@@ -208,3 +208,31 @@ select_backbone_and_exploratory_markers=function(files){
         }
     }
 }
+
+#' Split a matrix into a list of chunks. Faster than using split on a data.frame
+#' @param mat A matrix
+#' @param vector A vector of length nrow(mat) if byrow=TRUE, ncol(mat) if byrow=FALSE
+#' @param byrow if TRUE split rows, if FALSE split columns 
+split_matrix=function (mat, vector, byrow = TRUE) 
+{
+    if (byrow & nrow(mat) != length(vector)) {
+        stop("if byrow=TRUE, vector's length should have length nrow(mat)")
+    }
+    else if (!byrow & ncol(mat) != length(vector)) {
+        !byrow & ncol(mat) != length(vector)
+        stop("if byrow=FALSE, vector's length should have length ncol(mat)")
+    }
+    if (byrow) {
+        levels = split(1:nrow(mat), vector)
+        res = lapply(levels, function(x) {
+            mat[x, , drop = FALSE]
+        })
+    }
+    else {
+        levels = split(1:ncol(mat), vector)
+        res = lapply(levels, function(x) {
+            mat[, x, drop = FALSE]
+        })
+    }
+    res
+}
