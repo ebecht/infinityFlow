@@ -152,7 +152,7 @@ color_biplot_by_channels <- function(matrix,
                 grid.newpage()
                 grid.raster(readPNG(x$main.file,native=T))
             }
-            grid.text(x=par("usr")[2],y=par("usr")[4],label=sub(".png","",sub("/mainplot_","",tail(strsplit(x$main.file,"/")[[1]],1),fixed=TRUE),fixed=TRUE),just=c(1,1),gp=gpar(col="white"))
+            grid.text(x=par("usr")[2],y=par("usr")[4],label=sub(".png","",sub("/mainplot_","",tail(strsplit(x$main.file,"/")[[1]],1),fixed=TRUE),fixed=TRUE),just=c(1,1),gp=gpar(col="white",cex=0.1))
             return(NULL)
         })
         dev.off()
