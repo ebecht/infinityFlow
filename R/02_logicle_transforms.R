@@ -1,0 +1,75 @@
+#' Transform FCS files
+#' @description Backbone measurements use a common transformation across the whole dataset. Exploratory measurements are transformed well/file-wise.
+#' @param yvar name of the exploratory measurement
+#' @param paths Character vector of paths to store intput, intermediary results, outputs...
+logicle_transform_input=function(
+                                 yvar,
+                                 paths
+                                 ){
+    env=environment()
+    sapply(
+        c("xp","chans"),
+        function(object){
+            assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
+            invisible()
+        }
+    )
+    events.code=readRDS(file.path(paths["rds"],"pe.Rds"))
+
+    ## The annotation spreadsheet should be in the annotations/ folder and named YOURPROJECT.csv
+    annot=read.table(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
+
+    ## ##################
+    ## Computing parameters for each channel for each project using the code from flowCore's estimateLogicle
+    ## ##################
+
+    transforms_chan=setNames(sapply(
+        chans,
+        function(x){
+            data=xp[,x]
+            t=max(data)
+            m=4.5
+            q=0.05
+            r=.Machine$double.eps + quantile(data, q)
+            w=max((m-log10(t/abs(r)))/2,0.1)
+            a=0
+            logicleTransform(w=w,t=t,m=m,a=a) ##Just use summary() to retrive the parameters
+        },
+        simplify=FALSE
+    ),chans)
+
+    transforms_pe=sapply(
+        split(xp[,yvar],events.code),
+        function(x){
+            data=x
+            t=max(data)
+            m=4.5
+            q=0.05
+            r=.Machine$double.eps + quantile(data, q)
+            w=max((m-log10(t/abs(r)))/2,0.1)
+            a=0
+            logicleTransform(w=w,t=t,m=m,a=a)
+        },
+        simplify=FALSE
+    )
+
+    saveRDS(transforms_chan,file=file.path(paths["rds"],"transforms_chan.Rds"))
+    saveRDS(transforms_pe,file=file.path(paths["rds"],"transforms_pe.Rds"))
+
+    ## ##################
+    ## Exporting transformed expression matrices
+    ## ##################
+    for(chan in chans){
+        xp[,chan]=transforms_chan[[chan]](xp[,chan])
+    }
+
+    d.e=split(as.data.frame(xp),events.code)
+    d.e=lapply(d.e,as.matrix)
+    for(chan in unique(events.code)){
+        d.e[[chan]][,yvar]=transforms_pe[[chan]](d.e[[chan]][,yvar])
+    }
+
+    xp=do.call(rbind,d.e)
+    saveRDS(xp,file=file.path(paths["rds"],"xp_transformed.Rds"))
+    invisible()
+}
