@@ -4,7 +4,10 @@
 \alias{predict_svms}
 \title{Predict missing measurements using fitted SVM regressions}
 \usage{
-predict_svms(paths, prediction_events_downsampling, cores)
+predict_svms(paths, prediction_events_downsampling, cores,
+  chans = readRDS(file.path(paths["rds"], "chans.Rds")),
+  events.code = readRDS(file.path(paths["rds"], "pe.Rds")),
+  svms = readRDS(file.path(paths["rds"], "svms_models.Rds")))
 }
 \arguments{
 \item{paths}{Character vector of paths to store intput, intermediary results, outputs...}

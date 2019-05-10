@@ -3,18 +3,20 @@
 #' @param extra_args_UMAP Named list of arguments to pass to uwot:umap. Defaults to list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L)
 perform_UMAP_dimensionality_reduction=function(
                                                paths,
-                                               extra_args_UMAP
+                                               extra_args_UMAP,
+                                               chans=readRDS(file.path(paths["rds"],"chans.Rds")),
+                                               preds=readRDS(file.path(paths["rds"],"svms_predictions.Rds"))
                                                )
 {
-    env=environment()
-    sapply(
-        c("chans"),
-        function(object){
-            assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
-            invisible()
-        }
-    )
-    preds=readRDS(file.path(paths["rds"],"svms_predictions.Rds"))
+    ## env=environment()
+    ## sapply(
+    ##     c("chans"),
+    ##     function(object){
+    ##         assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
+    ##         invisible()
+    ##     }
+    ## )
+    ## preds=readRDS(file.path(paths["rds"],"svms_predictions.Rds"))
     
     umap=do.call(umap,c(list(X=preds[,chans]),extra_args_UMAP))
     colnames(umap)=c("UMAP1","UMAP2")

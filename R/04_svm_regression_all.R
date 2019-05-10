@@ -1,4 +1,4 @@
-#' Wrapper to SVM training. Defined separetely to avoid passing too many objects in parLapply
+#' Wrapper to SVM training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_svms
 svm_fitter=function(x){
             try({
@@ -10,7 +10,7 @@ svm_fitter=function(x){
             })
 }
 
-#' Wrapper to SVM predict. Defined separetely to avoid passing too many objects in parLapply
+#' Wrapper to SVM predict. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_svms
 svm_predictor=function(x){
     res=predict(x,xp)
@@ -29,7 +29,12 @@ fit_svms=function(
                       epsilon=0.5
                   ),
                   paths,
-                  cores
+                  cores,
+                  xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds")),
+                  chans=readRDS(file.path(paths["rds"],"chans.Rds")),
+                  events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
+                  transforms_chan=readRDS(file.path(paths["rds"],"transforms_chan.Rds")),
+                  transforms_pe=readRDS(file.path(paths["rds"],"transforms_pe.Rds"))
                   )
 {
     require(parallel)
@@ -39,19 +44,18 @@ fit_svms=function(
     mc.reset.stream()
 
     env=environment()
-    sapply(
-        c("chans","transforms_chan","transforms_pe"),
-        function(object){
-            assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
-            invisible()
-        }
-    )
-    events.code=readRDS(file.path(paths["rds"],"pe.Rds"))
-    xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds"))
+    
+    ## sapply(
+    ##     c("chans","transforms_chan","transforms_pe"),
+    ##     function(object){
+    ##         assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
+    ##         invisible()
+    ##     }
+    ## )
+    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"))
+    ## xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds"))
 
-    ## d.e=split(as.data.frame(xp),events.code)
     d.e=split_matrix(xp,events.code)
-    ## d.e=lapply(d.e,as.matrix)
     rm(xp)
 
     clusterEvalQ(
@@ -65,7 +69,7 @@ fit_svms=function(
         envir=env
     )
 
-    svms=parLapply(
+    svms=parLapplyLB(
         X=d.e,
         fun=svm_fitter,
         cl=cl
@@ -100,7 +104,10 @@ fit_svms=function(
 predict_svms=function(
                       paths,
                       prediction_events_downsampling,
-                      cores
+                      cores,
+                      chans=readRDS(file.path(paths["rds"],"chans.Rds")),
+                      events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
+                      svms=readRDS(file.path(paths["rds"],"svms_models.Rds"))
                       )
 {
     require(parallel)
@@ -109,15 +116,15 @@ predict_svms=function(
     mc.reset.stream()
     
     env=environment()
-    sapply(
-        c("chans"),
-        function(object){
-            assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
-            invisible()
-        }
-    )
-    events.code=readRDS(file.path(paths["rds"],"pe.Rds"))
-    svms=readRDS(file.path(paths["rds"],"svms_models.Rds"))
+    ## sapply(
+    ##     c("chans"),
+    ##     function(object){
+    ##         assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
+    ##         invisible()
+    ##     }
+    ## )
+    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"))
+    ## svms=readRDS(file.path(paths["rds"],"svms_models.Rds"))
     
     xp=lapply(svms,"[[",1)
     xp=lapply(xp,function(x){x[x[,"train_set"]==0,]})
@@ -139,7 +146,7 @@ predict_svms=function(
     preds=do.call(
         cbind,
         setNames(
-            parLapply(
+            parLapplyLB(
                 cl=cl,
                 X=svms,
                 svm_predictor

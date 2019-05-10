@@ -4,22 +4,29 @@
 export_data=function(
                      paths,
                      FCS_export,
-                     CSV_export
+                     CSV_export,
+                     chans=readRDS(file.path(paths["rds"],"chans.Rds")),
+                     transforms_chan=readRDS(file.path(paths["rds"],"transforms_chan.Rds")),
+                     transforms_pe=readRDS(file.path(paths["rds"],"transforms_pe.Rds")),
+                     xp=readRDS(file.path(paths["rds"],"xp.Rds")),
+                     umap=readRDS(file.path(paths["rds"],"umap.Rds")),
+                     events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
+                     preds=readRDS(file.path(paths["rds"],"svms_predictions.Rds")),
+                     sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds")),
+                     a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
                      ){
-    env=environment()
-    sapply(
-        c("transforms_chan","transforms_pe","xp","chans","umap"),
-        function(object){
-            assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
-            invisible()
-        }
-    )
-    events.code=readRDS(file.path(paths["rds"],"pe.Rds"))
-    
-    preds=readRDS(file.path(paths["rds"],"svms_predictions.Rds"))
-    sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds"))
+    ## env=environment()
+    ## sapply(
+    ##     c("transforms_chan","transforms_pe","xp","chans","umap"),
+    ##     function(object){
+    ##         assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
+    ##         invisible()
+    ##     }
+    ## )
+    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"))
+    ## preds=readRDS(file.path(paths["rds"],"svms_predictions.Rds"))
+    ## sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds"))
 
-    a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
     a[,"target"]=make.unique(a[,"target"])
     a=setNames(as.character(a[,"target",]),a[,"file"])
     a[is.na(a)]="Autofluorescence"

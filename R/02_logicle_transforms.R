@@ -4,20 +4,23 @@
 #' @param paths Character vector of paths to store intput, intermediary results, outputs...
 logicle_transform_input=function(
                                  yvar,
-                                 paths
+                                 paths,
+                                 xp=readRDS(file.path(paths["rds"],"xp.Rds")),
+                                 chans=readRDS(file.path(paths["rds"],"chans.Rds")),
+                                 events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
+                                 annot=read.table(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
                                  ){
-    env=environment()
-    sapply(
-        c("xp","chans"),
-        function(object){
-            assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
-            invisible()
-        }
-    )
-    events.code=readRDS(file.path(paths["rds"],"pe.Rds"))
+    ## env=environment()
+    ## sapply(
+    ##     c("xp","chans"),
+    ##     function(object){
+    ##         assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
+    ##         invisible()
+    ##     }
+    ## )
+    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"))
 
     ## The annotation spreadsheet should be in the annotations/ folder and named YOURPROJECT.csv
-    annot=read.table(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
 
     ## ##################
     ## Computing parameters for each channel for each project using the code from flowCore's estimateLogicle

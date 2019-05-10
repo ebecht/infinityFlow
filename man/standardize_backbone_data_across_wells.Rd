@@ -6,7 +6,9 @@
 \usage{
 standardize_backbone_data_across_wells(yvar, paths,
   scale_function = function(x) {     scale(x, center = TRUE, scale =
-  TRUE) })
+  TRUE) }, xp = readRDS(file.path(paths["rds"], "xp_transformed.Rds")),
+  chans = readRDS(file.path(paths["rds"], "chans.Rds")),
+  events.code = readRDS(file.path(paths["rds"], "pe.Rds")))
 }
 \arguments{
 \item{yvar}{name of the exploratory measurement}

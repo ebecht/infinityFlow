@@ -4,21 +4,26 @@
 
 plot_results=function(
                       paths,
-                      chop_quantiles=0.005
+                      chop_quantiles=0.005,
+                      chans=readRDS(file.path(paths["rds"],"chans.Rds")),
+                      umap=readRDS(file.path(paths["rds"],"umap.Rds")),
+                      events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
+                      preds=readRDS(file.path(paths["rds"],"svms_predictions.Rds")),
+                      sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds")),
+                      a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
                       ){
-    env=environment()
-    sapply(
-        c("chans","umap"),
-        function(object){
-            assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
-            invisible()
-        }
-    )
-    events.code=readRDS(file.path(paths["rds"],"pe.Rds"))
-    
-    preds=readRDS(file.path(paths["rds"],"svms_predictions.Rds"))
+    ## env=environment()
+    ## sapply(
+    ##     c("chans","umap"),
+    ##     function(object){
+    ##         assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
+    ##         invisible()
+    ##     }
+    ## )
+    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"))
+    ## preds=readRDS(file.path(paths["rds"],"svms_predictions.Rds"))
 
-    a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
+    ## a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
     a=setNames(as.character(a[,"target",]),a[,"file"])
     a[is.na(a)]=paste0("Autofluorescence",1:sum(is.na(a)))
 

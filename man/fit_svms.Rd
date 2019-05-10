@@ -5,7 +5,12 @@
 \title{Train SVM regressions}
 \usage{
 fit_svms(yvar, params = list(type = "eps-regression", cost = 1, epsilon =
-  0.5), paths, cores)
+  0.5), paths, cores, xp = readRDS(file.path(paths["rds"],
+  "xp_transformed_scaled.Rds")), chans = readRDS(file.path(paths["rds"],
+  "chans.Rds")), events.code = readRDS(file.path(paths["rds"],
+  "pe.Rds")), transforms_chan = readRDS(file.path(paths["rds"],
+  "transforms_chan.Rds")),
+  transforms_pe = readRDS(file.path(paths["rds"], "transforms_pe.Rds")))
 }
 \arguments{
 \item{yvar}{name of the exploratory measurement}

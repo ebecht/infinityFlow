@@ -4,7 +4,14 @@
 \alias{plot_results}
 \title{Plot the UMAP embedding of the backbone with color-coded intensities for backbone and predicted measurements}
 \usage{
-plot_results(paths, chop_quantiles = 0.005)
+plot_results(paths, chop_quantiles = 0.005,
+  chans = readRDS(file.path(paths["rds"], "chans.Rds")),
+  umap = readRDS(file.path(paths["rds"], "umap.Rds")),
+  events.code = readRDS(file.path(paths["rds"], "pe.Rds")),
+  preds = readRDS(file.path(paths["rds"], "svms_predictions.Rds")),
+  sampling = readRDS(file.path(paths["rds"], "sampling_preds.Rds")),
+  a = read.csv(paths["annotation"], sep = ",", header = TRUE,
+  stringsAsFactors = FALSE))
 }
 \arguments{
 \item{paths}{Character vector of paths to store intput, intermediary results, outputs...}
