@@ -4,6 +4,7 @@
 #' @param path_to_intermediary_results Path to results to store temporary data. If left blank, will default to a temporary directory. It may be useful to store the intermediary results to further explore the data, tweak the pipeline or to resume computations.
 #' @param backbone_selection_file If that argument is missing and R is run interactively, the user will be prompted to state whether each channel in the FCS file should be considered backbone measurement, exploratory measurement or ignored. Otherwise, the user should run \code{\link{select_backbone_and_exploratory_markers}} in an interactive R session, save its output using \emph{write.csv(row.names=FALSE)} and set this \emph{backbone_selection_file} parameter to the path of the saved output.
 #' @param annotation Named character vector. Elements should be the targets of the exploratory antibodies, names should be the name of the FCS file where that exploratory antibody was measured.
+#' @param annotation Named character vector. Elements should be the isotype used in each of the well and that (e.g. IgG2). The corresponding isotype should be present in \emph{annotation} (e.g. Isotype_IgG2, with this capitalization exactly). Autofluorescence measurements should be listed here as "Blank"
 #' @param input_events_downsampling How many event should be kept per input FCS file. Default to no downsampling. In any case, half of the events will be used to train regression models and half to test the performance. Predictions will be made only on events from the test set.
 #' @param cores Number of cores to use for parallel computing. Defaults to 1 (no parallel computing)
 #' @param your_random_seed Set a seed for reproducible results. Defaults to 123
@@ -23,6 +24,7 @@ infinity_flow=function(
 
                        ## Annotation
                        annotation=NULL, ## Named vector with names = files. Use name of input files if missing
+                       isotype=NULL, ## Named vector with names = files and values = which isotype this target maps to
 
                        ## Downsampling
                        input_events_downsampling=Inf, ## Number of cells to downsample to per input FCS file
@@ -38,6 +40,7 @@ infinity_flow=function(
                        extra_args_read_FCS=list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE),
                        extra_args_UMAP=list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L),
                        extra_args_export=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
+                       extra_args_correct_background=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
                        extra_args_plotting=list(chop_quantiles=0.005)
                        ){
     ## Loading packages
@@ -76,11 +79,20 @@ infinity_flow=function(
         sapply(paths[-match("annotation",names(paths))][!dir.exists(paths[-match("annotation",names(paths))])],dir.create,recursive=TRUE,showWarnings=FALSE)
     }
 
+    if(verbose){
+        message("Using directories...")
+        sapply(names(paths),function(x){message("\t",x,": ",paths[x])})
+    }
+    
     files=list.files(path_to_fcs,pattern="^.*.(fcs)$",ignore.case=TRUE,recursive=TRUE)
     if(missing(annotation)){
         annotation=setNames(files,files)
     }
-    write.csv(data.frame(file=names(annotation),target=annotation),row.names=FALSE,file=paths["annotation"])
+    annotation=data.frame(file=names(annotation),target=annotation)
+    if(!missing(isotype)){
+        annotation=cbind(annotation,isotype=isotype)
+    }
+    write.csv(annotation,row.names=FALSE,file=paths["annotation"])
     
     files=list.files(path_to_fcs,pattern="^.*.(fcs)$",ignore.case=TRUE,recursive=TRUE,full.names=TRUE)
     if(missing(backbone_selection_file)){
@@ -166,9 +178,17 @@ infinity_flow=function(
     res=do.call(export_data,c(list(paths=paths),extra_args_export))
     
     ## Plotting
+    if(verbose){
+        message("Plotting")
+    }
     do.call(plot_results,c(list(paths=paths),extra_args_plotting))
 
-    res
+    if(verbose){
+        message("Background correcting")
+    }
+    res_bgc=do.call(correct_background,c(list(paths=paths),extra_args_correct_background))
+    
+    list(raw=res,bgc=res_bgc)
 }
 
 ## ## Load two misc functions (for exporting and plotting)

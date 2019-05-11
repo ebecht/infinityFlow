@@ -6,7 +6,7 @@
 \usage{
 infinity_flow(path_to_fcs, path_to_output,
   path_to_intermediary_results = tempdir(),
-  backbone_selection_file = NULL, annotation = NULL,
+  backbone_selection_file = NULL, annotation = NULL, isotype = NULL,
   input_events_downsampling = Inf,
   prediction_events_downsampling = 1000, cores = 1L,
   your_random_seed = 123, verbose = TRUE,
@@ -14,6 +14,8 @@ infinity_flow(path_to_fcs, path_to_output,
   FALSE, ignore.text.offset = TRUE), extra_args_UMAP = list(n_neighbors =
   15L, min_dist = 0.2, metric = "euclidean", verbose = verbose, n_epochs =
   1000L), extra_args_export = list(FCS_export = c("split",
+  "concatenated", "none")[1], CSV_export = FALSE),
+  extra_args_correct_background = list(FCS_export = c("split",
   "concatenated", "none")[1], CSV_export = FALSE),
   extra_args_plotting = list(chop_quantiles = 0.005))
 }
@@ -41,6 +43,8 @@ infinity_flow(path_to_fcs, path_to_output,
 \item{extra_args_UMAP}{list of named arguments to pass to uwot:umap. Defaults to list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L)}
 
 \item{extra_args_plotting}{list of named arguments to pass to plot_results. Defaults to list(chop_quantiles=0.005) which removes the top 0.05% and bottom 0.05% of the scale for each marker when mapping color palettes to intensities.}
+
+\item{annotation}{Named character vector. Elements should be the isotype used in each of the well and that (e.g. IgG2). The corresponding isotype should be present in \emph{annotation} (e.g. Isotype_IgG2, with this capitalization exactly). Autofluorescence measurements should be listed here as "Blank"}
 }
 \description{
 Wrapper to the Infinity Flow pipeline

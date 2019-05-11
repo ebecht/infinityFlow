@@ -236,3 +236,12 @@ split_matrix=function (mat, vector, byrow = TRUE)
     }
     res
 }
+
+## Linear scale with chosen boundaries
+minmax_scale=function(matrix,min=1,max=1000){
+    apply(matrix,2,function(x){
+        a=(max-min)/(max(x)-min(x))
+        b=min-a*min(x)
+        a*x+b
+    })
+}
