@@ -43,6 +43,8 @@ correct_background=function(
         ##inverseLogicleTransform(lgcl)(orthogonal_residuals) ## That does not work because these transforms have different origin
     }
 
+    saveRDS(preds_rawbgc,file=file.path(paths["rds"],"svms_predictions_backgroundcorrected.Rds"))
+    
     ## ##################
     ## Exporting Phenograph / BGC / UMAPs
     ## ##################
