@@ -38,7 +38,7 @@ infinity_flow=function(
                        verbose=TRUE,
 
                        extra_args_read_FCS=list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE),
-                       extra_args_UMAP=list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L),
+                       extra_args_UMAP=list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L,n_threads=cores,n_sgd_threads=cores),
                        extra_args_export=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
                        extra_args_correct_background=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
                        extra_args_plotting=list(chop_quantiles=0.005)
