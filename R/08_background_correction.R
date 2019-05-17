@@ -78,7 +78,7 @@ correct_background=function(
         FCS@parameters$name=as.character(FCS@parameters$name)
         FCS=generate_description(FCS)
         dir.create(file.path(paths["output"],"FCS_background_corrected/","concatenated"),recursive=TRUE,showWarnings=FALSE)
-        invisible(write.FCS(FCS,file=file.path(paths["output"],"FCS_background_corrected","predicted_data_background_corrected.fcs")))
+        invisible(write.FCS(FCS,file=file.path(paths["output"],"FCS_background_corrected","concatenated","concatenated_results_background_corrected.fcs")))
     }
 
     if(any(FCS_export=="split")){       

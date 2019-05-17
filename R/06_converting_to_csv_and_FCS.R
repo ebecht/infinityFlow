@@ -56,28 +56,28 @@ export_data=function(
     if(CSV_export){
         write.csv(preds,file=file.path(paths["output"],"results.csv"),row.names=FALSE)
     }
-
-    if(FCS_export%in%c("split","concatenated")){
-        if(FCS_export=="split"){
-            preds_tmp=lapply(split(as.data.frame(preds),events.code[sampling]),as.matrix)
-            dir.create(file.path(paths["output"],"FCS"),showWarnings=FALSE)
-            lapply(
-                names(preds_tmp),
-                function(file){
-                    FCS=flowFrame(preds_tmp[[file]])
-                    FCS@parameters$desc=as.character(FCS@parameters$desc)
-                    FCS@parameters$name=as.character(FCS@parameters$name)
-                    FCS=generate_description(FCS)
-                    invisible(write.FCS(FCS,file=file.path(paths["output"],"FCS",file)))
-                }
-            )
-        } else if(FCS_export=="concatenated"){
-            FCS=flowFrame(preds)
-            FCS@parameters$desc=as.character(FCS@parameters$desc)
-            FCS@parameters$name=as.character(FCS@parameters$name)
-            FCS=generate_description(FCS)
-            invisible(write.FCS(FCS,file=file.path(paths["output"],"results.fcs")))
-        }
+    
+    if(any(FCS_export=="split")){
+        preds_tmp=lapply(split(as.data.frame(preds),events.code[sampling]),as.matrix)
+        dir.create(file.path(paths["output"],"FCS","split"),showWarnings=FALSE)
+        lapply(
+            names(preds_tmp),
+            function(file){
+                FCS=flowFrame(preds_tmp[[file]])
+                FCS@parameters$desc=as.character(FCS@parameters$desc)
+                FCS@parameters$name=as.character(FCS@parameters$name)
+                FCS=generate_description(FCS)
+                invisible(write.FCS(FCS,file=file.path(paths["output"],"FCS","split",file)))
+            }
+        )
+    }
+    if(any(FCS_export=="concatenated")){
+        dir.create(file.path(paths["output"],"FCS","concatenated"),showWarnings=FALSE)
+        FCS=flowFrame(preds)
+        FCS@parameters$desc=as.character(FCS@parameters$desc)
+        FCS@parameters$name=as.character(FCS@parameters$name)
+        FCS=generate_description(FCS)
+        invisible(write.FCS(FCS,file=file.path(paths["output"],"FCS","concatenated","concatenated_results.fcs")))
     }
 
     preds
