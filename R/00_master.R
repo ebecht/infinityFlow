@@ -53,62 +53,20 @@ infinity_flow=function(
     require(grid)
     require(uwot)
 
-    ## The paths below have to point to directories. If they do not exist the script will create them to store outputs
-    path_to_subsetted_fcs=file.path(path_to_intermediary_results,"subsetted_fcs") ## Subsetted here means for instance "gated on live singlets CD45+"
-    path_to_rds=file.path(path_to_intermediary_results,"rds")
-    ## A CSV file to map files to PE targets
-    path_to_annotation_file=file.path(path_to_intermediary_results,"annotation.csv") ## Has to be a comma-separated csv file, with two columns. The first column has to be the name of the FCS files and the second the marker bound to the PE reporter. The first line (column names) have to be "file" and "target". You can leave the unlabelled PEs empty
-
-    paths=c(
-        input=path_to_fcs,
-        intermediary=path_to_intermediary_results,
-        subset=path_to_subsetted_fcs,
-        rds=path_to_rds,
-        annotation=path_to_annotation_file,
-        output=path_to_output
-    )
-    
-    if(path_to_intermediary_results==tempdir()){
-        if(verbose){
-            message("Using ",tempdir()," temporary directory to store intermediary results as no non-temporary directory has been specified")
-        }
-        sapply(paths[c("subset","rds")],dir.create,showWarnings=FALSE,recursive=TRUE)
-    }
-    if(!all(dir.exists(paths[-match("annotation",names(paths))]))){
-        message(paste(paths[-match("annotation",names(paths))][!dir.exists(paths[-match("annotation",names(paths))])],collapse=" and "),": directories not found, creating directory(ies)")
-        sapply(paths[-match("annotation",names(paths))][!dir.exists(paths[-match("annotation",names(paths))])],dir.create,recursive=TRUE,showWarnings=FALSE)
-    }
-
-    if(verbose){
-        message("Using directories...")
-        sapply(names(paths),function(x){message("\t",x,": ",paths[x])})
-    }
-    
-    files=list.files(path_to_fcs,pattern="^.*.(fcs)$",ignore.case=TRUE,recursive=TRUE)
-    if(missing(annotation)){
-        annotation=setNames(files,files)
-    }
-    annotation=data.frame(file=names(annotation),target=annotation)
-    if(!missing(isotype)){
-        annotation=cbind(annotation,isotype=isotype)
-    }
-    write.csv(annotation,row.names=FALSE,file=paths["annotation"])
-    
-    files=list.files(path_to_fcs,pattern="^.*.(fcs)$",ignore.case=TRUE,recursive=TRUE,full.names=TRUE)
-    if(missing(backbone_selection_file)){
-        backbone_definition=select_backbone_and_exploratory_markers(files)
-        write.csv(backbone_definition,file=file.path(path_to_output,"backbone_selection_file.csv"),row.names=FALSE)
-    } else {
-        backbone_definition=read.csv(backbone_selection_file,stringsAsFactors=FALSE)
-    }
-    backbone_definition$desc[is.na(backbone_definition$desc)]=backbone_definition$name[is.na(backbone_definition$desc)]
-    chans=subset(backbone_definition,type=="backbone")
-    chans=setNames(chans$desc,chans$name)
-    name_of_PE_parameter=subset(backbone_definition,type=="exploratory")$name
-
-    saveRDS(chans,file=file.path(path_to_rds,"chans.Rds"))
 
     ##/!\ Potentially add a check here to make sure parameters are consistent with FCS files
+
+    settings=initialize(
+        path_to_fcs=path_to_fcs,
+        path_to_output=path_to_output,
+        path_to_intermediary_results=path_to_intermediary_results,
+        backbone_selection_file=backbone_selection_file,
+        annotation=annotation,
+        isotype=isotype,
+        verbose=verbose
+    )
+    name_of_PE_parameter=settings$name_of_PE_parameter
+    paths=settings$paths
     
     ## Subsample FCS files
     M=input_events_downsampling ## Number of cells to downsample to for each file
@@ -225,3 +183,79 @@ infinity_flow=function(
 ##     stop("Some channels' names were not found in the FCS files, check for possible mismatches between chans and pData")
 ## }
 
+initialize=function(
+                    path_to_fcs=path_to_fcs, ## Where the source FCS files are
+                    path_to_output=path_to_output, ## Where the results will be stored
+                    path_to_intermediary_results=path_to_intermediary_results, ## Storing intermediary results. Default to a temporary directory. Can be a user-specified directory to store intermediary results (to resume interrupted computation)
+                    backbone_selection_file=backbone_selection_file, ## Define backbone and exploratory channels. If missing will be defined interactively and the selection will be saved in the output folder under the name backbone_selection_file.csv. To define it the first time you should call select_backbone_and_exploratory_markers(read.files(path_to_fcs,recursive=TRUE)) in an interactive R session 
+                    
+                    ## Annotation
+                    annotation=annotation, ## Named vector with names = files. Use name of input files if missing
+                    isotype=isotype, ## Named vector with names = files and values = which isotype this target maps to
+
+                    verbose=verbose
+                    ){
+    
+    ## The paths below have to point to directories. If they do not exist the script will create them to store outputs
+    path_to_subsetted_fcs=file.path(path_to_intermediary_results,"subsetted_fcs") ## Subsetted here means for instance "gated on live singlets CD45+"
+    path_to_rds=file.path(path_to_intermediary_results,"rds")
+    ## A CSV file to map files to PE targets
+    path_to_annotation_file=file.path(path_to_intermediary_results,"annotation.csv") ## Has to be a comma-separated csv file, with two columns. The first column has to be the name of the FCS files and the second the marker bound to the PE reporter. The first line (column names) have to be "file" and "target". You can leave the unlabelled PEs empty
+
+    paths=c(
+        input=path_to_fcs,
+        intermediary=path_to_intermediary_results,
+        subset=path_to_subsetted_fcs,
+        rds=path_to_rds,
+        annotation=path_to_annotation_file,
+        output=path_to_output
+    )
+    
+    if(path_to_intermediary_results==tempdir()){
+        if(verbose){
+            message("Using ",tempdir()," temporary directory to store intermediary results as no non-temporary directory has been specified")
+        }
+        sapply(paths[c("subset","rds")],dir.create,showWarnings=FALSE,recursive=TRUE)
+    }
+    if(!all(dir.exists(paths[-match("annotation",names(paths))]))){
+        message(paste(paths[-match("annotation",names(paths))][!dir.exists(paths[-match("annotation",names(paths))])],collapse=" and "),": directories not found, creating directory(ies)")
+        sapply(paths[-match("annotation",names(paths))][!dir.exists(paths[-match("annotation",names(paths))])],dir.create,recursive=TRUE,showWarnings=FALSE)
+    }
+
+    if(verbose){
+        message("Using directories...")
+        sapply(names(paths),function(x){message("\t",x,": ",paths[x])})
+    }
+    
+    files=list.files(path_to_fcs,pattern="^.*.(fcs)$",ignore.case=TRUE,recursive=TRUE)
+    if(missing(annotation)){
+        annotation=setNames(files,files)
+    }
+    annotation=data.frame(file=names(annotation),target=annotation)
+    if(!missing(isotype)){
+        annotation=cbind(annotation,isotype=isotype)
+    }
+    write.csv(annotation,row.names=FALSE,file=paths["annotation"])
+    
+    files=list.files(path_to_fcs,pattern="^.*.(fcs)$",ignore.case=TRUE,recursive=TRUE,full.names=TRUE)
+    if(missing(backbone_selection_file)){
+        backbone_definition=select_backbone_and_exploratory_markers(files)
+        write.csv(backbone_definition,file=file.path(path_to_output,"backbone_selection_file.csv"),row.names=FALSE)
+    } else {
+        backbone_definition=read.csv(backbone_selection_file,stringsAsFactors=FALSE)
+    }
+    backbone_definition$desc[is.na(backbone_definition$desc)]=backbone_definition$name[is.na(backbone_definition$desc)]
+    chans=subset(backbone_definition,type=="backbone")
+    chans=setNames(chans$desc,chans$name)
+    name_of_PE_parameter=subset(backbone_definition,type=="exploratory")$name
+
+    saveRDS(chans,file=file.path(path_to_rds,"chans.Rds"))
+
+    return(
+        list(
+            paths=paths,
+            chans=chans,
+            name_of_PE_parameter=name_of_PE_parameter
+        )
+    )
+}
