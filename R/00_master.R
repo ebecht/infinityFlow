@@ -38,6 +38,8 @@ infinity_flow=function(
                        verbose=TRUE,
 
                        extra_args_read_FCS=list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE),
+                       regression_function=fitter_svm,
+                       extra_args_regression_params=list(params=list(type="eps-regression",cost=1,epsilon=0.5)),
                        extra_args_UMAP=list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L,n_threads=cores,n_sgd_threads=cores),
                        extra_args_export=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
                        extra_args_correct_background=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
@@ -52,6 +54,7 @@ infinity_flow=function(
     require(raster)
     require(grid)
     require(uwot)
+    require(xgboost)
 
 
     ##/!\ Potentially add a check here to make sure parameters are consistent with FCS files
@@ -99,22 +102,24 @@ infinity_flow=function(
         paths=paths
     )
 
-    ## SVM training and predictions
+    ## Regression models training and predictions
     if(verbose){
         message("Fitting regression models")
     }
     set.seed(your_random_seed+1)
-    fit_svms(
+    fit_regressions(
+        regression_function=regression_function,
         yvar=name_of_PE_parameter,
         paths=paths,
-        cores=cores
+        cores=cores,
+        params=extra_args_regression_params
         )
 
     if(verbose){
         message("Imputing missing measurements")
     }
     set.seed(your_random_seed+2)
-    predict_svms(
+    predict_from_models(
         paths=paths,
         prediction_events_downsampling=prediction_events_downsampling,
         cores=cores
@@ -149,50 +154,13 @@ infinity_flow=function(
     list(raw=res,bgc=res_bgc)
 }
 
-## ## Load two misc functions (for exporting and plotting)
-## source("./misc.R")
-
-## ####################/!\ this will be used for the backbone specification file /!\####################
-## ## This displays the annotation of the first FCS file, it will help you populate the objects "chans" and "name_of_PE_parameter"
-## pData=pData(parameters(read.FCS(list.files(path_to_fcs,full.names=TRUE,recursive=TRUE,pattern=".fcs")[1]))[,c("name","desc")])
-## print(pData)
-
-## ## In the backbone, we ignore FSC-A and SSC-A as it is somewhat redundant with Height+Width
-## chans=c( ## Use the "name" parameter on the left-hand-side and a human-readable description on the right hand side (usually in the "desc" parameter")
-##     "FSC-H"="FSC-H",
-##     "FSC-W"="FSC-W",
-##     "SSC-H"="SSC-H",
-##     "SSC-W"="SSC-W",
-##     "FJComp-APC-A"="CD3",
-##     "FJComp-APC-eFlour780-A"="Zombie",
-##     "FJComp-Alexa Fluor 700-A"="CD4",
-##     "FJComp-BUV395-A"="CD8",
-##     "FJComp-BUV737-A"="CD14",
-##     "FJComp-BV421-A"="CD19",
-##     "FJComp-BV510-A"="CD19",
-##     "FJComp-BV605-A"="CD64",
-##     "FJComp-BV650-A"="F480",
-##     "FJComp-BV711-A"="CD123",
-##     "FJComp-BV786-A"="Ter119",
-##     "FJComp-GFP-A"="CD117",
-##     "FJComp-PE-Cy7(yg)-A"="CD34",
-##     "FJComp-PerCP-Cy5-5-A"="CD161"
-## )
-
-## if(!all(names(chans)%in%pData$name)){
-##     stop("Some channels' names were not found in the FCS files, check for possible mismatches between chans and pData")
-## }
-
 initialize=function(
-                    path_to_fcs=path_to_fcs, ## Where the source FCS files are
-                    path_to_output=path_to_output, ## Where the results will be stored
-                    path_to_intermediary_results=path_to_intermediary_results, ## Storing intermediary results. Default to a temporary directory. Can be a user-specified directory to store intermediary results (to resume interrupted computation)
-                    backbone_selection_file=backbone_selection_file, ## Define backbone and exploratory channels. If missing will be defined interactively and the selection will be saved in the output folder under the name backbone_selection_file.csv. To define it the first time you should call select_backbone_and_exploratory_markers(read.files(path_to_fcs,recursive=TRUE)) in an interactive R session 
-                    
-                    ## Annotation
-                    annotation=annotation, ## Named vector with names = files. Use name of input files if missing
-                    isotype=isotype, ## Named vector with names = files and values = which isotype this target maps to
-
+                    path_to_fcs=path_to_fcs,
+                    path_to_output=path_to_output,
+                    path_to_intermediary_results=path_to_intermediary_results,
+                    backbone_selection_file=backbone_selection_file,
+                    annotation=annotation,
+                    isotype=isotype,
                     verbose=verbose
                     ){
     

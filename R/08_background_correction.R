@@ -12,7 +12,7 @@ correct_background=function(
                             umap=readRDS(file.path(paths["rds"],"umap.Rds")),
                             events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
                             sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds")),
-                            preds=readRDS(file.path(paths["rds"],"svms_predictions.Rds")),
+                            preds=readRDS(file.path(paths["rds"],"predictions.Rds")),
                             a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
                             ){
 
@@ -43,7 +43,7 @@ correct_background=function(
         ##inverseLogicleTransform(lgcl)(orthogonal_residuals) ## That does not work because these transforms have different origin
     }
 
-    saveRDS(preds_rawbgc,file=file.path(paths["rds"],"svms_predictions_backgroundcorrected.Rds"))
+    saveRDS(preds_rawbgc,file=file.path(paths["rds"],"predictions_backgroundcorrected.Rds"))
     
     ## ##################
     ## Exporting Phenograph / BGC / UMAPs
@@ -67,7 +67,7 @@ correct_background=function(
     preds_rawbgc_linear=cbind(preds_rawbgc_linear,PE_id=PE_id)
 
     if(CSV_export){
-        dir.create(paths["output"],"FCS_background_corrected/",showWarnings=FALSE)
+        dir.create(file.path(paths["output"],"FCS_background_corrected/"),showWarnings=FALSE,recursive=TRUE)
         require(data.table)
         fwrite(as.data.frame(preds_rawbgc_linear),row.names=FALSE,file=file.path(paths["output"],"predicted_data_background_corrected.csv"))
     }

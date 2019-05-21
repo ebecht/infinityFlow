@@ -12,7 +12,7 @@ export_data(paths, FCS_export, CSV_export,
   xp = readRDS(file.path(paths["rds"], "xp.Rds")),
   umap = readRDS(file.path(paths["rds"], "umap.Rds")),
   events.code = readRDS(file.path(paths["rds"], "pe.Rds")),
-  preds = readRDS(file.path(paths["rds"], "svms_predictions.Rds")),
+  preds = readRDS(file.path(paths["rds"], "predictions.Rds")),
   sampling = readRDS(file.path(paths["rds"], "sampling_preds.Rds")),
   a = read.csv(paths["annotation"], sep = ",", header = TRUE,
   stringsAsFactors = FALSE))

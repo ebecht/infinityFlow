@@ -11,22 +11,11 @@ export_data=function(
                      xp=readRDS(file.path(paths["rds"],"xp.Rds")),
                      umap=readRDS(file.path(paths["rds"],"umap.Rds")),
                      events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
-                     preds=readRDS(file.path(paths["rds"],"svms_predictions.Rds")),
+                     preds=readRDS(file.path(paths["rds"],"predictions.Rds")),
                      sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds")),
                      a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
                      ){
-    ## env=environment()
-    ## sapply(
-    ##     c("transforms_chan","transforms_pe","xp","chans","umap"),
-    ##     function(object){
-    ##         assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
-    ##         invisible()
-    ##     }
-    ## )
-    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"))
-    ## preds=readRDS(file.path(paths["rds"],"svms_predictions.Rds"))
-    ## sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds"))
-
+    
     a[,"target"]=make.unique(a[,"target"])
     a=setNames(as.character(a[,"target",]),a[,"file"])
     a[is.na(a)]="Autofluorescence"
@@ -59,7 +48,7 @@ export_data=function(
     
     if(any(FCS_export=="split")){
         preds_tmp=lapply(split(as.data.frame(preds),events.code[sampling]),as.matrix)
-        dir.create(file.path(paths["output"],"FCS","split"),showWarnings=FALSE)
+        dir.create(file.path(paths["output"],"FCS","split"),showWarnings=FALSE,recursive=TRUE)
         lapply(
             names(preds_tmp),
             function(file){
@@ -72,7 +61,7 @@ export_data=function(
         )
     }
     if(any(FCS_export=="concatenated")){
-        dir.create(file.path(paths["output"],"FCS","concatenated"),showWarnings=FALSE)
+        dir.create(file.path(paths["output"],"FCS","concatenated"),showWarnings=FALSE,recursive=TRUE)
         FCS=flowFrame(preds)
         FCS@parameters$desc=as.character(FCS@parameters$desc)
         FCS@parameters$name=as.character(FCS@parameters$name)

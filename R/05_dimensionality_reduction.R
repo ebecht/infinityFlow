@@ -5,19 +5,10 @@ perform_UMAP_dimensionality_reduction=function(
                                                paths,
                                                extra_args_UMAP,
                                                chans=readRDS(file.path(paths["rds"],"chans.Rds")),
-                                               preds=readRDS(file.path(paths["rds"],"svms_predictions.Rds"))
+                                               preds=readRDS(file.path(paths["rds"],"predictions.Rds"))
                                                )
 {
-    ## env=environment()
-    ## sapply(
-    ##     c("chans"),
-    ##     function(object){
-    ##         assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
-    ##         invisible()
-    ##     }
-    ## )
-    ## preds=readRDS(file.path(paths["rds"],"svms_predictions.Rds"))
-    
+
     umap=do.call(umap,c(list(X=preds[,chans]),extra_args_UMAP))
     colnames(umap)=c("UMAP1","UMAP2")
 

@@ -8,7 +8,7 @@ plot_results(paths, chop_quantiles = 0.005,
   chans = readRDS(file.path(paths["rds"], "chans.Rds")),
   umap = readRDS(file.path(paths["rds"], "umap.Rds")),
   events.code = readRDS(file.path(paths["rds"], "pe.Rds")),
-  preds = readRDS(file.path(paths["rds"], "svms_predictions.Rds")),
+  preds = readRDS(file.path(paths["rds"], "predictions.Rds")),
   sampling = readRDS(file.path(paths["rds"], "sampling_preds.Rds")),
   a = read.csv(paths["annotation"], sep = ",", header = TRUE,
   stringsAsFactors = FALSE))
