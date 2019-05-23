@@ -222,7 +222,6 @@ predict_from_models=function(
         )
         t1=Sys.time()
         dt=difftime(t1,t0,units="secs")
-        t0=t1
         cat("\t",dt," seconds","\n")
         timings=c(timings,dt)
     }
