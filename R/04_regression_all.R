@@ -209,9 +209,9 @@ predict_from_models=function(
     
     preds=list()
     timings=numeric()
-    t0=Sys.time()
     for(i in seq_along(models)){
         cat("\t",names(models)[i])
+        t0=Sys.time()
         preds[[i]]=do.call(
             cbind,
             parLapplyLB(
@@ -222,6 +222,7 @@ predict_from_models=function(
         )
         t1=Sys.time()
         dt=difftime(t1,t0,units="secs")
+        t0=t1
         cat("\t",dt," seconds","\n")
         timings=c(timings,dt)
     }
