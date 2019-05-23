@@ -15,32 +15,44 @@ correct_background=function(
                             preds=readRDS(file.path(paths["rds"],"predictions.Rds")),
                             a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
                             ){
+    
+    chans=readRDS(file.path(paths["rds"],"chans.Rds"));
+    transforms_chan=readRDS(file.path(paths["rds"],"transforms_chan.Rds"));
+    transforms_pe=readRDS(file.path(paths["rds"],"transforms_pe.Rds"));
+    xp=readRDS(file.path(paths["rds"],"xp.Rds"));
+    umap=readRDS(file.path(paths["rds"],"umap.Rds"));
+    events.code=readRDS(file.path(paths["rds"],"pe.Rds"));
+    sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds"));
+    preds=readRDS(file.path(paths["rds"],"predictions.Rds"));
 
-    ## Load predictions, transformations for chans and PEs, original expression matrix, expression channel names, sampled events indicator, correspondance of events to PEs in the expression matrix' rows, and UMAP for the sampled events. Loads annotation of PEs and Isotype of PE-bound antibodies
+    a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
+    
     rownames(a)=a[,"file"]
     a[,"target"]=gsub("/","-",a[,"target"])
     a[is.na(a$target),"target"]="Blank"
     if(any(a$target=="Blank")){
         a[a$target=="Blank","target"]=paste0("Blank",1:sum(a$target=="Blank"))
     }
-
+    
     preds_raw=preds
     
-    preds_rawbgc=preds_raw[,rownames(subset(a,isotype!="Auto"&!grepl("Isotype",target)))]
-    for(file in colnames(preds_rawbgc)){
-        iso=a[a$target==paste0("Isotype_",a[file,"isotype"]),"file"]
-        x=preds_raw[,iso]
-        y=preds_raw[,file]
-        ## lgcl_x=eb.autolgcl(c(x,y))
-        ## lgcl_y=eb.autolgcl(c(x,y))
-        ## x=lgcl(x)
-        ## y=lgcl(y)
-        lm=lm(y~x)$coefficients
-        intercept=lm[1]
-        slope=lm[2]
-        orthogonal_residuals=(-slope*x+y-intercept)/sqrt(slope^2+1)
-        preds_rawbgc[,file]=orthogonal_residuals
-        ##inverseLogicleTransform(lgcl)(orthogonal_residuals) ## That does not work because these transforms have different origin
+    preds_rawbgc=lapply(
+        preds_raw,function(x){
+            x[,rownames(subset(a,isotype!="Auto"&!grepl("Isotype",target)))]
+        }
+    )
+
+    for(i in seq_along(preds_rawbgc)){
+        for(file in colnames(preds_rawbgc[[i]])){
+            iso=a[a$target==paste0("Isotype_",a[file,"isotype"]),"file"]
+            x=preds_raw[[i]][,iso]
+            y=preds_raw[[i]][,file]
+            lm=lm(y~x)$coefficients
+            intercept=lm[1]
+            slope=lm[2]
+            orthogonal_residuals=(-slope*x+y-intercept)/sqrt(slope^2+1)
+            preds_rawbgc[[i]][,file]=orthogonal_residuals
+        }
     }
 
     saveRDS(preds_rawbgc,file=file.path(paths["rds"],"predictions_backgroundcorrected.Rds"))
@@ -48,19 +60,31 @@ correct_background=function(
     ## ##################
     ## Exporting Phenograph / BGC / UMAPs
     ## ##################
-    
-    preds_rawbgc_linear=apply(preds_rawbgc,2,function(x){
-        10^(x-min(x))
-    })
-    preds_rawbgc_linear=cbind(preds_rawbgc_linear,apply(preds_raw[,setdiff(colnames(preds),c(colnames(preds_rawbgc_linear),chans)),drop=FALSE],2,function(x){
-        10^(x-min(x))
-    }))
-    preds_rawbgc_linear=preds_rawbgc_linear[,rownames(a)]
-    colnames(preds_rawbgc_linear)=paste0(a[colnames(preds_rawbgc_linear),"target"],".pred_bgc")
-    preds_rawbgc_linear=cbind(xp[sampling,],preds_rawbgc_linear,minmax_scale(umap))
-    ##preds_rawbgc_linear=cbind(xp[sampling,],preds_rawbgc_linear,minmax_scale(umap),minmax_scale(umap_preds),minmax_scale(umap_bgc))
-    ##preds_rawbgc_linear=cbind(preds_rawbgc_linear,Phenograph=clust*1000)
 
+    ## Preparing data for display using log transform
+    preds_rawbgc_linear=lapply(
+        preds_rawbgc,function(x){
+            apply(x,2,function(x){
+                10^(x-min(x))
+            })
+        }
+    )
+    
+    ## Adding uncorrected data (isotypes and autofluorescence)
+    for(i in seq_along(preds_rawbgc_linear)){
+        preds_rawbgc_linear[[i]]=cbind(
+            preds_rawbgc_linear[[i]],
+            preds_raw[[i]][,setdiff(colnames(preds[[i]]),c(colnames(preds_rawbgc_linear[[i]]),chans)),drop=FALSE]
+        )
+    }
+    preds_rawbgc_linear=lapply(preds_rawbgc_linear,function(x){
+        x[,rownames(a)]
+    })
+    for(x in names(preds_rawbgc_linear)){
+        colnames(preds_rawbgc_linear[[x]])=paste0(a[colnames(preds_rawbgc_linear[[x]]),"target"],".",x,"_bgc")
+    }
+    preds_rawbgc_linear=cbind(xp[sampling,],do.call(cbind,preds_rawbgc_linear),minmax_scale(umap))
+    
     unique_pes=unique(events.code)
     PE_id=sapply(events.code[sampling],match,table=unique_pes)
 
@@ -97,6 +121,9 @@ correct_background=function(
             }
         )   
     }
+
+    saveRDS(preds_rawbgc_linear,file.path(paths["rds"],"predictions_bgc_cbound.Rds"))
+    preds_rawbgc
 }
 
 ## ####################

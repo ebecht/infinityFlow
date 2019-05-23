@@ -11,13 +11,15 @@ infinity_flow(path_to_fcs, path_to_output,
   prediction_events_downsampling = 1000, cores = 1L,
   your_random_seed = 123, verbose = TRUE,
   extra_args_read_FCS = list(emptyValue = FALSE, truncate_max_range =
-  FALSE, ignore.text.offset = TRUE), regression_function = fitter_svm,
-  extra_args_regression_params = list(params = list(type =
-  "eps-regression", cost = 1, epsilon = 0.5)),
-  extra_args_UMAP = list(n_neighbors = 15L, min_dist = 0.2, metric =
-  "euclidean", verbose = verbose, n_epochs = 1000L, n_threads = cores,
-  n_sgd_threads = cores), extra_args_export = list(FCS_export =
-  c("split", "concatenated", "none")[1], CSV_export = FALSE),
+  FALSE, ignore.text.offset = TRUE),
+  regression_functions = list(fitter_svm, fitter_xgboost,
+  fitter_linear)[1], extra_args_regression_params = list(list(type =
+  "eps-regression", cost = 1, epsilon = 0.5), list(nrounds = 10),
+  list(degree = 2))[1], extra_args_UMAP = list(n_neighbors = 15L,
+  min_dist = 0.2, metric = "euclidean", verbose = verbose, n_epochs =
+  1000L, n_threads = cores, n_sgd_threads = cores),
+  extra_args_export = list(FCS_export = c("split", "concatenated",
+  "none")[1], CSV_export = FALSE),
   extra_args_correct_background = list(FCS_export = c("split",
   "concatenated", "none")[1], CSV_export = FALSE),
   extra_args_plotting = list(chop_quantiles = 0.005))

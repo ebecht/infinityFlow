@@ -4,7 +4,7 @@
 \alias{fitter_svm}
 \title{Wrapper to SVM training. Defined separetely to avoid passing too many objects in parLapplyLB}
 \usage{
-fitter_svm(x)
+fitter_svm(x, params)
 }
 \arguments{
 \item{x}{passed from fit_regressions}

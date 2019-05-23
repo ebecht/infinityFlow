@@ -7,7 +7,9 @@
 predict_from_models(paths, prediction_events_downsampling, cores,
   chans = readRDS(file.path(paths["rds"], "chans.Rds")),
   events.code = readRDS(file.path(paths["rds"], "pe.Rds")),
-  models = readRDS(file.path(paths["rds"], "regression_models.Rds")))
+  models = readRDS(file.path(paths["rds"], "regression_models.Rds")),
+  xp = readRDS(file.path(paths["rds"], "xp_transformed_scaled.Rds")),
+  train_set = readRDS(file.path(paths["rds"], "train_set.Rds")))
 }
 \arguments{
 \item{paths}{Character vector of paths to store intput, intermediary results, outputs...}

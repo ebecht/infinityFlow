@@ -1,23 +1,34 @@
 #' Wrapper to SVM training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions
 #' @export
-fitter_svm=function(x){
+fitter_svm=function(x,params){
+    require(e1071)
     w=x[,"train_set"]==1
     model=do.call(function(...){svm(...,x=x[w,chans],y=x[w,yvar])},params)
     pred=predict(model,x[,chans])
-    x=cbind(x,SVM=pred)
-    return(list(data=x,svm=model))
+    return(list(pred=pred,model=model))
 }
 
 #' Wrapper to XGBoost training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions
 #' @export
-fitter_xgboost=function(x){
+fitter_xgboost=function(x,params){
+    require(xgboost)
     w=x[,"train_set"]==1
     model=do.call(function(...){xgboost(...,data=x[w,chans],label=x[w,yvar],nthread=1L)},params)
     pred=predict(model,x[,chans])
-    x=cbind(x,XGBoost=pred)
-    return(list(data=x,xgboost=model))
+    return(list(pred=pred,model=model))
+}
+
+#' Wrapper to linear model training. Defined separetely to avoid passing too many objects in parLapplyLB
+#' @param x passed from fit_regressions
+#' @export
+fitter_linear=function(x,params){
+    w=x[,"train_set"]==1
+    fmla=paste0(make.names(yvar),"~",polynomial_formula(variables=chans,degree=params$degree))
+    model=lm(formula=fmla,data=as.data.frame(x[w,c(chans,yvar)]))
+    pred=predict(model,as.data.frame(x[,chans]))
+    return(list(pred=pred,model=model))
 }
 
 polynomial_formula=function(variables,degree){
@@ -31,18 +42,6 @@ polynomial_formula=function(variables,degree){
         }
     )
     paste(do.call(c,lapply(polys,paste,sep="+")),collapse="+")
-}
-
-#' Wrapper to linear model training. Defined separetely to avoid passing too many objects in parLapplyLB
-#' @param x passed from fit_regressions
-#' @export
-fitter_linear=function(x){
-    w=x[,"train_set"]==1
-    fmla=paste0(make.names(yvar),"~",polynomial_formula(variables=chans,degree=params$degree))
-    model=lm(formula=fmla,data=as.data.frame(x[w,c(chans,yvar)]))
-    pred=predict(model,as.data.frame(x[,chans]))
-    x=cbind(x,LM=pred)
-    return(list(data=x,lm=model))
 }
 
 #' Wrapper to SVM predict. Defined separetely to avoid passing too many objects in parLapplyLB
@@ -69,21 +68,27 @@ fit_regressions=function(
                   events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
                   transforms_chan=readRDS(file.path(paths["rds"],"transforms_chan.Rds")),
                   transforms_pe=readRDS(file.path(paths["rds"],"transforms_pe.Rds")),
-                  regression_function
+                  regression_functions
                   )
 {
+    ## xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds"));
+    ## chans=readRDS(file.path(paths["rds"],"chans.Rds"));
+    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"));
+    ## transforms_chan=readRDS(file.path(paths["rds"],"transforms_chan.Rds"));
+    ## transforms_pe=readRDS(file.path(paths["rds"],"transforms_pe.Rds"));
+
+                  
     require(parallel)
-    cl=makeCluster(cores)
+    cl=makeCluster(min(cores,length(unique(events.code))))
     
     RNGkind("L'Ecuyer-CMRG")
     mc.reset.stream()
 
     env=environment()
-
+    
     colnames(xp)=make.names(colnames(xp))
     
     d.e=split_matrix(xp,events.code)
-    rm(xp)
     d.e=lapply(
         d.e,
         function(x){
@@ -92,19 +97,11 @@ fit_regressions=function(
             x
         }
     )
+    train_set=matrix(ncol=1,dimnames=list(NULL,"train_set"),do.call(c,sapply(d.e,function(x){x[,"train_set"]},simplify=FALSE)))
     
-    clusterEvalQ(
-        cl,
-        {
-            library(e1071)
-            library(xgboost)
-            library(gtools)
-        }
-    )
-
     clusterExport(
         cl,
-        c("yvar","chans","params"),
+        c("yvar","chans"),
         envir=env
     )
 
@@ -115,16 +112,29 @@ fit_regressions=function(
             yvar=make.names(yvar)
         }
     )
-
-    models=parLapplyLB(
-        X=d.e,
-        fun=regression_function,
-        cl=cl
-    )
-
+    
+    models=list()
+    timings=numeric()
+    for(i in seq_along(regression_functions)){
+        cat("\t",names(regression_functions)[i])
+        t0=Sys.time()
+        models[[i]]=parLapplyLB(
+            X=d.e,
+            fun=regression_functions[[i]],
+            params=params[[i]],
+            cl=cl
+        )
+        t1=Sys.time()
+        dt=difftime(t1,t0,units="secs")
+        cat("\t",dt," seconds","\n")
+        timings=c(timings,dt)
+    }
+    names(models)=names(regression_functions)
+    
     stopCluster(cl)
     saveRDS(models,file=file.path(paths["rds"],"regression_models.Rds"))
-    invisible()
+    saveRDS(train_set,file=file.path(paths["rds"],"train_set.Rds"))
+    list(timings=timings)
 }
 
 #' Predict missing measurements using fitted SVM regressions
@@ -138,19 +148,34 @@ predict_from_models=function(
                       cores,
                       chans=readRDS(file.path(paths["rds"],"chans.Rds")),
                       events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
-                      models=readRDS(file.path(paths["rds"],"regression_models.Rds"))
+                      models=readRDS(file.path(paths["rds"],"regression_models.Rds")),
+                      xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds")),
+                      train_set=readRDS(file.path(paths["rds"],"train_set.Rds"))
                       )
 {
+    ## chans=readRDS(file.path(paths["rds"],"chans.Rds"));
+    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"));
+    ## models=readRDS(file.path(paths["rds"],"regression_models.Rds"));
+    ## xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds"));
+    ## train_set=readRDS(file.path(paths["rds"],"train_set.Rds"))
+    
     require(parallel)
     cl=makeCluster(cores)
+    
+    clusterEvalQ(
+        cl,
+        {
+            library(xgboost)
+            library(e1071)
+        }
+    )
 
     mc.reset.stream()
     
     env=environment()
     
-    xp=lapply(models,"[[",1)
-    ## xp=lapply(xp,function(x){x[x[,"train_set"]==0,]})
-    ## xp=lapply(xp,function(x){x[sort(sample(1:nrow(x),min(prediction_events_downsampling,nrow(x)))),]})
+    xp=cbind(xp,train_set)
+    xp=split_matrix(xp,events.code)
     spl=lapply(
         xp,
         function(x){
@@ -160,50 +185,55 @@ predict_from_models=function(
             spl
         }
     )
-    sampling=which(do.call(c,spl))
-
-    for(i in seq_along(xp)){
-        xp[[i]]=xp[[i]][spl[[i]],]
-    }
+    pred_set=which(do.call(c,spl))
     
-    xp=do.call(rbind,xp)[,make.names(chans)]
-
-    models=lapply(models,"[[",2)
-
-    clusterEvalQ(
-        cl,
-        {
-            library(e1071)
-            library(xgboost)
-            library(gtools)
-        }
-    )
-
+    xp=do.call(rbind,xp)
+    xp=xp[pred_set,]
+    
     clusterExport(
         cl,
-        c("xp"),
+        c("xp","chans"),
         envir=env
     )
-
-    preds=do.call(
-        cbind,
-        setNames(
+    invisible(clusterEvalQ(
+        cl,
+        {
+            colnames(xp)=make.names(colnames(xp))
+            xp=xp[,make.names(chans)]
+        }
+    ))
+    
+    for(i in seq_along(models)){
+        models[[i]]=lapply(models[[i]],"[[",2)
+    }
+    
+    preds=list()
+    timings=numeric()
+    t0=Sys.time()
+    for(i in seq_along(models)){
+        cat("\t",names(models)[i])
+        preds[[i]]=do.call(
+            cbind,
             parLapplyLB(
                 cl=cl,
-                X=models,
+                X=models[[i]],
                 predict_wrapper
-            ),
-            names(models)
+            )
         )
-    )
+        t1=Sys.time()
+        dt=difftime(t1,t0,units="secs")
+        cat("\t",dt," seconds","\n")
+        timings=c(timings,dt)
+    }
+    
     stopCluster(cl)
 
-    colnames(xp)=chans
-    preds=cbind(xp,preds)
-    preds=as.matrix(preds)
+    preds=lapply(preds,function(x){cbind(xp,x)})
+    preds=lapply(preds,as.matrix)
+    names(preds)=names(models)
     
-    saveRDS(sampling,file=file.path(paths["rds"],"sampling_preds.Rds"))   
     saveRDS(preds,file=file.path(paths["rds"],"predictions.Rds"))
-    invisible()
+    saveRDS(pred_set,file=file.path(paths["rds"],"sampling_preds.Rds"))   
+    list(timings=timings)
 }
 

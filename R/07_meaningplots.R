@@ -8,20 +8,23 @@ plot_results=function(
                       chans=readRDS(file.path(paths["rds"],"chans.Rds")),
                       umap=readRDS(file.path(paths["rds"],"umap.Rds")),
                       events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
-                      preds=readRDS(file.path(paths["rds"],"predictions.Rds")),
+                      preds=readRDS(file.path(paths["rds"],"predictions_cbound.Rds")),
                       sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds")),
                       a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
                       ){
+    ## chop_quantiles=0.005;
+    ## chans=readRDS(file.path(paths["rds"],"chans.Rds"));
+    ## umap=readRDS(file.path(paths["rds"],"umap.Rds"));
+    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"));
+    ## preds=readRDS(file.path(paths["rds"],"predictions_cbound.Rds"));
+    ## sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds"));
+    ## a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
+                      
     a=setNames(as.character(a[,"target",]),a[,"file"])
     a[is.na(a)]=paste0("Autofluorescence",1:sum(is.na(a)))
 
     scrbl=sample(1:nrow(preds))
     umap=umap[scrbl,]
-
-    w=colnames(preds)%in%names(a)
-    colnames(preds)[w]=paste0(a[colnames(preds)[w]],".predicted")
-    colnames(preds)=gsub("/","_",colnames(preds))
-    colnames(preds)=make.unique(colnames(preds))
 
     for(col in colnames(preds)){
         q=quantile(preds[,col],c(chop_quantiles,1-chop_quantiles))
@@ -31,7 +34,7 @@ plot_results=function(
     }
 
     channels.code=setNames(colnames(preds),colnames(preds))
-    preds=cbind(umap,preds[,!w],preds[,sort(colnames(preds)[w])])
+    ## preds=cbind(umap,preds[,!w],preds[,sort(colnames(preds)[w])])
 
     color_biplot_by_channels(
         preds,

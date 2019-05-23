@@ -38,8 +38,12 @@ infinity_flow=function(
                        verbose=TRUE,
 
                        extra_args_read_FCS=list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE),
-                       regression_function=fitter_svm,
-                       extra_args_regression_params=list(params=list(type="eps-regression",cost=1,epsilon=0.5)),
+                       regression_functions=list(fitter_svm,fitter_xgboost,fitter_linear)[1],
+                       extra_args_regression_params=list(
+                           list(type="eps-regression",cost=1,epsilon=0.5),
+                           list(nrounds=10),
+                           list(degree=2)
+                       )[1],
                        extra_args_UMAP=list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L,n_threads=cores,n_sgd_threads=cores),
                        extra_args_export=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
                        extra_args_correct_background=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
@@ -56,7 +60,18 @@ infinity_flow=function(
     require(uwot)
     require(xgboost)
 
-
+    if(length(extra_args_regression_params)!=length(regression_functions)){
+        stop("extra_args_regression_params and regression_functions should be lists of the same lengths")
+    }
+    if(is.null(names(regression_functions))){
+        names(regression_functions)=paste0("Alg",seq_along(regression_functions))
+    }
+    w=is.na(names(regression_functions))|names(regression_functions)==""
+    if(any(w)){
+        names(regression_functions)[w]=paste0("Alg",seq_along(regression_functions))[w]
+    }
+    print(names(regression_functions))
+    
     ##/!\ Potentially add a check here to make sure parameters are consistent with FCS files
 
     settings=initialize(
@@ -108,7 +123,7 @@ infinity_flow=function(
     }
     set.seed(your_random_seed+1)
     fit_regressions(
-        regression_function=regression_function,
+        regression_functions=regression_functions,
         yvar=name_of_PE_parameter,
         paths=paths,
         cores=cores,
