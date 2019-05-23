@@ -6,12 +6,12 @@
 \usage{
 plot_results(paths, chop_quantiles = 0.005,
   chans = readRDS(file.path(paths["rds"], "chans.Rds")),
-  umap = readRDS(file.path(paths["rds"], "umap.Rds")),
   events.code = readRDS(file.path(paths["rds"], "pe.Rds")),
   preds = readRDS(file.path(paths["rds"], "predictions_cbound.Rds")),
   sampling = readRDS(file.path(paths["rds"], "sampling_preds.Rds")),
-  a = read.csv(paths["annotation"], sep = ",", header = TRUE,
-  stringsAsFactors = FALSE))
+  prediction_colnames = readRDS(file.path(paths["rds"],
+  "prediction_colnames.Rds")), a = read.csv(paths["annotation"], sep =
+  ",", header = TRUE, stringsAsFactors = FALSE))
 }
 \arguments{
 \item{paths}{Character vector of paths to store intput, intermediary results, outputs...}

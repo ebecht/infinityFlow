@@ -11,7 +11,9 @@ perform_UMAP_dimensionality_reduction=function(
     ## chans=readRDS(file.path(paths["rds"],"chans.Rds"))
     ## preds=readRDS(file.path(paths["rds"],"predictions.Rds"))
 
-    umap=do.call(umap,c(list(X=preds[[1]][,chans]),extra_args_UMAP))
+    require(uwot)
+
+    umap=do.call(uwot::umap,c(list(X=preds[[1]][,chans]),extra_args_UMAP))
     colnames(umap)=c("UMAP1","UMAP2")
 
     saveRDS(umap,file=file.path(paths["rds"],"umap.Rds"))

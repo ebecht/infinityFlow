@@ -51,6 +51,10 @@ export_data=function(
         }
     )
     
+    prediction_colnames=sort(do.call(c,lapply(preds,colnames)))
+
+    preds=do.call(cbind,preds)[,prediction_colnames]
+    
     unique_pes=unique(events.code)
     PE_id=sapply(events.code[sampling],match,table=unique_pes)
 
@@ -61,8 +65,6 @@ export_data=function(
         (x-min(x))/(max(x)-min(x))*10000
     })
 
-    preds=do.call(cbind,preds)
-    
     preds=cbind(xp[sampling,],preds[,!colnames(preds)%in%colnames(xp)],Exploratory_Ab_ID=PE_id,umap)
     colnames(preds)=make.unique(colnames(preds))
 
@@ -94,5 +96,6 @@ export_data=function(
     }
 
     saveRDS(preds,file.path(paths["rds"],"predictions_cbound.Rds"))
+    saveRDS(prediction_colnames,file.path(paths["rds"],"prediction_colnames.Rds"))
     preds
 }

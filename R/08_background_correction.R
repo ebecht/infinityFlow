@@ -13,17 +13,18 @@ correct_background=function(
                             events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
                             sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds")),
                             preds=readRDS(file.path(paths["rds"],"predictions.Rds")),
+                            prediction_colnames=readRDS(file.path(paths["rds"],"prediction_colnames.Rds")),
                             a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
                             ){
     
-    chans=readRDS(file.path(paths["rds"],"chans.Rds"));
-    transforms_chan=readRDS(file.path(paths["rds"],"transforms_chan.Rds"));
-    transforms_pe=readRDS(file.path(paths["rds"],"transforms_pe.Rds"));
-    xp=readRDS(file.path(paths["rds"],"xp.Rds"));
-    umap=readRDS(file.path(paths["rds"],"umap.Rds"));
-    events.code=readRDS(file.path(paths["rds"],"pe.Rds"));
-    sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds"));
-    preds=readRDS(file.path(paths["rds"],"predictions.Rds"));
+    ## chans=readRDS(file.path(paths["rds"],"chans.Rds"));
+    ## transforms_chan=readRDS(file.path(paths["rds"],"transforms_chan.Rds"));
+    ## transforms_pe=readRDS(file.path(paths["rds"],"transforms_pe.Rds"));
+    ## xp=readRDS(file.path(paths["rds"],"xp.Rds"));
+    ## umap=readRDS(file.path(paths["rds"],"umap.Rds"));
+    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"));
+    ## sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds"));
+    ## preds=readRDS(file.path(paths["rds"],"predictions.Rds"));
 
     a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
     

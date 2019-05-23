@@ -6,10 +6,10 @@ plot_results=function(
                       paths,
                       chop_quantiles=0.005,
                       chans=readRDS(file.path(paths["rds"],"chans.Rds")),
-                      umap=readRDS(file.path(paths["rds"],"umap.Rds")),
                       events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
                       preds=readRDS(file.path(paths["rds"],"predictions_cbound.Rds")),
                       sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds")),
+                      prediction_colnames=readRDS(file.path(paths["rds"],"prediction_colnames.Rds")),
                       a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
                       ){
     ## chop_quantiles=0.005;
@@ -23,16 +23,17 @@ plot_results=function(
     a=setNames(as.character(a[,"target",]),a[,"file"])
     a[is.na(a)]=paste0("Autofluorescence",1:sum(is.na(a)))
 
-    scrbl=sample(1:nrow(preds))
-    umap=umap[scrbl,]
-
-    for(col in colnames(preds)){
+    for(col in prediction_colnames){
         q=quantile(preds[,col],c(chop_quantiles,1-chop_quantiles))
         preds[,col][preds[,col]<=q[1]]=q[1]
         preds[,col][preds[,col]>=q[2]]=q[2]
-        preds[,col]=preds[,col][scrbl]
+        preds[,col]=preds[,col]
     }
 
+    scrbl=sample(1:nrow(preds))
+    preds=preds[scrbl,]
+    
+    colnames(preds)=gsub("/","-",colnames(preds))
     channels.code=setNames(colnames(preds),colnames(preds))
     ## preds=cbind(umap,preds[,!w],preds[,sort(colnames(preds)[w])])
 
