@@ -38,7 +38,7 @@ infinity_flow=function(
                        verbose=TRUE,
 
                        extra_args_read_FCS=list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE),
-                       regression_functions=list(fitter_svm,fitter_xgboost,fitter_linear)[1],
+                       regression_functions=list(SVM=fitter_svm,XGBoost=fitter_xgboost,LM2=fitter_linear)[1],
                        extra_args_regression_params=list(
                            list(type="eps-regression",cost=1,epsilon=0.5),
                            list(nrounds=10),
