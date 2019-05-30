@@ -244,6 +244,7 @@ initialize=function(
     if(any(w)){
         names(regression_functions)[w]=paste0("Alg",seq_along(regression_functions))[w]
     }
+    names(regression_functions)=make.unique(names(regression_functions))
 
     return(
         list(
