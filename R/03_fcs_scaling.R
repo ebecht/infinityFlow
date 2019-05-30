@@ -8,8 +8,14 @@ standardize_backbone_data_across_wells=function(
                                                 scale_function=function(x){scale(x,center=TRUE,scale=TRUE)},
                                                 xp=readRDS(file.path(paths["rds"],"xp_transformed.Rds")),
                                                 chans=readRDS(file.path(paths["rds"],"chans.Rds")),
-                                                events.code=readRDS(file.path(paths["rds"],"pe.Rds"))
+                                                events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
+                                                verbose=TRUE
                                                 ){
+    if(verbose){
+        message("Harmonizing backbone data")
+        message("\tScaling expression matrices")
+    }    
+    
     ## env=environment()
     ## sapply(
     ##     c("chans"),
@@ -29,6 +35,11 @@ standardize_backbone_data_across_wells=function(
         x
     })
     xp=do.call(rbind,xp)
+
+    if(verbose){
+        message("\tWriting to disk")
+    }    
+    
     saveRDS(xp,file=file.path(paths["rds"],"xp_transformed_scaled.Rds"))
     invisible()
 }

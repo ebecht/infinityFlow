@@ -95,7 +95,7 @@ color_biplot_by_channels <- function(matrix,
             color.scale=unique(colorRampPalette(palette)(1000))
             n=length(color.scale)
 
-            breaks=seq(data.range["min",pname],data.range["max",pname],length.out=n+1)
+            breaks=unique(seq(data.range["min",pname],data.range["max",pname],length.out=n+1))
             points.colors=as.character(cut(xp[,pname],breaks=breaks,labels=color.scale))
             mainplot=paste(tmpDir(),"/mainplot_",pname,".png",sep="")
             png(mainplot,res=resolution,height=raster.height*resolution/72,width=raster.width*resolution/72)

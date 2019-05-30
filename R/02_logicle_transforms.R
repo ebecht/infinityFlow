@@ -8,7 +8,8 @@ logicle_transform_input=function(
                                  xp=readRDS(file.path(paths["rds"],"xp.Rds")),
                                  chans=readRDS(file.path(paths["rds"],"chans.Rds")),
                                  events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
-                                 annot=read.table(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
+                                 annot=read.table(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE),
+                                 verbose=TRUE
                                  ){
     ## env=environment()
     ## sapply(
@@ -25,7 +26,11 @@ logicle_transform_input=function(
     ## ##################
     ## Computing parameters for each channel for each project using the code from flowCore's estimateLogicle
     ## ##################
-
+    if(verbose){
+        message("Logicle-transforming the data")
+        message("\tBackbone data")
+    }
+    
     transforms_chan=setNames(sapply(
         chans,
         function(x){
@@ -41,6 +46,9 @@ logicle_transform_input=function(
         simplify=FALSE
     ),chans)
 
+    if(verbose){
+        message("\tExploratory data")
+    }
     transforms_pe=sapply(
         split(xp[,yvar],events.code),
         function(x){
@@ -56,12 +64,20 @@ logicle_transform_input=function(
         simplify=FALSE
     )
 
+    
+    if(verbose){
+        message("\tWriting to disk")
+    }
     saveRDS(transforms_chan,file=file.path(paths["rds"],"transforms_chan.Rds"))
     saveRDS(transforms_pe,file=file.path(paths["rds"],"transforms_pe.Rds"))
 
     ## ##################
     ## Exporting transformed expression matrices
     ## ##################
+    if(verbose){
+        message("\tTransforming expression matrix")
+    }
+    
     for(chan in chans){
         xp[,chan]=transforms_chan[[chan]](xp[,chan])
     }
@@ -73,6 +89,11 @@ logicle_transform_input=function(
     }
 
     xp=do.call(rbind,d.e)
+
+    if(verbose){
+        message("\tWriting to disk")
+    }
+    
     saveRDS(xp,file=file.path(paths["rds"],"xp_transformed.Rds"))
     invisible()
 }

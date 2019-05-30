@@ -9,13 +9,19 @@ correct_background=function(
                             transforms_chan=readRDS(file.path(paths["rds"],"transforms_chan.Rds")),
                             transforms_pe=readRDS(file.path(paths["rds"],"transforms_pe.Rds")),
                             xp=readRDS(file.path(paths["rds"],"xp.Rds")),
+                            xp_scaled=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds")),
                             umap=readRDS(file.path(paths["rds"],"umap.Rds")),
                             events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
                             sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds")),
                             preds=readRDS(file.path(paths["rds"],"predictions.Rds")),
                             prediction_colnames=readRDS(file.path(paths["rds"],"prediction_colnames.Rds")),
-                            a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
+                            a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE),
+                            verbose=TRUE
                             ){
+
+    if(verbose){
+        message("Background correcting")
+    }
     
     ## chans=readRDS(file.path(paths["rds"],"chans.Rds"));
     ## transforms_chan=readRDS(file.path(paths["rds"],"transforms_chan.Rds"));
@@ -25,6 +31,9 @@ correct_background=function(
     ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"));
     ## sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds"));
     ## preds=readRDS(file.path(paths["rds"],"predictions.Rds"));
+    ## xp_scaled=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds"))
+    ## CSV_export=TRUE;
+    ## FCS_export=c("split","concatenated")
 
     a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
     
@@ -38,7 +47,8 @@ correct_background=function(
     preds_raw=preds
     
     preds_rawbgc=lapply(
-        preds_raw,function(x){
+        preds_raw,
+        function(x){
             x[,rownames(subset(a,isotype!="Auto"&!grepl("Isotype",target)))]
         }
     )
@@ -62,6 +72,9 @@ correct_background=function(
     ## Exporting Phenograph / BGC / UMAPs
     ## ##################
 
+    if(verbose){
+        message("\tTransforming background-corrected predictions. (Use logarithm to visualize)")
+    }
     ## Preparing data for display using log transform
     preds_rawbgc_linear=lapply(
         preds_rawbgc,function(x){
@@ -77,36 +90,51 @@ correct_background=function(
             preds_rawbgc_linear[[i]],
             preds_raw[[i]][,setdiff(colnames(preds[[i]]),c(colnames(preds_rawbgc_linear[[i]]),chans)),drop=FALSE]
         )
+        preds_rawbgc[[i]]=cbind(
+            preds_rawbgc[[i]],
+            preds_raw[[i]][,setdiff(colnames(preds[[i]]),c(colnames(preds_rawbgc[[i]]),chans)),drop=FALSE]
+        )
     }
-    preds_rawbgc_linear=lapply(preds_rawbgc_linear,function(x){
-        x[,rownames(a)]
-    })
+    
+    preds_rawbgc_linear=lapply(
+        preds_rawbgc_linear,
+        function(x){
+            x[,rownames(a)]
+        }
+    )
+    preds_rawbgc=lapply(
+        preds_rawbgc_linear,
+        function(x){
+            x[,rownames(a)]
+        }
+    )
     for(x in names(preds_rawbgc_linear)){
         colnames(preds_rawbgc_linear[[x]])=paste0(a[colnames(preds_rawbgc_linear[[x]]),"target"],".",x,"_bgc")
+        colnames(preds_rawbgc[[x]])=paste0(a[colnames(preds_rawbgc[[x]]),"target"],".",x,"_bgc")
     }
+    
     preds_rawbgc_linear=cbind(xp[sampling,],do.call(cbind,preds_rawbgc_linear),minmax_scale(umap))
+    preds_rawbgc=cbind(xp_scaled[sampling,],do.call(cbind,preds_rawbgc),minmax_scale(umap))
     
     unique_pes=unique(events.code)
     PE_id=sapply(events.code[sampling],match,table=unique_pes)
 
     preds_rawbgc_linear=cbind(preds_rawbgc_linear,PE_id=PE_id)
+    preds_rawbgc=cbind(preds_rawbgc,PE_id=PE_id)
 
     if(CSV_export){
+        if(verbose){
+            message("\t","Exporting as CSV")
+        }
         dir.create(file.path(paths["output"],"FCS_background_corrected/"),showWarnings=FALSE,recursive=TRUE)
         require(data.table)
         fwrite(as.data.frame(preds_rawbgc_linear),row.names=FALSE,file=file.path(paths["output"],"predicted_data_background_corrected.csv"))
     }
 
-    if(any(FCS_export=="concatenated")){
-        FCS=flowFrame(preds_rawbgc_linear)
-        FCS@parameters$desc=as.character(FCS@parameters$desc)
-        FCS@parameters$name=as.character(FCS@parameters$name)
-        FCS=generate_description(FCS)
-        dir.create(file.path(paths["output"],"FCS_background_corrected/","concatenated"),recursive=TRUE,showWarnings=FALSE)
-        invisible(write.FCS(FCS,file=file.path(paths["output"],"FCS_background_corrected","concatenated","concatenated_results_background_corrected.fcs")))
-    }
-
-    if(any(FCS_export=="split")){       
+    if(any(FCS_export=="split")){
+        if(verbose){
+            message("\t","Exporting FCS files (1 per well)")
+        }
         dir.create(file.path(paths["output"],"FCS_background_corrected/","split"),recursive=TRUE,showWarnings=FALSE)
         FCS_list=split_matrix(preds_rawbgc_linear,events.code[sampling])
         FCS_list=lapply(FCS_list,function(x){
@@ -123,7 +151,19 @@ correct_background=function(
         )   
     }
 
-    saveRDS(preds_rawbgc_linear,file.path(paths["rds"],"predictions_bgc_cbound.Rds"))
+    if(any(FCS_export=="concatenated")){
+        if(verbose){
+            message("\t","Exporting concatenated FCS file")
+        }
+        FCS=flowFrame(preds_rawbgc_linear)
+        FCS@parameters$desc=as.character(FCS@parameters$desc)
+        FCS@parameters$name=as.character(FCS@parameters$name)
+        FCS=generate_description(FCS)
+        dir.create(file.path(paths["output"],"FCS_background_corrected/","concatenated"),recursive=TRUE,showWarnings=FALSE)
+        invisible(write.FCS(FCS,file=file.path(paths["output"],"FCS_background_corrected","concatenated","concatenated_results_background_corrected.fcs")))
+    }
+
+    saveRDS(preds_rawbgc,file.path(paths["rds"],"predictions_bgc_cbound.Rds"))
     preds_rawbgc
 }
 

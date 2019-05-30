@@ -11,7 +11,7 @@ plot_results(paths, chop_quantiles = 0.005,
   sampling = readRDS(file.path(paths["rds"], "sampling_preds.Rds")),
   prediction_colnames = readRDS(file.path(paths["rds"],
   "prediction_colnames.Rds")), a = read.csv(paths["annotation"], sep =
-  ",", header = TRUE, stringsAsFactors = FALSE))
+  ",", header = TRUE, stringsAsFactors = FALSE), verbose = TRUE)
 }
 \arguments{
 \item{paths}{Character vector of paths to store intput, intermediary results, outputs...}

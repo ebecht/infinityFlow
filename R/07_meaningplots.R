@@ -10,8 +10,13 @@ plot_results=function(
                       preds=readRDS(file.path(paths["rds"],"predictions_cbound.Rds")),
                       sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds")),
                       prediction_colnames=readRDS(file.path(paths["rds"],"prediction_colnames.Rds")),
-                      a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
+                      a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE),
+                      verbose=TRUE
                       ){
+    if(verbose){
+        message("Plotting")
+    }
+    
     ## chop_quantiles=0.005;
     ## chans=readRDS(file.path(paths["rds"],"chans.Rds"));
     ## umap=readRDS(file.path(paths["rds"],"umap.Rds"));
@@ -19,10 +24,15 @@ plot_results=function(
     ## preds=readRDS(file.path(paths["rds"],"predictions_cbound.Rds"));
     ## sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds"));
     ## a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
-                      
+    ## verbose=TRUE;
+    ## prediction_colnames=readRDS(file.path(paths["rds"],"prediction_colnames.Rds"))
+    
     a=setNames(as.character(a[,"target",]),a[,"file"])
     a[is.na(a)]=paste0("Autofluorescence",1:sum(is.na(a)))
-
+    
+    if(verbose){
+        message("\tChopping off the top and bottom ",chop_quantiles," quantiles")
+    }
     for(col in prediction_colnames){
         q=quantile(preds[,col],c(chop_quantiles,1-chop_quantiles))
         preds[,col][preds[,col]<=q[1]]=q[1]
@@ -30,6 +40,9 @@ plot_results=function(
         preds[,col]=preds[,col]
     }
 
+    if(verbose){
+        message("\tShuffling the order of cells (rows)")
+    }
     scrbl=sample(1:nrow(preds))
     preds=preds[scrbl,]
     
@@ -37,6 +50,9 @@ plot_results=function(
     channels.code=setNames(colnames(preds),colnames(preds))
     ## preds=cbind(umap,preds[,!w],preds[,sort(colnames(preds)[w])])
 
+    if(verbose){
+        message("\tProducing plot")
+    }
     color_biplot_by_channels(
         preds,
         x_axis="UMAP1",

@@ -2,6 +2,7 @@
 
 export(correct_background)
 export(fitter_linear)
+export(fitter_nn)
 export(fitter_svm)
 export(fitter_xgboost)
 export(infinity_flow)

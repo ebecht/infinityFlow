@@ -38,11 +38,36 @@ infinity_flow=function(
                        verbose=TRUE,
 
                        extra_args_read_FCS=list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE),
-                       regression_functions=list(SVM=fitter_svm,XGBoost=fitter_xgboost,LM2=fitter_linear)[1],
+                       regression_functions=list(SVM=fitter_svm,XGBoost=fitter_xgboost,LM2=fitter_linear,NN=fitter_nn)[1],
                        extra_args_regression_params=list(
                            list(type="eps-regression",cost=1,epsilon=0.5),
                            list(nrounds=10),
-                           list(degree=2)
+                           list(degree=2),
+                           list(
+                               object={
+                                   model=keras_model_sequential()
+                                   model %>%
+                                       layer_dense(units = 8, activation = "relu", input_shape=14) %>%
+                                       layer_dense(units = 8, activation = "relu") %>%
+                                       layer_dense(units = 8, activation = "relu") %>%
+                                       layer_dense(units = 8, activation = "relu") %>%
+                                       layer_dense(units = 8, activation = "relu") %>%
+                                       layer_dense(units = 8, activation = "relu") %>%
+                                       layer_dense(units = 8, activation = "relu") %>%
+                                       layer_dense(units = 8, activation = "relu") %>%
+                                       layer_dense(units = 1, activation = "linear")
+                                   model %>% compile(
+                                                 loss = "mean_squared_error",
+                                                 optimizer = optimizer_sgd(lr = 0.01)
+                                             )
+                                   serialize_model(model)
+                               },
+                               ##callbacks=list(callback_early_stopping(monitor = "val_loss", patience = 20)), ## This was moved inside fitter_nn because it causes crashes
+                               epochs=1000,
+                               validation_split=0.2,
+                               verbose=1,
+                               batch_size=128
+                           )                               
                        )[1],
                        extra_args_UMAP=list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L,n_threads=cores,n_sgd_threads=cores),
                        extra_args_export=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
@@ -63,15 +88,7 @@ infinity_flow=function(
     if(length(extra_args_regression_params)!=length(regression_functions)){
         stop("extra_args_regression_params and regression_functions should be lists of the same lengths")
     }
-    if(is.null(names(regression_functions))){
-        names(regression_functions)=paste0("Alg",seq_along(regression_functions))
-    }
-    w=is.na(names(regression_functions))|names(regression_functions)==""
-    if(any(w)){
-        names(regression_functions)[w]=paste0("Alg",seq_along(regression_functions))[w]
-    }
-    print(names(regression_functions))
-    
+        
     ##/!\ Potentially add a check here to make sure parameters are consistent with FCS files
 
     settings=initialize(
@@ -81,92 +98,77 @@ infinity_flow=function(
         backbone_selection_file=backbone_selection_file,
         annotation=annotation,
         isotype=isotype,
-        verbose=verbose
+        verbose=verbose,
+        regression_functions=regression_functions
     )
     name_of_PE_parameter=settings$name_of_PE_parameter
     paths=settings$paths
+    regression_functions=settings$regression_functions
     
     ## Subsample FCS files
     M=input_events_downsampling ## Number of cells to downsample to for each file
     set.seed(your_random_seed)
-    if(verbose){
-        message("Parsing (and subsampling if required) FCS files")
-    }
     subsample_data(
         input_events_downsampling=input_events_downsampling,
         paths=paths,
         extra_args_read_FCS=extra_args_read_FCS,
-        name_of_PE_parameter=name_of_PE_parameter
+        name_of_PE_parameter=name_of_PE_parameter,
+        verbose=verbose
     )
     
     ## Automatically scale backbone markers and each PE. ## /!\ This only accomodates a single exploratory measurement
-    if(verbose){
-            message("Logicle-transforming the data")
-    }
     logicle_transform_input(
         yvar=name_of_PE_parameter,
-        paths=paths
+        paths=paths,
+        verbose=verbose
     )
     
     ## Z-score transform each backbone marker for each sample
-    if(verbose){
-        message("Harmonizing backbone data")
-    }    
     standardize_backbone_data_across_wells(
         yvar=name_of_PE_parameter,
-        paths=paths
+        paths=paths,
+        verbose=verbose
     )
 
     ## Regression models training and predictions
-    if(verbose){
-        message("Fitting regression models")
-    }
     set.seed(your_random_seed+1)
     fit_regressions(
         regression_functions=regression_functions,
         yvar=name_of_PE_parameter,
         paths=paths,
         cores=cores,
-        params=extra_args_regression_params
+        params=extra_args_regression_params,
+        verbose=verbose
         )
 
-    if(verbose){
-        message("Imputing missing measurements")
-    }
     set.seed(your_random_seed+2)
-    predict_from_models(
+    timings_fit=predict_from_models(
         paths=paths,
         prediction_events_downsampling=prediction_events_downsampling,
-        cores=cores
+        cores=cores,
+        verbose=verbose
     )
     
     ## UMAP dimensionality reduction
-    if(verbose){
-        message("Performing dimensionality reduction")
-    }
-    perform_UMAP_dimensionality_reduction(
+    timings_pred=perform_UMAP_dimensionality_reduction(
         paths=paths,
-        extra_args_UMAP=extra_args_UMAP
+        extra_args_UMAP=extra_args_UMAP,
+        verbose=verbose
     )
     
     ## Export of the data and predicted data
-    if(verbose){
-        message("Exporting results")
-    }
-    res=do.call(export_data,c(list(paths=paths),extra_args_export))
+    res=do.call(export_data,c(list(paths=paths,verbose=verbose),extra_args_export))
     
     ## Plotting
-    if(verbose){
-        message("Plotting")
-    }
-    do.call(plot_results,c(list(paths=paths),extra_args_plotting))
+    do.call(plot_results,c(list(paths=paths,verbose=verbose),extra_args_plotting))
 
-    if(verbose){
-        message("Background correcting")
-    }
-    res_bgc=do.call(correct_background,c(list(paths=paths),extra_args_correct_background))
+    res_bgc=do.call(correct_background,c(list(paths=paths,verbose=verbose),extra_args_correct_background))
+
+    timings=cbind(fit=timings_fit$timings,pred=timings_pred$timings)
+    rownames(timings)=names(regression_functions)
+    saveRDS(timings,file.path(paths["rds"],"timings.Rds"))
     
-    list(raw=res,bgc=res_bgc)
+    list(raw=res,bgc=res_bgc,timings=timings)
 }
 
 initialize=function(
@@ -176,7 +178,8 @@ initialize=function(
                     backbone_selection_file=backbone_selection_file,
                     annotation=annotation,
                     isotype=isotype,
-                    verbose=verbose
+                    verbose=TRUE,
+                    regression_functions=regression_functions
                     ){
     
     ## The paths below have to point to directories. If they do not exist the script will create them to store outputs
@@ -234,11 +237,20 @@ initialize=function(
 
     saveRDS(chans,file=file.path(path_to_rds,"chans.Rds"))
 
+    if(is.null(names(regression_functions))){
+        names(regression_functions)=paste0("Alg",seq_along(regression_functions))
+    }
+    w=is.na(names(regression_functions))|names(regression_functions)==""
+    if(any(w)){
+        names(regression_functions)[w]=paste0("Alg",seq_along(regression_functions))[w]
+    }
+
     return(
         list(
             paths=paths,
             chans=chans,
-            name_of_PE_parameter=name_of_PE_parameter
+            name_of_PE_parameter=name_of_PE_parameter,
+            regression_functions=regression_functions
         )
     )
 }

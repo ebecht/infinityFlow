@@ -8,9 +8,14 @@ subsample_data=function(
                         input_events_downsampling,
                         paths,
                         extra_args_read_FCS,
-                        name_of_PE_parameter
+                        name_of_PE_parameter,
+                        verbose=TRUE
                         ){
     ## Subsampling
+    if(verbose){
+        message("Parsing and subsampling input data")
+        message("\tDownsampling to ",input_events_downsampling," events per input file")
+    }
     files=list.files(paths["input"],full.names=TRUE,recursive=TRUE,pattern=".fcs")
     invisible(sapply(files,function(file){
         res=do.call(read.FCS,c(list(filename=file),extra_args_read_FCS))
@@ -20,6 +25,9 @@ subsample_data=function(
     }))
 
     ## convert to .Rds
+    if(verbose){
+        message("\tConcatenating expression matrices")
+    }
     files=list.files(paths["subset"],full.names=TRUE,recursive=FALSE,include.dirs=FALSE,pattern=".fcs")
     ns=setNames(integer(length(files)),files)
     xp=sapply(files,function(file){
@@ -36,6 +44,9 @@ subsample_data=function(
     xp=do.call(rbind,xp)
 
     ## Map which events originate from which file.
+    if(verbose){
+        message("\tWriting to disk")
+    }
     events.code=unlist(unname(sapply(names(ns),function(x){rep(tail(strsplit(x,"/")[[1]],1),ns[x])},simplify=FALSE)))
     saveRDS(xp,file=file.path(paths["rds"],"xp.Rds"))
     saveRDS(events.code,file=file.path(paths["rds"],"pe.Rds"))

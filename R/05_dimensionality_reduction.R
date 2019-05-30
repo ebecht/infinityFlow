@@ -5,12 +5,16 @@ perform_UMAP_dimensionality_reduction=function(
                                                paths,
                                                extra_args_UMAP,
                                                chans=readRDS(file.path(paths["rds"],"chans.Rds")),
-                                               preds=readRDS(file.path(paths["rds"],"predictions.Rds"))
+                                               preds=readRDS(file.path(paths["rds"],"predictions.Rds")),
+                                               verbose=TRUE
                                                )
 {
     ## chans=readRDS(file.path(paths["rds"],"chans.Rds"))
     ## preds=readRDS(file.path(paths["rds"],"predictions.Rds"))
-
+    if(verbose){
+        message("Performing dimensionality reduction")
+    }
+    
     require(uwot)
 
     umap=do.call(uwot::umap,c(list(X=preds[[1]][,chans]),extra_args_UMAP))
