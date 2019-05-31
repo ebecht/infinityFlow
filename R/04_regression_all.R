@@ -62,6 +62,11 @@ predict_wrapper=function(x){
 #' @export
 fitter_nn=function(x,params){
     require(keras)
+    k_clear_session()
+    config <- tf$ConfigProto(intra_op_parallelism_threads = 1L,
+                             inter_op_parallelism_threads = 1L)
+    session = tf$Session(config = config)
+    k_set_session(session)
     model=unserialize_model(params$object)
     params=params[setdiff(names(params),"object")]
 
@@ -155,6 +160,14 @@ fit_regressions=function(
         {
             chans=make.names(chans)
             yvar=make.names(yvar)
+            library(tensorflow)
+            library(keras)
+            ## Disable tensorflow parallelism (since we are already fitting models in parallel)
+            k_clear_session()
+            config <- tf$ConfigProto(intra_op_parallelism_threads = 1L,
+                                     inter_op_parallelism_threads = 1L)
+            session = tf$Session(config = config)
+            k_set_session(session)
         }
     )
     
@@ -221,6 +234,14 @@ predict_from_models=function(
             library(xgboost)
             library(e1071)
             library(keras)
+            library(tensorflow)
+            ## Disable tensorflow parallelism (since we are already fitting models in parallel)
+            k_clear_session()
+            config <- tf$ConfigProto(intra_op_parallelism_threads = 1L,
+                                     inter_op_parallelism_threads = 1L)
+            session = tf$Session(config = config)
+            k_set_session(session)
+            
         }
     )
 
