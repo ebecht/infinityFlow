@@ -6,6 +6,7 @@ fitter_svm=function(x,params){
     w=x[,"train_set"]==1
     model=do.call(function(...){svm(...,x=x[w,chans],y=x[w,yvar])},params)
     pred=predict(model,x[,chans])
+    rm(list=setdiff(ls(),c("pred","model")))
     return(list(pred=pred,model=model))
 }
 
@@ -17,6 +18,7 @@ fitter_xgboost=function(x,params){
     w=x[,"train_set"]==1
     model=do.call(function(...){xgboost(...,data=x[w,chans],label=x[w,yvar],nthread=1L)},params)
     pred=predict(model,x[,chans])
+    rm(list=setdiff(ls(),c("pred","model")))
     return(list(pred=pred,model=model))
 }
 
@@ -28,6 +30,9 @@ fitter_linear=function(x,params){
     fmla=paste0(make.names(yvar),"~",polynomial_formula(variables=chans,degree=params$degree))
     model=lm(formula=fmla,data=as.data.frame(x[w,c(chans,yvar)]))
     pred=predict(model,as.data.frame(x[,chans]))
+    rm(list=setdiff(ls(),c("pred","model")))
+    model$model=NULL ## Trim down for slimmer objects
+    model$qr$qr=NULL ## Trim down for slimmer objects
     return(list(pred=pred,model=model))
 }
 
@@ -89,6 +94,7 @@ fitter_nn=function(x,params){
     )
     
     pred = predict(model, x[, chans])
+    rm(list=setdiff(ls(),c("pred","model")))
     return(list(pred = pred, model = serialize_model(model)))
 }
             
@@ -250,7 +256,7 @@ predict_from_models=function(
     env=environment()
 
     if(verbose){
-        message("\tRandomly drawing training set")
+        message("\tRandomly drawing events to predict from the test set")
     }
 
     spl=split(train_set[,1],events.code)
