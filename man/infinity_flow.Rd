@@ -25,14 +25,15 @@ infinity_flow(path_to_fcs, path_to_output,
   "relu") \%>\% layer_dense(units = 1, activation = "linear")     model
   \%>\% compile(loss = "mean_squared_error", optimizer = optimizer_sgd(lr =
   0.01))     serialize_model(model) }, epochs = 1000, validation_split =
-  0.2, verbose = 1, batch_size = 128))[1],
+  0.2, verbose = 0, batch_size = 128))[1],
   extra_args_UMAP = list(n_neighbors = 15L, min_dist = 0.2, metric =
   "euclidean", verbose = verbose, n_epochs = 1000L, n_threads = cores,
   n_sgd_threads = cores), extra_args_export = list(FCS_export =
   c("split", "concatenated", "none")[1], CSV_export = FALSE),
   extra_args_correct_background = list(FCS_export = c("split",
   "concatenated", "none")[1], CSV_export = FALSE),
-  extra_args_plotting = list(chop_quantiles = 0.005))
+  extra_args_plotting = list(chop_quantiles = 0.005),
+  neural_networks_seed = your_random_seed + 3)
 }
 \arguments{
 \item{path_to_fcs}{Path to the input directory where input FCS files are stored (one file per well). Will look for FCS files recursively in that directory.}

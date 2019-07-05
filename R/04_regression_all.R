@@ -67,11 +67,6 @@ predict_wrapper=function(x){
 #' @export
 fitter_nn=function(x,params){
     require(keras)
-    k_clear_session()
-    config <- tf$ConfigProto(intra_op_parallelism_threads = 1L,
-                             inter_op_parallelism_threads = 1L)
-    session = tf$Session(config = config)
-    k_set_session(session)
     model=unserialize_model(params$object)
     params=params[setdiff(names(params),"object")]
 
@@ -80,7 +75,7 @@ fitter_nn=function(x,params){
     
     w=x[,"train_set"]==1
 
-    do.call(
+    fit_history=do.call(
         function(...){
             fit(
                 ...,
@@ -94,8 +89,8 @@ fitter_nn=function(x,params){
     )
     
     pred = predict(model, x[, chans])
-    rm(list=setdiff(ls(),c("pred","model")))
-    return(list(pred = pred, model = serialize_model(model)))
+    rm(list=setdiff(ls(),c("pred","model","fit_history")))
+    return(list(pred = pred, model = serialize_model(model), fit_history = fit_history))
 }
             
 #' Train SVM regressions
@@ -114,7 +109,8 @@ fit_regressions=function(
                   transforms_chan=readRDS(file.path(paths["rds"],"transforms_chan.Rds")),
                   transforms_pe=readRDS(file.path(paths["rds"],"transforms_pe.Rds")),
                   regression_functions,
-                  verbose=TRUE
+                  verbose=TRUE,
+                  neural_networks_seed
                   )
 {
     ## xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds"));
@@ -157,7 +153,7 @@ fit_regressions=function(
     
     clusterExport(
         cl,
-        c("yvar","chans"),
+        c("yvar","chans","neural_networks_seed"),
         envir=env
     )
 
@@ -168,12 +164,9 @@ fit_regressions=function(
             yvar=make.names(yvar)
             library(tensorflow)
             library(keras)
-            ## Disable tensorflow parallelism (since we are already fitting models in parallel)
-            k_clear_session()
-            config <- tf$ConfigProto(intra_op_parallelism_threads = 1L,
-                                     inter_op_parallelism_threads = 1L)
-            session = tf$Session(config = config)
-            k_set_session(session)
+            if(!is.null(neural_networks_seed)){
+                use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
+            }
         }
     )
     
@@ -218,7 +211,8 @@ predict_from_models=function(
                       models=readRDS(file.path(paths["rds"],"regression_models.Rds")),
                       xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds")),
                       train_set=readRDS(file.path(paths["rds"],"train_set.Rds")),
-                      verbose=TRUE
+                      verbose=TRUE,
+                      neural_networks_seed
                       )
 {
     ## chans=readRDS(file.path(paths["rds"],"chans.Rds"));
@@ -241,13 +235,6 @@ predict_from_models=function(
             library(e1071)
             library(keras)
             library(tensorflow)
-            ## Disable tensorflow parallelism (since we are already fitting models in parallel)
-            k_clear_session()
-            config <- tf$ConfigProto(intra_op_parallelism_threads = 1L,
-                                     inter_op_parallelism_threads = 1L)
-            session = tf$Session(config = config)
-            k_set_session(session)
-            
         }
     )
 
@@ -269,25 +256,14 @@ predict_from_models=function(
             res
         }
     )
-    ## xp=cbind(xp,train_set)
-    ## xp=split_matrix(xp,events.code)
-    ## spl=lapply(
-    ##     xp,
-    ##     function(x){
-    ##         spl=rep(FALSE,nrow(x))
-    ##         w=x[,"train_set"]==0
-    ##         spl[w][sample(1:sum(w),min(prediction_events_downsampling,sum(w)))]=TRUE
-    ##         spl
-    ##     }
-    ## )
+
     pred_set=which(do.call(c,spl))
     
-    ## xp=do.call(rbind,xp)
     xp=xp[pred_set,]
     
     clusterExport(
         cl,
-        c("xp","chans"),
+        c("xp","chans","neural_networks_seed"),
         envir=env
     )
     invisible(clusterEvalQ(
@@ -295,6 +271,10 @@ predict_from_models=function(
         {
             colnames(xp)=make.names(colnames(xp))
             xp=xp[,make.names(chans)]
+            
+            if(!is.null(neural_networks_seed)){
+                use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
+            }            
         }
     ))
     

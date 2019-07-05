@@ -96,7 +96,11 @@ color_biplot_by_channels <- function(matrix,
             n=length(color.scale)
 
             breaks=unique(seq(data.range["min",pname],data.range["max",pname],length.out=n+1))
-            points.colors=as.character(cut(xp[,pname],breaks=breaks,labels=color.scale))
+            if(length(unique(breaks))>1){
+                points.colors=as.character(cut(xp[,pname],breaks=breaks,labels=color.scale))
+            } else {
+                points.colors=rep("lightsteelblue",length(xp[,pname]))
+            }
             mainplot=paste(tmpDir(),"/mainplot_",pname,".png",sep="")
             png(mainplot,res=resolution,height=raster.height*resolution/72,width=raster.width*resolution/72)
             par("bty"="l")

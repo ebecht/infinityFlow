@@ -115,7 +115,7 @@ export_data=function(
                 FCS@parameters$desc=as.character(FCS@parameters$desc)
                 FCS@parameters$name=as.character(FCS@parameters$name)
                 FCS=generate_description(FCS)
-                invisible(write.FCS(FCS,file=file.path(paths["output"],"FCS","split",file)))
+                invisible(write.FCS(FCS,file=file.path(paths["output"],"FCS","split",paste0(sub(".fcs","",file),"_target_",gsub("/","-",a[file]),".fcs"))))
             }
         )
     }

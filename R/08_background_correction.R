@@ -146,7 +146,7 @@ correct_background=function(
         lapply(
             names(FCS_list),
             function(x){
-                invisible(write.FCS(FCS_list[[x]],file=file.path(paths["output"],"FCS_background_corrected/","split",paste0(sub(".fcs","",x),"_target_",a[x,"target"],".fcs"))))
+                invisible(write.FCS(FCS_list[[x]],file=file.path(paths["output"],"FCS_background_corrected/","split",paste0(sub(".fcs","",x),"_target_",gsub("/","-",a[x,"target"]),".fcs"))))
             }
         )   
     }

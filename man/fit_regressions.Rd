@@ -11,7 +11,7 @@ fit_regressions(yvar, params, paths, cores,
   transforms_chan = readRDS(file.path(paths["rds"],
   "transforms_chan.Rds")),
   transforms_pe = readRDS(file.path(paths["rds"], "transforms_pe.Rds")),
-  regression_functions, verbose = TRUE)
+  regression_functions, verbose = TRUE, neural_networks_seed)
 }
 \arguments{
 \item{yvar}{name of the exploratory measurement}

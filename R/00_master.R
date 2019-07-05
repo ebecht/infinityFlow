@@ -65,14 +65,15 @@ infinity_flow=function(
                                ##callbacks=list(callback_early_stopping(monitor = "val_loss", patience = 20)), ## This was moved inside fitter_nn because it causes crashes
                                epochs=1000,
                                validation_split=0.2,
-                               verbose=1,
-                               batch_size=128
+                               verbose=0,
+                               batch_size=128 ## If you want reproducibility with neural networks you should also use use_session_with_seed(your_random_seed + 3) before calling infinity flow. Set to NULL if you want to remove reproducibility of the NN (which can be good practice to ensure robustness)
                            )                               
                        )[1],
                        extra_args_UMAP=list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L,n_threads=cores,n_sgd_threads=cores),
                        extra_args_export=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
                        extra_args_correct_background=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
-                       extra_args_plotting=list(chop_quantiles=0.005)
+                       extra_args_plotting=list(chop_quantiles=0.005),
+                       neural_networks_seed=your_random_seed + 3 ## Set to NULL to disable reproducibility
                        ){
     ## Loading packages
     require(flowCore) ##Bioconductor
@@ -84,6 +85,10 @@ infinity_flow=function(
     require(grid)
     require(uwot)
     require(xgboost)
+    require(keras)
+    if(!is.null(neural_networks_seed)){
+        use_session_with_seed(neural_networks_seed)
+    }
 
     if(length(extra_args_regression_params)!=length(regression_functions)){
         stop("extra_args_regression_params and regression_functions should be lists of the same lengths")
@@ -138,7 +143,8 @@ infinity_flow=function(
         paths=paths,
         cores=cores,
         params=extra_args_regression_params,
-        verbose=verbose
+        verbose=verbose,
+        neural_networks_seed=neural_networks_seed
         )
 
     set.seed(your_random_seed+2)
@@ -146,7 +152,8 @@ infinity_flow=function(
         paths=paths,
         prediction_events_downsampling=prediction_events_downsampling,
         cores=cores,
-        verbose=verbose
+        verbose=verbose,
+        neural_networks_seed=neural_networks_seed
     )
     
     ## UMAP dimensionality reduction
