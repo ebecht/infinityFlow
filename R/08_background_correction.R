@@ -55,7 +55,7 @@ correct_background=function(
 
     for(i in seq_along(preds_rawbgc)){
         for(file in colnames(preds_rawbgc[[i]])){
-            iso=a[a$target==paste0("Isotype_",a[file,"isotype"]),"file"]
+            iso=a[a$target==a[file,"isotype"],"file"][1]
             x=preds_raw[[i]][,iso]
             y=preds_raw[[i]][,file]
             lm=lm(y~x)$coefficients
