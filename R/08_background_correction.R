@@ -38,11 +38,11 @@ correct_background=function(
     a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
     
     rownames(a)=a[,"file"]
-    a[,"target"]=gsub("/","-",a[,"target"])
-    a[is.na(a$target),"target"]="Blank"
-    if(any(a$target=="Blank")){
-        a[a$target=="Blank","target"]=paste0("Blank",1:sum(a$target=="Blank"))
-    }
+    ## a[,"target"]=gsub("/","-",a[,"target"])
+    ## a[is.na(a$target),"target"]="Blank"
+    ## if(any(a$target=="Blank")){
+    ##     a[a$target=="Blank","target"]=paste0("Blank",1:sum(a$target=="Blank"))
+    ## }
     
     preds_raw=preds
     
