@@ -36,8 +36,8 @@ correct_background=function(
     ## FCS_export=c("split","concatenated")
 
     a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
-    
     rownames(a)=a[,"file"]
+    
     ## a[,"target"]=gsub("/","-",a[,"target"])
     ## a[is.na(a$target),"target"]="Blank"
     ## if(any(a$target=="Blank")){
@@ -49,13 +49,14 @@ correct_background=function(
     preds_rawbgc=lapply(
         preds_raw,
         function(x){
-            x[,rownames(subset(a,isotype!="Auto"&!grepl("Isotype",target)))]
+            ## x[,rownames(subset(a,isotype!="Auto"&!grepl("Isotype",target)))]
+            x[,a$file]
         }
     )
-
+    
     for(i in seq_along(preds_rawbgc)){
         for(file in colnames(preds_rawbgc[[i]])){
-            iso=a[a$target==a[file,"isotype"],"file"][1]
+            iso=a[file,"isotype"][1]
             x=preds_raw[[i]][,iso]
             y=preds_raw[[i]][,file]
             lm=lm(y~x)$coefficients

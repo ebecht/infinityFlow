@@ -33,8 +33,8 @@ export_data=function(
         message("Exporting results")
     }
     
-    ## a[,"target"]=make.unique(a[,"target"])
     a=setNames(as.character(a[,"target",]),a[,"file"])
+    
     ## a[is.na(a)]="Autofluorescence"
     ## if(any(a=="Autofluorescence")){
     ##     a[a=="Autofluorescence"]=paste0("Autofluorescence",1:sum(a=="Autofluorescence"))
@@ -75,7 +75,7 @@ export_data=function(
         }
     )
     
-    prediction_colnames=order(do.call(c,lapply(preds,colnames)))
+    prediction_colnames=sort(do.call(c,lapply(preds,colnames)))
     preds=do.call(cbind,preds)[,prediction_colnames]
     preds_raw=do.call(cbind,preds_raw)[,prediction_colnames]
     

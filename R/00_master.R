@@ -226,8 +226,9 @@ initialize=function(
     }
     annotation=data.frame(file=names(annotation),target=annotation)
     if(!missing(isotype)){
-        annotation=cbind(annotation,isotype=isotype)
+        annotation=cbind(annotation,isotype=annotation$file[match(isotype,annotation$target)])
     }
+    annotation$target=make.unique(as.character(annotation$target))
     write.csv(annotation,row.names=FALSE,file=paths["annotation"])
     
     files=list.files(path_to_fcs,pattern="^.*.(fcs)$",ignore.case=TRUE,recursive=TRUE,full.names=TRUE)
