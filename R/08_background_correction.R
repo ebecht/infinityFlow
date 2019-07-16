@@ -37,19 +37,12 @@ correct_background=function(
 
     a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
     rownames(a)=a[,"file"]
-    
-    ## a[,"target"]=gsub("/","-",a[,"target"])
-    ## a[is.na(a$target),"target"]="Blank"
-    ## if(any(a$target=="Blank")){
-    ##     a[a$target=="Blank","target"]=paste0("Blank",1:sum(a$target=="Blank"))
-    ## }
-    
+        
     preds_raw=preds
     
     preds_rawbgc=lapply(
         preds_raw,
         function(x){
-            ## x[,rownames(subset(a,isotype!="Auto"&!grepl("Isotype",target)))]
             x[,a$file]
         }
     )
@@ -86,6 +79,7 @@ correct_background=function(
     )
     
     ## Adding uncorrected data (isotypes and autofluorescence)
+    ## I don't think this does anything anymore
     for(i in seq_along(preds_rawbgc_linear)){
         preds_rawbgc_linear[[i]]=cbind(
             preds_rawbgc_linear[[i]],
@@ -104,7 +98,7 @@ correct_background=function(
         }
     )
     preds_rawbgc=lapply(
-        preds_rawbgc_linear,
+        preds_rawbgc,
         function(x){
             x[,rownames(a)]
         }
@@ -112,6 +106,8 @@ correct_background=function(
     for(x in names(preds_rawbgc_linear)){
         colnames(preds_rawbgc_linear[[x]])=paste0(a[colnames(preds_rawbgc_linear[[x]]),"target"],".",x,"_bgc")
         colnames(preds_rawbgc[[x]])=paste0(a[colnames(preds_rawbgc[[x]]),"target"],".",x,"_bgc")
+        preds_rawbgc_linear[[x]]=preds_rawbgc_linear[[x]][,order(colnames(preds_rawbgc_linear[[x]]))]
+        preds_rawbgc[[x]]=preds_rawbgc[[x]][,order(colnames(preds_rawbgc[[x]]))]
     }
     
     preds_rawbgc_linear=cbind(xp[sampling,],do.call(cbind,preds_rawbgc_linear),minmax_scale(umap))

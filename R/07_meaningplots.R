@@ -11,7 +11,8 @@ plot_results=function(
                       sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds")),
                       prediction_colnames=readRDS(file.path(paths["rds"],"prediction_colnames.Rds")),
                       a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE),
-                      verbose=TRUE
+                      verbose=TRUE,
+                      file_name=file.path(paths["output"],"umap_plot_annotated.pdf")
                       ){
     if(verbose){
         message("Plotting")
@@ -58,7 +59,7 @@ plot_results=function(
         x_axis="UMAP1",
         y_axis="UMAP2",
         global_across_channels=FALSE,
-        file_name=file.path(paths["output"],"umap_plot_annotated.pdf"),
+        file_name=file_name,
         palette=jet.colors(100),
         pch=16,
         cex=min(1,1.1-0.15*log10(nrow(preds))),

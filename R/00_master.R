@@ -137,7 +137,7 @@ infinity_flow=function(
 
     ## Regression models training and predictions
     set.seed(your_random_seed+1)
-    fit_regressions(
+    timings_fit=fit_regressions(
         regression_functions=regression_functions,
         yvar=name_of_PE_parameter,
         paths=paths,
@@ -148,7 +148,7 @@ infinity_flow=function(
         )
 
     set.seed(your_random_seed+2)
-    timings_fit=predict_from_models(
+    timings_pred=predict_from_models(
         paths=paths,
         prediction_events_downsampling=prediction_events_downsampling,
         cores=cores,
@@ -157,7 +157,7 @@ infinity_flow=function(
     )
     
     ## UMAP dimensionality reduction
-    timings_pred=perform_UMAP_dimensionality_reduction(
+    perform_UMAP_dimensionality_reduction(
         paths=paths,
         extra_args_UMAP=extra_args_UMAP,
         verbose=verbose
@@ -169,8 +169,26 @@ infinity_flow=function(
     ## Plotting
     do.call(plot_results,c(list(paths=paths,verbose=verbose),extra_args_plotting))
 
+    ## Background correcting
     res_bgc=do.call(correct_background,c(list(paths=paths,verbose=verbose),extra_args_correct_background))
 
+    ## Plotting background corrected
+
+    ## Plotting
+    do.call(
+        plot_results,
+        c(
+            list(
+                paths=paths,
+                verbose=verbose,
+                preds=readRDS(file.path(paths["rds"],"predictions_bgc_cbound.Rds")),
+                file_name=file.path(paths["output"],"umap_plot_annotated_backgroundcorrected.pdf"),
+                prediction_colnames = paste0(readRDS(file.path(paths["rds"],"prediction_colnames.Rds")),"_bgc")
+            ),
+            extra_args_plotting
+        )
+    )
+        
     timings=cbind(fit=timings_fit$timings,pred=timings_pred$timings)
     rownames(timings)=names(regression_functions)
     saveRDS(timings,file.path(paths["rds"],"timings.Rds"))
