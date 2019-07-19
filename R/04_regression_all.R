@@ -59,6 +59,10 @@ predict_wrapper=function(x){
         require(keras)
         x=unserialize_model(x)
     }
+    if(class(x)=="xgb.Booster"){
+        x=xgb.Booster.complete(x)
+        xgb.parameters(x) <- list(nthread = 1)
+    }
     res=predict(x,xp)
 }
 
@@ -271,10 +275,9 @@ predict_from_models=function(
         {
             colnames(xp)=make.names(colnames(xp))
             xp=xp[,make.names(chans)]
-            
             if(!is.null(neural_networks_seed)){
                 use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
-            }            
+            }
         }
     ))
     
