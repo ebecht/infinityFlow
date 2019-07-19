@@ -109,9 +109,15 @@ correct_background=function(
         preds_rawbgc_linear[[x]]=preds_rawbgc_linear[[x]][,order(colnames(preds_rawbgc_linear[[x]]))]
         preds_rawbgc[[x]]=preds_rawbgc[[x]][,order(colnames(preds_rawbgc[[x]]))]
     }
+
+    preds_rawbgc_linear=do.call(cbind,preds_rawbgc_linear)
+    preds_rawbgc=do.call(cbind,preds_rawbgc)
+
+    preds_rawbgc=preds_rawbgc[,sort(colnames(preds_rawbgc))]
+    preds_rawbgc_linear=preds_rawbgc_linear[,sort(colnames(preds_rawbgc_linear))]
     
-    preds_rawbgc_linear=cbind(xp[sampling,],do.call(cbind,preds_rawbgc_linear),minmax_scale(umap))
-    preds_rawbgc=cbind(xp_scaled[sampling,],do.call(cbind,preds_rawbgc),minmax_scale(umap))
+    preds_rawbgc_linear=cbind(xp[sampling,],preds_rawbgc_linear,minmax_scale(umap))
+    preds_rawbgc=cbind(xp_scaled[sampling,],preds_rawbgc,minmax_scale(umap))
     
     unique_pes=unique(events.code)
     PE_id=sapply(events.code[sampling],match,table=unique_pes)
