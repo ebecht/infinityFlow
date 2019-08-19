@@ -81,8 +81,8 @@ export_data=function(
     
     unique_pes=unique(events.code)
     PE_id=sapply(events.code[sampling],match,table=unique_pes)
-
-    write.csv(file=file.path(paths["output"],"Exploratory_Ab_ID_table.csv"),data.frame(file=unique_pes,target=a[unique_pes],PE_id=unique(PE_id)),row.names=FALSE)
+    
+    write.csv(file=file.path(paths["output"],"Exploratory_Ab_ID_table.csv"),data.frame(file=unique_pes,target=a[unique_pes],PE_id=1:length(unique_pes)),row.names=FALSE)
     
     ## To make UMAP easier to plot for FlowJo users
     umap=apply(umap,2,function(x){

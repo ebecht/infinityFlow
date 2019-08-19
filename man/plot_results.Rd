@@ -12,7 +12,8 @@ plot_results(paths, chop_quantiles = 0.005,
   prediction_colnames = readRDS(file.path(paths["rds"],
   "prediction_colnames.Rds")), a = read.csv(paths["annotation"], sep =
   ",", header = TRUE, stringsAsFactors = FALSE), verbose = TRUE,
-  file_name = file.path(paths["output"], "umap_plot_annotated.pdf"))
+  file_name = file.path(paths["output"], "umap_plot_annotated.pdf"),
+  global_palette = FALSE)
 }
 \arguments{
 \item{paths}{Character vector of paths to store intput, intermediary results, outputs...}

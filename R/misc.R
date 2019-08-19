@@ -53,7 +53,8 @@ generate_description<-function(ff){
 #' @return NULL
 #' @note Since pdf files are vectorized, they can get really big if a lot of data point are plotted. This function thus used bitmap images that are stored in a temporary directory (tmpDir()) and then import them in a single pdf. If you're interested in using the bitmap images, you can fetch them in tmpDir()
 
-color_biplot_by_channels <- function(matrix,
+color_biplot_by_channels <- function(
+                                     matrix,
                                      x_axis,
                                      y_axis,
                                      global_across_channels=T,
@@ -66,7 +67,6 @@ color_biplot_by_channels <- function(matrix,
                                      ... #pass to plot for e.g. tSNE biplot
                                      )
 {
-
     sapply(c("png","raster","grid"),function(package){
         if(!require(package,character.only=T)){
             install.packages(pkgs=package)
@@ -83,7 +83,6 @@ color_biplot_by_channels <- function(matrix,
         data_range=apply(matrix[,regular_channels],na.rm=T,2,range,na.rm=T)
         rownames(data_range)=c("min","max")
     }
-
 
     x = matrix[,x_axis]
     y = matrix[,y_axis]
@@ -146,24 +145,23 @@ color_biplot_by_channels <- function(matrix,
         }
         sapply(rasters,function(x){
             par("mar"=c(0,0,0,0))
+            grid.newpage()
+            label=sub(".png","",sub("mainplot_","",tail(strsplit(x$main.file,"/")[[1]],1),fixed=TRUE),fixed=TRUE)
+            
             if(!global_across_channels){
-                grid.newpage()
                 grid.raster(readPNG(x$main.file,native=T),y=0.6,height=0.8)
                 grid.raster(readPNG(x$scale.file,native=T),y=0.1,height=0.2)
             }
             if(global_across_channels){
-                par("mar"=c(0,0,0,0))
-                grid.newpage()
                 grid.raster(readPNG(x$main.file,native=T))
             }
-            grid.text(x=par("usr")[2],y=par("usr")[4],label=sub(".png","",sub("/mainplot_","",tail(strsplit(x$main.file,"/")[[1]],1),fixed=TRUE),fixed=TRUE),just=c(1,1),gp=gpar(col="white",cex=0.1))
+            grid.text(x=unit(1,"npc"),y=unit(1,"npc"),label=label,just=c(1,1),gp=gpar(col="white",cex=0.1))
             return(NULL)
         })
         dev.off()
     }
     NULL
 }
-
 #' @title For each parameter in the FCS files, interactively specify whether it is part of the backbone, the exploratory markers or should be ignored.
 #' @description This This function will load the first of the input FCS files and extract the measured parameters as well as their labels. For each of these, it will ask the user whether it is part of the backbone measurements (and will be used as a predictor variable in regressions), exploratory measurements (used as dependent variable in regressions) or discarded (e.g. for Time, Sample IDs, Event number IDs, ...).
 #' @param files character vector of paths to FCS files
