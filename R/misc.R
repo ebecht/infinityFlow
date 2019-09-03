@@ -162,6 +162,7 @@ color_biplot_by_channels <- function(
     }
     NULL
 }
+
 #' @title For each parameter in the FCS files, interactively specify whether it is part of the backbone, the exploratory markers or should be ignored.
 #' @description This This function will load the first of the input FCS files and extract the measured parameters as well as their labels. For each of these, it will ask the user whether it is part of the backbone measurements (and will be used as a predictor variable in regressions), exploratory measurements (used as dependent variable in regressions) or discarded (e.g. for Time, Sample IDs, Event number IDs, ...).
 #' @param files character vector of paths to FCS files

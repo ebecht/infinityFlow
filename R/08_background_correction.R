@@ -37,7 +37,8 @@ correct_background=function(
 
     a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
     rownames(a)=a[,"file"]
-        
+    a=a[intersect(rownames(a),colnames(preds[[1]])),]
+    
     preds_raw=preds
     
     preds_rawbgc=lapply(
