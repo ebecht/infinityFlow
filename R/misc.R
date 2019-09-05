@@ -241,10 +241,10 @@ split_matrix=function (mat, vector, byrow = TRUE)
 }
 
 ## Linear scale with chosen boundaries
-minmax_scale=function(matrix,min=1,max=1000){
+minmax_scale=function(matrix,min=1,max=1000,na.rm=TRUE){
     apply(matrix,2,function(x){
-        a=(max-min)/(max(x)-min(x))
-        b=min-a*min(x)
+        a=(max-min)/(max(x,na.rm=na.rm)-min(x,na.rm=na.rm))
+        b=min-a*min(x, na.rm=na.rm)
         a*x+b
     })
 }
