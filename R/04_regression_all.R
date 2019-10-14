@@ -40,8 +40,6 @@ fitter_linear=function(x,params){
 #' @param x passed from fit_regressions
 #' @export
 fitter_glmnet=function(x,params){
-    require(glmnet)
-    require(glmnetUtils)
     w=x[,"train_set"]==1
     fmla=paste0(make.names(yvar),"~",polynomial_formula(variables=chans,degree=params$degree))
     params=params[setdiff(names(params),"degree")]
@@ -198,6 +196,7 @@ fit_regressions=function(
             library(tensorflow)
             library(keras)
             require(glmnetUtils)
+            require(glmnet)
             if(!is.null(neural_networks_seed)){
                 use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
             }
@@ -269,7 +268,8 @@ predict_from_models=function(
             library(e1071)
             library(keras)
             library(tensorflow)
-            require(glmnetUtils)
+            library(glmnetUtils)
+            library(glmnet)
         }
     )
 

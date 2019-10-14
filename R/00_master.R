@@ -87,6 +87,9 @@ infinity_flow=function(
     require(uwot)
     require(xgboost)
     require(keras)
+    require(glmnet)
+    require(glmnetUtils)
+    
     if(!is.null(neural_networks_seed)){
         use_session_with_seed(neural_networks_seed)
     }
