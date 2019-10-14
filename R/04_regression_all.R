@@ -36,6 +36,31 @@ fitter_linear=function(x,params){
     return(list(pred=pred,model=model))
 }
 
+#' Wrapper to glmnet. Defined separetely to avoid passing too many objects in parLapplyLB
+#' @param x passed from fit_regressions
+#' @export
+fitter_glmnet=function(x,params){
+    require(glmnet)
+    require(glmnetUtils)
+    w=x[,"train_set"]==1
+    fmla=paste0(make.names(yvar),"~",polynomial_formula(variables=chans,degree=params$degree))
+    params=params[setdiff(names(params),"degree")]
+    params=c(params, list(formula=fmla,data=as.data.frame(x[w,c(chans,yvar)]),use.model.frame=TRUE))
+    ## MF=model.frame(fmla,data=as.data.frame(x[w,c(chans,yvar)]))
+    ## model=glmnet(x=as.matrix(MF[,-match(yvar,colnames(MF))]),y=MF[,yvar],alpha=1)
+    ## cvfit=cv.glmnet(as.matrix(MF[,-match(yvar,colnames(MF))]),y=MF[,yvar],alpha=1,type.measure="mse",nfolds=20)
+    ## lambda.min = cvfit$lambda.min
+
+    model=do.call(glmnetUtils:::cv.glmnet.formula,params)
+    pred=predict(model,as.data.frame(x[,chans]),s=model$lambda.min)
+    
+    ## pred=predict(model,newx=as.matrix(MF[,-match(yvar,colnames(MF))]),s=lambda.min)[, 1]
+    rm(list=setdiff(ls(),c("pred","model")))
+    ## model$model=NULL ## Trim down for slimmer objects
+    ## model$qr$qr=NULL ## Trim down for slimmer objects
+    return(list(pred=pred,model=model))
+}
+
 polynomial_formula=function(variables,degree){
     require(gtools)
     n=length(variables)
@@ -54,6 +79,10 @@ polynomial_formula=function(variables,degree){
 predict_wrapper=function(x){
     if(class(x)=="lm"){
         xp=as.data.frame(xp)
+    }
+    if("cv.glmnet"%in%class(x)){
+        xp=as.data.frame(xp)
+        return(predict(x,xp,s=x$lambda.min)[,1])
     }
     if(class(x)=="raw"){
         require(keras)
@@ -168,6 +197,7 @@ fit_regressions=function(
             yvar=make.names(yvar)
             library(tensorflow)
             library(keras)
+            require(glmnetUtils)
             if(!is.null(neural_networks_seed)){
                 use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
             }
@@ -239,6 +269,7 @@ predict_from_models=function(
             library(e1071)
             library(keras)
             library(tensorflow)
+            require(glmnetUtils)
         }
     )
 

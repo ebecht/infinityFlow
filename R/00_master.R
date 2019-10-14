@@ -38,7 +38,7 @@ infinity_flow=function(
                        verbose=TRUE,
 
                        extra_args_read_FCS=list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE),
-                       regression_functions=list(SVM=fitter_svm,XGBoost=fitter_xgboost,LM2=fitter_linear,NN=fitter_nn)[1],
+                       regression_functions=list(SVM=fitter_svm,XGBoost=fitter_xgboost,LM2=fitter_linear,NN=fitter_nn,LASSO=fitter_glmnet)[1],
                        extra_args_regression_params=list(
                            list(type="eps-regression",cost=1,epsilon=0.5),
                            list(nrounds=10),
@@ -67,7 +67,8 @@ infinity_flow=function(
                                validation_split=0.2,
                                verbose=0,
                                batch_size=128 ## If you want reproducibility with neural networks you should also use use_session_with_seed(your_random_seed + 3) before calling infinity flow. Set to NULL if you want to remove reproducibility of the NN (which can be good practice to ensure robustness)
-                           )                               
+                           ),
+                           list(degree=2,alpha=1,nfolds=10)
                        )[1],
                        extra_args_UMAP=list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L,n_threads=cores,n_sgd_threads=cores),
                        extra_args_export=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),

@@ -13,19 +13,20 @@ infinity_flow(path_to_fcs, path_to_output,
   extra_args_read_FCS = list(emptyValue = FALSE, truncate_max_range =
   FALSE, ignore.text.offset = TRUE), regression_functions = list(SVM =
   fitter_svm, XGBoost = fitter_xgboost, LM2 = fitter_linear, NN =
-  fitter_nn)[1], extra_args_regression_params = list(list(type =
-  "eps-regression", cost = 1, epsilon = 0.5), list(nrounds = 10),
-  list(degree = 2), list(object = {     model = keras_model_sequential()   
-   model \%>\% layer_dense(units = 8, activation = "relu", input_shape =
-  14) \%>\% layer_dense(units = 8, activation = "relu") \%>\%
-  layer_dense(units = 8, activation = "relu") \%>\% layer_dense(units = 8,
+  fitter_nn, LASSO = fitter_glmnet)[1],
+  extra_args_regression_params = list(list(type = "eps-regression", cost
+  = 1, epsilon = 0.5), list(nrounds = 10), list(degree = 2), list(object =
+  {     model = keras_model_sequential()     model \%>\% layer_dense(units
+  = 8, activation = "relu", input_shape = 14) \%>\% layer_dense(units = 8,
   activation = "relu") \%>\% layer_dense(units = 8, activation = "relu")
   \%>\% layer_dense(units = 8, activation = "relu") \%>\% layer_dense(units
   = 8, activation = "relu") \%>\% layer_dense(units = 8, activation =
-  "relu") \%>\% layer_dense(units = 1, activation = "linear")     model
-  \%>\% compile(loss = "mean_squared_error", optimizer = optimizer_sgd(lr =
-  0.01))     serialize_model(model) }, epochs = 1000, validation_split =
-  0.2, verbose = 0, batch_size = 128))[1],
+  "relu") \%>\% layer_dense(units = 8, activation = "relu") \%>\%
+  layer_dense(units = 8, activation = "relu") \%>\% layer_dense(units = 1,
+  activation = "linear")     model \%>\% compile(loss =
+  "mean_squared_error", optimizer = optimizer_sgd(lr = 0.01))    
+  serialize_model(model) }, epochs = 1000, validation_split = 0.2, verbose
+  = 0, batch_size = 128), list(degree = 2, alpha = 1, nfolds = 10))[1],
   extra_args_UMAP = list(n_neighbors = 15L, min_dist = 0.2, metric =
   "euclidean", verbose = verbose, n_epochs = 1000L, n_threads = cores,
   n_sgd_threads = cores), extra_args_export = list(FCS_export =
