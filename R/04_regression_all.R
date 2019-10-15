@@ -5,6 +5,7 @@ fitter_svm=function(x,params){
     require(e1071)
     w=x[,"train_set"]==1
     model=do.call(function(...){svm(...,x=x[w,chans],y=x[w,yvar])},params)
+    ## model=butcher(model)
     pred=predict(model,x[,chans])
     rm(list=setdiff(ls(),c("pred","model")))
     return(list(pred=pred,model=model))
@@ -29,6 +30,7 @@ fitter_linear=function(x,params){
     w=x[,"train_set"]==1
     fmla=paste0(make.names(yvar),"~",polynomial_formula(variables=chans,degree=params$degree))
     model=lm(formula=fmla,data=as.data.frame(x[w,c(chans,yvar)]))
+    ## model=butcher(model)
     pred=predict(model,as.data.frame(x[,chans]))
     rm(list=setdiff(ls(),c("pred","model")))
     model$model=NULL ## Trim down for slimmer objects
@@ -43,14 +45,28 @@ fitter_glmnet=function(x,params){
     w=x[,"train_set"]==1
     fmla=paste0(make.names(yvar),"~",polynomial_formula(variables=chans,degree=params$degree))
     params=params[setdiff(names(params),"degree")]
-    params=c(params, list(formula=fmla,data=as.data.frame(x[w,c(chans,yvar)]),use.model.frame=TRUE))
+    params=c(
+        params,
+        list(
+            formula=fmla,
+            data=as.data.frame(x[w,c(chans,yvar)]),
+            use.model.frame=TRUE
+        )
+    )
     ## MF=model.frame(fmla,data=as.data.frame(x[w,c(chans,yvar)]))
     ## model=glmnet(x=as.matrix(MF[,-match(yvar,colnames(MF))]),y=MF[,yvar],alpha=1)
     ## cvfit=cv.glmnet(as.matrix(MF[,-match(yvar,colnames(MF))]),y=MF[,yvar],alpha=1,type.measure="mse",nfolds=20)
     ## lambda.min = cvfit$lambda.min
 
     model=do.call(glmnetUtils:::cv.glmnet.formula,params)
+    ## model=butcher:::axe_call.glmnet(model)
+    model$call = NULL ## Slimming down object
+    model$glmnet.fit$call = NULL ## Slimming down object
+    attributes(model$terms)[[".Environment"]] = NULL ## Slimming down object
     pred=predict(model,as.data.frame(x[,chans]),s=model$lambda.min)
+    
+    ## attributes(model$terms)[".Environment"]=NULL ## Trim down for slimmer objects
+
     
     ## pred=predict(model,newx=as.matrix(MF[,-match(yvar,colnames(MF))]),s=lambda.min)[, 1]
     rm(list=setdiff(ls(),c("pred","model")))
@@ -75,7 +91,7 @@ polynomial_formula=function(variables,degree){
 #' Wrapper to SVM predict. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_svms
 predict_wrapper=function(x){
-    if(class(x)=="lm"){
+    if("lm"%in%class(x)){
         xp=as.data.frame(xp)
     }
     if("cv.glmnet"%in%class(x)){
@@ -195,8 +211,9 @@ fit_regressions=function(
             yvar=make.names(yvar)
             library(tensorflow)
             library(keras)
-            require(glmnetUtils)
-            require(glmnet)
+            library(glmnetUtils)
+            library(glmnet)
+            library(butcher)
             if(!is.null(neural_networks_seed)){
                 use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
             }
