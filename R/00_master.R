@@ -226,6 +226,7 @@ initialize=function(
         annotation=path_to_annotation_file,
         output=path_to_output
     )
+    paths=sapply(paths, path.expand)
     
     if(path_to_intermediary_results==tempdir()){
         if(verbose){

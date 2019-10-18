@@ -21,7 +21,7 @@ subsample_data=function(
         res=do.call(read.FCS,c(list(filename=file),extra_args_read_FCS))
         w=sort(sample(1:nrow(res),min(input_events_downsampling,nrow(res))))
         res=res[w,]
-        write.FCS(res,sub(paths["input"],paths["subset"],file,fixed=TRUE))
+        write.FCS(res,file.path(paths["subset"],basename(file)))
     }))
 
     ## convert to .Rds
