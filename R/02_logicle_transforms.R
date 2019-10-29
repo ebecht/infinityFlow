@@ -40,6 +40,7 @@ logicle_transform_input=function(
             q=0.05
             r=.Machine$double.eps + quantile(data, q)
             w=max((m-log10(t/abs(r)))/2,0.1)
+            w=min(w,m/2)
             a=0
             logicleTransform(w=w,t=t,m=m,a=a) ##Just use summary() to retrive the parameters
         },
@@ -58,6 +59,7 @@ logicle_transform_input=function(
             q=0.05
             r=.Machine$double.eps + quantile(data, q)
             w=max((m-log10(t/abs(r)))/2,0.1)
+            w=min(w,m/2)
             a=0
             logicleTransform(w=w,t=t,m=m,a=a)
         },
