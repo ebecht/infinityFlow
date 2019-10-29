@@ -5,7 +5,6 @@ fitter_svm=function(x,params){
     require(e1071)
     w=x[,"train_set"]==1
     model=do.call(function(...){svm(...,x=x[w,chans],y=x[w,yvar])},params)
-    ## model=butcher(model)
     pred=predict(model,x[,chans])
     rm(list=setdiff(ls(),c("pred","model")))
     return(list(pred=pred,model=model))
@@ -30,7 +29,6 @@ fitter_linear=function(x,params){
     w=x[,"train_set"]==1
     fmla=paste0(make.names(yvar),"~",polynomial_formula(variables=chans,degree=params$degree))
     model=lm(formula=fmla,data=as.data.frame(x[w,c(chans,yvar)]))
-    ## model=butcher(model)
     pred=predict(model,as.data.frame(x[,chans]))
     rm(list=setdiff(ls(),c("pred","model")))
     model$model=NULL ## Trim down for slimmer objects
@@ -59,7 +57,6 @@ fitter_glmnet=function(x,params){
     ## lambda.min = cvfit$lambda.min
 
     model=do.call(glmnetUtils:::cv.glmnet.formula,params)
-    ## model=butcher:::axe_call.glmnet(model)
     model$call = NULL ## Slimming down object
     model$glmnet.fit$call = NULL ## Slimming down object
     attributes(model$terms)[[".Environment"]] = NULL ## Slimming down object
@@ -213,7 +210,6 @@ fit_regressions=function(
             library(keras)
             library(glmnetUtils)
             library(glmnet)
-            library(butcher)
             if(!is.null(neural_networks_seed)){
                 use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
             }
@@ -226,11 +222,11 @@ fit_regressions=function(
     models=list()
     timings=numeric()
     for(i in seq_along(regression_functions)){
-        cat("\t\t",names(regression_functions)[i],sep="")
+        cat("\t",names(regression_functions)[i],"\n\n",sep="")
         t0=Sys.time()
-        models[[i]]=parLapplyLB(
+        models[[i]]=pblapply(##parLapplyLB(
             X=d.e,
-            fun=regression_functions[[i]],
+            FUN=regression_functions[[i]],
             params=params[[i]],
             cl=cl
         )
@@ -339,14 +335,15 @@ predict_from_models=function(
     preds=list()
     timings=numeric()
     for(i in seq_along(models)){
-        cat("\t\t",names(models)[i],sep="")
+        cat("\t",names(models)[i],"\n\n",sep="")
         t0=Sys.time()
         preds[[i]]=do.call(
             cbind,
-            parLapplyLB(
+            ##parLapplyLB(
+            pblapply(
                 cl=cl,
                 X=models[[i]],
-                predict_wrapper
+                FUN=predict_wrapper
             )
         )
         t1=Sys.time()

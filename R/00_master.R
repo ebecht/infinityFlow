@@ -89,7 +89,7 @@ infinity_flow=function(
     require(keras)
     require(glmnet)
     require(glmnetUtils)
-    require(butcher)
+    require(pbapply)
     
     if(!is.null(neural_networks_seed)){
         use_session_with_seed(neural_networks_seed)
