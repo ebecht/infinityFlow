@@ -212,6 +212,12 @@ fit_regressions=function(
             library(glmnet)
             if(!is.null(neural_networks_seed)){
                 use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
+            } else {
+                config <- list()
+                config$intra_op_parallelism_threads <- 1L
+                config$inter_op_parallelism_threads <- 1L
+                session_conf <- do.call(tf$ConfigProto, config)
+                sess <- tf$Session(graph = tf$get_default_graph(), config = session_conf)
             }
         }
     )
@@ -321,6 +327,12 @@ predict_from_models=function(
             xp=xp[,make.names(chans)]
             if(!is.null(neural_networks_seed)){
                 use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
+            }  else {
+                config <- list()
+                config$intra_op_parallelism_threads <- 1L
+                config$inter_op_parallelism_threads <- 1L
+                session_conf <- do.call(tf$ConfigProto, config)
+                sess <- tf$Session(graph = tf$get_default_graph(), config = session_conf)
             }
         }
     ))
