@@ -67,13 +67,6 @@ color_biplot_by_channels <- function(
                                      ... #pass to plot for e.g. tSNE biplot
                                      )
 {
-    sapply(c("png","raster","grid"),function(package){
-        if(!require(package,character.only=T)){
-            install.packages(pkgs=package)
-            library(package,character.only=T)
-        }
-    })
-
     regular_channels=setdiff(colnames(matrix),c(x_axis,y_axis))
 
     if(global_across_channels){
