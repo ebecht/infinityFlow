@@ -18,17 +18,7 @@ plot_results=function(
     if(verbose){
         message("Plotting")
     }
-    
-    ## chop_quantiles=0.005;
-    ## chans=readRDS(file.path(paths["rds"],"chans.Rds"));
-    ## umap=readRDS(file.path(paths["rds"],"umap.Rds"));
-    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"));
-    ## preds=readRDS(file.path(paths["rds"],"predictions_cbound.Rds"));
-    ## sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds"));
-    ## a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
-    ## verbose=TRUE;
-    ## prediction_colnames=readRDS(file.path(paths["rds"],"prediction_colnames.Rds"))
-    
+        
     a=setNames(as.character(a[,"target",]),a[,"file"])
     a[is.na(a)]=paste0("Autofluorescence",1:sum(is.na(a)))
     
@@ -50,7 +40,6 @@ plot_results=function(
     
     colnames(preds)=gsub("/","-",colnames(preds))
     channels.code=setNames(colnames(preds),colnames(preds))
-    ## preds=cbind(umap,preds[,!w],preds[,sort(colnames(preds)[w])])
 
     if(verbose){
         message("\tProducing plot")

@@ -11,18 +11,7 @@ logicle_transform_input=function(
                                  annot=read.table(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE),
                                  verbose=TRUE
                                  ){
-    ## env=environment()
-    ## sapply(
-    ##     c("xp","chans"),
-    ##     function(object){
-    ##         assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
-    ##         invisible()
-    ##     }
-    ## )
-    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"))
-
-    ## The annotation spreadsheet should be in the annotations/ folder and named YOURPROJECT.csv
-
+    
     ## ##################
     ## Computing parameters for each channel for each project using the code from flowCore's estimateLogicle
     ## ##################

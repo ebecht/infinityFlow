@@ -14,20 +14,8 @@ standardize_backbone_data_across_wells=function(
     if(verbose){
         message("Harmonizing backbone data")
         message("\tScaling expression matrices")
-    }    
+    }
     
-    ## env=environment()
-    ## sapply(
-    ##     c("chans"),
-    ##     function(object){
-    ##         assign(object,value=readRDS(file.path(paths["rds"],paste0(object,".Rds"))),envir=env)
-    ##         invisible()
-    ##     }
-    ## )
-    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"))
-
-    ## xp=readRDS(file.path(paths["rds"],"xp_transformed.Rds"))
-
     xp=split(as.data.frame(xp),events.code)
     xp=lapply(xp,as.matrix)
     xp=lapply(xp,function(x){

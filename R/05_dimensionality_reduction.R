@@ -9,8 +9,6 @@ perform_UMAP_dimensionality_reduction=function(
                                                verbose=TRUE
                                                )
 {
-    ## chans=readRDS(file.path(paths["rds"],"chans.Rds"))
-    ## preds=readRDS(file.path(paths["rds"],"predictions.Rds"))
     if(verbose){
         message("Performing dimensionality reduction")
     }

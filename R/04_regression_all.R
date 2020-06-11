@@ -51,10 +51,6 @@ fitter_glmnet=function(x,params){
             use.model.frame=TRUE
         )
     )
-    ## MF=model.frame(fmla,data=as.data.frame(x[w,c(chans,yvar)]))
-    ## model=glmnet(x=as.matrix(MF[,-match(yvar,colnames(MF))]),y=MF[,yvar],alpha=1)
-    ## cvfit=cv.glmnet(as.matrix(MF[,-match(yvar,colnames(MF))]),y=MF[,yvar],alpha=1,type.measure="mse",nfolds=20)
-    ## lambda.min = cvfit$lambda.min
 
     model=do.call(glmnetUtils:::cv.glmnet.formula,params)
     model$call = NULL ## Slimming down object
@@ -62,13 +58,7 @@ fitter_glmnet=function(x,params){
     attributes(model$terms)[[".Environment"]] = NULL ## Slimming down object
     pred=predict(model,as.data.frame(x[,chans]),s=model$lambda.min)
     
-    ## attributes(model$terms)[".Environment"]=NULL ## Trim down for slimmer objects
-
-    
-    ## pred=predict(model,newx=as.matrix(MF[,-match(yvar,colnames(MF))]),s=lambda.min)[, 1]
     rm(list=setdiff(ls(),c("pred","model")))
-    ## model$model=NULL ## Trim down for slimmer objects
-    ## model$qr$qr=NULL ## Trim down for slimmer objects
     return(list(pred=pred,model=model))
 }
 
@@ -156,16 +146,7 @@ fit_regressions=function(
                   verbose=TRUE,
                   neural_networks_seed
                   )
-{
-    ## xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds"));
-    ## chans=readRDS(file.path(paths["rds"],"chans.Rds"));
-    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"));
-    ## transforms_chan=readRDS(file.path(paths["rds"],"transforms_chan.Rds"));
-    ## transforms_pe=readRDS(file.path(paths["rds"],"transforms_pe.Rds"));
-    ## yvar = name_of_PE_parameter
-    ## chans=make.names(chans)
-    ## yvar=make.names(yvar)
-    
+{   
     if(verbose){
         message("Fitting regression models")
     }
@@ -268,13 +249,7 @@ predict_from_models=function(
                       verbose=TRUE,
                       neural_networks_seed
                       )
-{
-    ## chans=readRDS(file.path(paths["rds"],"chans.Rds"));
-    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"));
-    ## models=readRDS(file.path(paths["rds"],"regression_models.Rds"));
-    ## xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds"));
-    ## train_set=readRDS(file.path(paths["rds"],"train_set.Rds"))
-    
+{   
     if(verbose){
         message("Imputing missing measurements")
     }

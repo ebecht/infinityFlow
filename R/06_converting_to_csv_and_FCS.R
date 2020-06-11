@@ -17,29 +17,12 @@ export_data=function(
                      a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE),
                      verbose=TRUE
                      ){
-    ## chans=readRDS(file.path(paths["rds"],"chans.Rds"));
-    ## transforms_chan=readRDS(file.path(paths["rds"],"transforms_chan.Rds"));
-    ## transforms_pe=readRDS(file.path(paths["rds"],"transforms_pe.Rds"));
-    ## xp=readRDS(file.path(paths["rds"],"xp.Rds"));
-    ## xp_scaled=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds"));
-    ## umap=readRDS(file.path(paths["rds"],"umap.Rds"));
-    ## events.code=readRDS(file.path(paths["rds"],"pe.Rds"));
-    ## preds=readRDS(file.path(paths["rds"],"predictions.Rds"));
-    ## sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds"));
-    ## a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE);
-    ## verbose=TRUE
-
     if(verbose){
         message("Exporting results")
     }
     
     a=setNames(as.character(a[,"target",]),a[,"file"])
     
-    ## a[is.na(a)]="Autofluorescence"
-    ## if(any(a=="Autofluorescence")){
-    ##     a[a=="Autofluorescence"]=paste0("Autofluorescence",1:sum(a=="Autofluorescence"))
-    ## }
-
     if(verbose){
         message("\tTransforming predictions back to a linear scale")
     }
