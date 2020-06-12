@@ -4,7 +4,7 @@
 \alias{fitter_xgboost}
 \title{Wrapper to XGBoost training. Defined separetely to avoid passing too many objects in parLapplyLB}
 \usage{
-fitter_xgboost(x, params)
+fitter_xgboost(x = NULL, params = NULL)
 }
 \arguments{
 \item{x}{passed from fit_regressions}

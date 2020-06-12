@@ -4,10 +4,13 @@
 \alias{perform_UMAP_dimensionality_reduction}
 \title{Wrapper to perform and export UMAP dimensionality reduction on the backbone}
 \usage{
-perform_UMAP_dimensionality_reduction(paths, extra_args_UMAP,
+perform_UMAP_dimensionality_reduction(
+  paths,
+  extra_args_UMAP,
   chans = readRDS(file.path(paths["rds"], "chans.Rds")),
   preds = readRDS(file.path(paths["rds"], "predictions.Rds")),
-  verbose = TRUE)
+  verbose = TRUE
+)
 }
 \arguments{
 \item{paths}{Character vector of paths to store intput, intermediary results, outputs...}

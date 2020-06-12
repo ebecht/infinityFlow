@@ -9,7 +9,7 @@
 #' @param cores Number of cores to use for parallel computing. Defaults to 1 (no parallel computing)
 #' @param your_random_seed Set a seed for reproducible results. Defaults to 123
 #' @param verbose Whether to print information about progress
-#' @param extra_args_plotting list of named arguments to pass to plot_results. Defaults to list(chop_quantiles=0.005) which removes the top 0.05% and bottom 0.05% of the scale for each marker when mapping color palettes to intensities.
+#' @param extra_args_plotting list of named arguments to pass to plot_results. Defaults to list(chop_quantiles=0.005) which removes the top 0.05\% and bottom 0.05\% of the scale for each marker when mapping color palettes to intensities.
 #' @param extra_args_read_FCS list of named arguments to pass to flowCore:read.FCS. Defaults to list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE) which in our experience avoided issues with data loading.
 #' @param extra_args_UMAP list of named arguments to pass to uwot:umap. Defaults to list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L)
 #' @export
@@ -76,26 +76,20 @@ infinity_flow=function(
                        extra_args_plotting=list(chop_quantiles=0.005),
                        neural_networks_seed=your_random_seed + 3 ## Set to NULL to disable reproducibility
                        ){
-    ## Loading packages
-    require(flowCore) ##Bioconductor
-    require(e1071) ## For SVMs
-    require(pbmcapply)
-    require(matlab)
-    require(png)
-    require(raster)
-    require(grid)
-    require(uwot)
-    require(xgboost)
-    require(keras)
-    require(glmnet)
-    require(glmnetUtils)
-    require(pbapply)
+
+    ## Making sure dependencies are installed. We make sure that users don't have to install complicated dependencies such as tensorflow and keras, unless they want to use them.
+    lapply(
+        regression_functions,
+        function(fun){
+            fun(x = NULL, params = NULL)
+        }
+    )
     
     if(!is.null(neural_networks_seed)){
         use_session_with_seed(neural_networks_seed)
     }
 
-    if(length(extra_args_regression_params)!=length(regression_functions)){
+    if(length(extra_args_regression_params) != length(regression_functions)){
         stop("extra_args_regression_params and regression_functions should be lists of the same lengths")
     }
         
@@ -116,7 +110,7 @@ infinity_flow=function(
     regression_functions=settings$regression_functions
     
     ## Subsample FCS files
-    M=input_events_downsampling ## Number of cells to downsample to for each file
+    M = input_events_downsampling ## Number of cells to downsample to for each file
     set.seed(your_random_seed)
     subsample_data(
         input_events_downsampling=input_events_downsampling,

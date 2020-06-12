@@ -4,37 +4,43 @@
 \alias{infinity_flow}
 \title{Wrapper to the Infinity Flow pipeline}
 \usage{
-infinity_flow(path_to_fcs, path_to_output,
+infinity_flow(
+  path_to_fcs,
+  path_to_output,
   path_to_intermediary_results = tempdir(),
-  backbone_selection_file = NULL, annotation = NULL, isotype = NULL,
+  backbone_selection_file = NULL,
+  annotation = NULL,
+  isotype = NULL,
   input_events_downsampling = Inf,
-  prediction_events_downsampling = 1000, cores = 1L,
-  your_random_seed = 123, verbose = TRUE,
-  extra_args_read_FCS = list(emptyValue = FALSE, truncate_max_range =
-  FALSE, ignore.text.offset = TRUE), regression_functions = list(SVM =
-  fitter_svm, XGBoost = fitter_xgboost, LM2 = fitter_linear, NN =
-  fitter_nn, LASSO = fitter_glmnet)[1],
-  extra_args_regression_params = list(list(type = "eps-regression", cost
-  = 1, epsilon = 0.5), list(nrounds = 10), list(degree = 2), list(object =
-  {     model = keras_model_sequential()     model \%>\% layer_dense(units
-  = 8, activation = "relu", input_shape = 14) \%>\% layer_dense(units = 8,
-  activation = "relu") \%>\% layer_dense(units = 8, activation = "relu")
-  \%>\% layer_dense(units = 8, activation = "relu") \%>\% layer_dense(units
-  = 8, activation = "relu") \%>\% layer_dense(units = 8, activation =
-  "relu") \%>\% layer_dense(units = 8, activation = "relu") \%>\%
-  layer_dense(units = 8, activation = "relu") \%>\% layer_dense(units = 1,
-  activation = "linear")     model \%>\% compile(loss =
-  "mean_squared_error", optimizer = optimizer_sgd(lr = 0.01))    
-  serialize_model(model) }, epochs = 1000, validation_split = 0.2, verbose
-  = 0, batch_size = 128), list(degree = 2, alpha = 1, nfolds = 10))[1],
-  extra_args_UMAP = list(n_neighbors = 15L, min_dist = 0.2, metric =
-  "euclidean", verbose = verbose, n_epochs = 1000L, n_threads = cores,
-  n_sgd_threads = cores), extra_args_export = list(FCS_export =
-  c("split", "concatenated", "none")[1], CSV_export = FALSE),
-  extra_args_correct_background = list(FCS_export = c("split",
-  "concatenated", "none")[1], CSV_export = FALSE),
+  prediction_events_downsampling = 1000,
+  cores = 1L,
+  your_random_seed = 123,
+  verbose = TRUE,
+  extra_args_read_FCS = list(emptyValue = FALSE, truncate_max_range = FALSE,
+    ignore.text.offset = TRUE),
+  regression_functions = list(SVM = fitter_svm, XGBoost = fitter_xgboost, LM2 =
+    fitter_linear, NN = fitter_nn, LASSO = fitter_glmnet)[1],
+  extra_args_regression_params = list(list(type = "eps-regression", cost = 1, epsilon =
+    0.5), list(nrounds = 10), list(degree = 2), list(object = {     model =
+    keras_model_sequential()     model \%>\% layer_dense(units = 8, activation = "relu",
+    input_shape = 14) \%>\% layer_dense(units = 8, activation = "relu") \%>\%
+    layer_dense(units = 8, activation = "relu") \%>\% layer_dense(units = 8, activation =
+    "relu") \%>\% layer_dense(units = 8, activation = "relu") \%>\% layer_dense(units = 8,
+    activation = "relu") \%>\% layer_dense(units = 8, activation = "relu") \%>\%
+    layer_dense(units = 8, activation = "relu") \%>\% layer_dense(units = 1, activation =
+    "linear")     model \%>\% compile(loss = "mean_squared_error", optimizer =
+    optimizer_sgd(lr = 0.01))     serialize_model(model) }, epochs = 1000,
+    validation_split = 0.2, verbose = 0, batch_size = 128), list(degree = 2, alpha = 1,
+    nfolds = 10))[1],
+  extra_args_UMAP = list(n_neighbors = 15L, min_dist = 0.2, metric = "euclidean",
+    verbose = verbose, n_epochs = 1000L, n_threads = cores, n_sgd_threads = cores),
+  extra_args_export = list(FCS_export = c("split", "concatenated", "none")[1],
+    CSV_export = FALSE),
+  extra_args_correct_background = list(FCS_export = c("split", "concatenated",
+    "none")[1], CSV_export = FALSE),
   extra_args_plotting = list(chop_quantiles = 0.005),
-  neural_networks_seed = your_random_seed + 3)
+  neural_networks_seed = your_random_seed + 3
+)
 }
 \arguments{
 \item{path_to_fcs}{Path to the input directory where input FCS files are stored (one file per well). Will look for FCS files recursively in that directory.}
@@ -45,7 +51,7 @@ infinity_flow(path_to_fcs, path_to_output,
 
 \item{backbone_selection_file}{If that argument is missing and R is run interactively, the user will be prompted to state whether each channel in the FCS file should be considered backbone measurement, exploratory measurement or ignored. Otherwise, the user should run \code{\link{select_backbone_and_exploratory_markers}} in an interactive R session, save its output using \emph{write.csv(row.names=FALSE)} and set this \emph{backbone_selection_file} parameter to the path of the saved output.}
 
-\item{annotation}{Named character vector. Elements should be the targets of the exploratory antibodies, names should be the name of the FCS file where that exploratory antibody was measured.}
+\item{annotation}{Named character vector. Elements should be the isotype used in each of the well and that (e.g. IgG2). The corresponding isotype should be present in \emph{annotation} (e.g. Isotype_IgG2, with this capitalization exactly). Autofluorescence measurements should be listed here as "Blank"}
 
 \item{input_events_downsampling}{How many event should be kept per input FCS file. Default to no downsampling. In any case, half of the events will be used to train regression models and half to test the performance. Predictions will be made only on events from the test set.}
 
@@ -59,9 +65,7 @@ infinity_flow(path_to_fcs, path_to_output,
 
 \item{extra_args_UMAP}{list of named arguments to pass to uwot:umap. Defaults to list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L)}
 
-\item{extra_args_plotting}{list of named arguments to pass to plot_results. Defaults to list(chop_quantiles=0.005) which removes the top 0.05% and bottom 0.05% of the scale for each marker when mapping color palettes to intensities.}
-
-\item{annotation}{Named character vector. Elements should be the isotype used in each of the well and that (e.g. IgG2). The corresponding isotype should be present in \emph{annotation} (e.g. Isotype_IgG2, with this capitalization exactly). Autofluorescence measurements should be listed here as "Blank"}
+\item{extra_args_plotting}{list of named arguments to pass to plot_results. Defaults to list(chop_quantiles=0.005) which removes the top 0.05\% and bottom 0.05\% of the scale for each marker when mapping color palettes to intensities.}
 }
 \description{
 Wrapper to the Infinity Flow pipeline

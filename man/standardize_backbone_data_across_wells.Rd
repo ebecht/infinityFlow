@@ -4,12 +4,15 @@
 \alias{standardize_backbone_data_across_wells}
 \title{Scaling of the backbone measurements}
 \usage{
-standardize_backbone_data_across_wells(yvar, paths,
-  scale_function = function(x) {     scale(x, center = TRUE, scale =
-  TRUE) }, xp = readRDS(file.path(paths["rds"], "xp_transformed.Rds")),
+standardize_backbone_data_across_wells(
+  yvar,
+  paths,
+  scale_function = function(x) {     scale(x, center = TRUE, scale = TRUE) },
+  xp = readRDS(file.path(paths["rds"], "xp_transformed.Rds")),
   chans = readRDS(file.path(paths["rds"], "chans.Rds")),
   events.code = readRDS(file.path(paths["rds"], "pe.Rds")),
-  verbose = TRUE)
+  verbose = TRUE
+)
 }
 \arguments{
 \item{yvar}{name of the exploratory measurement}

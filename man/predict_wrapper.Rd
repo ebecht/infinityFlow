@@ -2,7 +2,7 @@
 % Please edit documentation in R/04_regression_all.R
 \name{predict_wrapper}
 \alias{predict_wrapper}
-\title{Wrapper to SVM predict. Defined separetely to avoid passing too many objects in parLapplyLB}
+\title{Wrapper to predict. Defined separetely to avoid passing too many objects in parLapplyLB}
 \usage{
 predict_wrapper(x)
 }
@@ -10,5 +10,5 @@ predict_wrapper(x)
 \item{x}{passed from fit_svms}
 }
 \description{
-Wrapper to SVM predict. Defined separetely to avoid passing too many objects in parLapplyLB
+Wrapper to predict. Defined separetely to avoid passing too many objects in parLapplyLB
 }

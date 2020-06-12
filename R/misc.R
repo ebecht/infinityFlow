@@ -165,7 +165,7 @@ select_backbone_and_exploratory_markers=function(files){
     if(!interactive()){
         stop("Interactive backbone selection requires an interactive R session")
     } else {
-        require(flowCore)
+        requireNamespace("flowCore")
         representative_file=read.FCS(files[1],truncate_max_range=FALSE,ignore.text.offset=TRUE)
         data_channels=pData(parameters(representative_file)[,c("name","desc")])
         cat("For each data channel, enter either: backbone, exploratory or discard (can be abbreviated)\n")

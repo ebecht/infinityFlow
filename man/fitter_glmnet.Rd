@@ -4,7 +4,7 @@
 \alias{fitter_glmnet}
 \title{Wrapper to glmnet. Defined separetely to avoid passing too many objects in parLapplyLB}
 \usage{
-fitter_glmnet(x, params)
+fitter_glmnet(x = NULL, params = NULL)
 }
 \arguments{
 \item{x}{passed from fit_regressions}

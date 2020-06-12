@@ -4,14 +4,20 @@
 \alias{fit_regressions}
 \title{Train SVM regressions}
 \usage{
-fit_regressions(yvar, params, paths, cores,
+fit_regressions(
+  yvar,
+  params,
+  paths,
+  cores,
   xp = readRDS(file.path(paths["rds"], "xp_transformed_scaled.Rds")),
   chans = readRDS(file.path(paths["rds"], "chans.Rds")),
   events.code = readRDS(file.path(paths["rds"], "pe.Rds")),
-  transforms_chan = readRDS(file.path(paths["rds"],
-  "transforms_chan.Rds")),
+  transforms_chan = readRDS(file.path(paths["rds"], "transforms_chan.Rds")),
   transforms_pe = readRDS(file.path(paths["rds"], "transforms_pe.Rds")),
-  regression_functions, verbose = TRUE, neural_networks_seed)
+  regression_functions,
+  verbose = TRUE,
+  neural_networks_seed
+)
 }
 \arguments{
 \item{yvar}{name of the exploratory measurement}

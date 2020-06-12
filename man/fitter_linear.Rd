@@ -4,7 +4,7 @@
 \alias{fitter_linear}
 \title{Wrapper to linear model training. Defined separetely to avoid passing too many objects in parLapplyLB}
 \usage{
-fitter_linear(x, params)
+fitter_linear(x = NULL, params = NULL)
 }
 \arguments{
 \item{x}{passed from fit_regressions}

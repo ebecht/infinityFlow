@@ -4,19 +4,22 @@
 \alias{export_data}
 \title{Exporting results}
 \usage{
-export_data(paths, FCS_export, CSV_export,
+export_data(
+  paths,
+  FCS_export,
+  CSV_export,
   chans = readRDS(file.path(paths["rds"], "chans.Rds")),
-  transforms_chan = readRDS(file.path(paths["rds"],
-  "transforms_chan.Rds")),
+  transforms_chan = readRDS(file.path(paths["rds"], "transforms_chan.Rds")),
   transforms_pe = readRDS(file.path(paths["rds"], "transforms_pe.Rds")),
   xp = readRDS(file.path(paths["rds"], "xp.Rds")),
-  xp_scaled = readRDS(file.path(paths["rds"],
-  "xp_transformed_scaled.Rds")), umap = readRDS(file.path(paths["rds"],
-  "umap.Rds")), events.code = readRDS(file.path(paths["rds"], "pe.Rds")),
+  xp_scaled = readRDS(file.path(paths["rds"], "xp_transformed_scaled.Rds")),
+  umap = readRDS(file.path(paths["rds"], "umap.Rds")),
+  events.code = readRDS(file.path(paths["rds"], "pe.Rds")),
   preds = readRDS(file.path(paths["rds"], "predictions.Rds")),
   sampling = readRDS(file.path(paths["rds"], "sampling_preds.Rds")),
-  a = read.csv(paths["annotation"], sep = ",", header = TRUE,
-  stringsAsFactors = FALSE), verbose = TRUE)
+  a = read.csv(paths["annotation"], sep = ",", header = TRUE, stringsAsFactors = FALSE),
+  verbose = TRUE
+)
 }
 \arguments{
 \item{paths}{Character vector of paths to store intput, intermediary results, outputs...}

@@ -4,11 +4,19 @@
 \alias{color_biplot_by_channels}
 \title{Colors points of a biplot (2d-tSNE, 2d-PCA...) by the intensity of channels for each flowframe in the flowset}
 \usage{
-color_biplot_by_channels(matrix, x_axis, y_axis,
-  global_across_channels = T, palette = c("blue", "green", "red"),
-  resolution = 72, data_transformation_reverse = identity,
-  file_name = "biplot.pdf", raster.height = 480, raster.width = 480,
-  ...)
+color_biplot_by_channels(
+  matrix,
+  x_axis,
+  y_axis,
+  global_across_channels = T,
+  palette = c("blue", "green", "red"),
+  resolution = 72,
+  data_transformation_reverse = identity,
+  file_name = "biplot.pdf",
+  raster.height = 480,
+  raster.width = 480,
+  ...
+)
 }
 \arguments{
 \item{matrix}{A matrix}

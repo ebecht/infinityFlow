@@ -1,31 +1,43 @@
+#' Make sure a package is installed and produces an error otherwise
+test_dependency = function(packageName){
+    if(!requireNamespace(packageName)){
+        stop(paste("Please install the", packageName, "package to run SVM regression"))
+    }
+}
+
 #' Wrapper to SVM training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions
 #' @export
-fitter_svm=function(x,params){
-    require(e1071)
-    w=x[,"train_set"]==1
-    model=do.call(function(...){svm(...,x=x[w,chans],y=x[w,yvar])},params)
-    pred=predict(model,x[,chans])
-    rm(list=setdiff(ls(),c("pred","model")))
-    return(list(pred=pred,model=model))
+fitter_svm=function(x = NULL, params = NULL){
+    test_dependency("e1071")
+    if(!is.null(x) & !is.null(params)){
+        w=x[,"train_set"]==1
+        model=do.call(function(...){svm(...,x=x[w,chans],y=x[w,yvar])},params)
+        pred=predict(model,x[,chans])
+        rm(list=setdiff(ls(),c("pred","model")))
+        return(list(pred=pred,model=model))
+    }
 }
 
 #' Wrapper to XGBoost training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions
 #' @export
-fitter_xgboost=function(x,params){
-    require(xgboost)
-    w=x[,"train_set"]==1
-    model=do.call(function(...){xgboost(...,data=x[w,chans],label=x[w,yvar],nthread=1L)},params)
-    pred=predict(model,x[,chans])
-    rm(list=setdiff(ls(),c("pred","model")))
-    return(list(pred=pred,model=model))
+fitter_xgboost=function(x = NULL, params = NULL){
+    test_dependency("xgboost")
+
+    if(!is.null(x) & !is.null(params)){
+        w=x[,"train_set"]==1
+        model=do.call(function(...){xgboost(...,data=x[w,chans],label=x[w,yvar],nthread=1L)},params)
+        pred=predict(model,x[,chans])
+        rm(list=setdiff(ls(),c("pred","model")))
+        return(list(pred=pred,model=model))
+    }
 }
 
 #' Wrapper to linear model training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions
 #' @export
-fitter_linear=function(x,params){
+fitter_linear=function(x = NULL, params = NULL){
     w=x[,"train_set"]==1
     fmla=paste0(make.names(yvar),"~",polynomial_formula(variables=chans,degree=params$degree))
     model=lm(formula=fmla,data=as.data.frame(x[w,c(chans,yvar)]))
@@ -39,31 +51,36 @@ fitter_linear=function(x,params){
 #' Wrapper to glmnet. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions
 #' @export
-fitter_glmnet=function(x,params){
-    w=x[,"train_set"]==1
-    fmla=paste0(make.names(yvar),"~",polynomial_formula(variables=chans,degree=params$degree))
-    params=params[setdiff(names(params),"degree")]
-    params=c(
-        params,
-        list(
-            formula=fmla,
-            data=as.data.frame(x[w,c(chans,yvar)]),
-            use.model.frame=TRUE
-        )
-    )
+fitter_glmnet=function(x = NULL, params = NULL){
+    test_dependency("glmnetUtils")
+    test_dependency("gtools")
 
-    model=do.call(glmnetUtils:::cv.glmnet.formula,params)
-    model$call = NULL ## Slimming down object
-    model$glmnet.fit$call = NULL ## Slimming down object
-    attributes(model$terms)[[".Environment"]] = NULL ## Slimming down object
-    pred=predict(model,as.data.frame(x[,chans]),s=model$lambda.min)
-    
-    rm(list=setdiff(ls(),c("pred","model")))
-    return(list(pred=pred,model=model))
+    if(!is.null(x) & !is.null(params)){
+        w = x[,"train_set"] == 1
+        fmla = paste0(make.names(yvar), "~", polynomial_formula(variables = chans, degree = params$degree))
+        flma = as.formula(fmla)
+        params = params[setdiff(names(params), "degree")]
+        params = c(
+            params,
+            list(
+                formula = fmla,
+                data = as.data.frame(x[w, c(chans, yvar)]),
+                use.model.frame = TRUE
+            )
+        )
+
+        model = do.call(getS3method("cv.glmnet", "formula"), params)
+        model$call = NULL ## Slimming down object
+        model$glmnet.fit$call = NULL ## Slimming down object
+        attributes(model$terms)[[".Environment"]] = NULL ## Slimming down object
+        pred=predict(model, as.data.frame(x[, chans]), s = model$lambda.min)
+        
+        rm(list = setdiff(ls(), c("pred", "model")))
+        return(list(pred = pred, model = model))
+    }
 }
 
 polynomial_formula=function(variables,degree){
-    require(gtools)
     n=length(variables)
     polys=lapply(
         1:degree,
@@ -75,83 +92,87 @@ polynomial_formula=function(variables,degree){
     paste(do.call(c,lapply(polys,paste,sep="+")),collapse="+")
 }
 
-#' Wrapper to SVM predict. Defined separetely to avoid passing too many objects in parLapplyLB
+#' Wrapper to predict. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_svms
 predict_wrapper=function(x){
     if("lm"%in%class(x)){
-        xp=as.data.frame(xp)
+        xp = as.data.frame(xp)
     }
     if("cv.glmnet"%in%class(x)){
-        xp=as.data.frame(xp)
+        xp = as.data.frame(xp)
         return(predict(x,xp,s=x$lambda.min)[,1])
     }
     if(class(x)=="raw"){
-        require(keras)
-        x=unserialize_model(x)
+        requireNamespace("keras")
+        x = unserialize_model(x)
     }
     if(class(x)=="xgb.Booster"){
-        x=xgb.Booster.complete(x)
+        x = xgb.Booster.complete(x)
         xgb.parameters(x) <- list(nthread = 1)
     }
-    res=predict(x,xp)
+    res=predict(x, xp)
 }
 
 #' Wrapper to Neural Network training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions. Defines model architecture
 #' @export
 fitter_nn=function(x,params){
-    require(keras)
-    model=unserialize_model(params$object)
-    params=params[setdiff(names(params),"object")]
-
-    early_stop=callback_early_stopping(monitor = "val_loss", patience = 20)
-    callbacks=list(early_stop)
     
-    w=x[,"train_set"]==1
+    test_dependency("keras")
+    test_dependency("tensorflow")
 
-    fit_history=do.call(
-        function(...){
-            fit(
-                ...,
-                object=model,
-                x=x[w,chans],
-                y=x[w,yvar],
-                callbacks=callbacks
-            )
-        },
-        params
-    )
-    
-    pred = predict(model, x[, chans])
-    rm(list=setdiff(ls(),c("pred","model","fit_history")))
-    return(list(pred = pred, model = serialize_model(model), fit_history = fit_history))
+    if(!is.null(x) & !is.null(params)){
+        model=unserialize_model(params$object)
+        params=params[setdiff(names(params),"object")]
+
+        early_stop=callback_early_stopping(monitor = "val_loss", patience = 20)
+        callbacks=list(early_stop)
+        
+        w=x[,"train_set"]==1
+
+        fit_history=do.call(
+            function(...){
+                fit(
+                    ...,
+                    object=model,
+                    x=x[w,chans],
+                    y=x[w,yvar],
+                    callbacks=callbacks
+                )
+            },
+            params
+        )
+        
+        pred = predict(model, x[, chans])
+        rm(list=setdiff(ls(),c("pred","model","fit_history")))
+        return(list(pred = pred, model = serialize_model(model), fit_history = fit_history))
+    }
 }
-            
+
 #' Train SVM regressions
 #' @param yvar name of the exploratory measurement
 #' @param params Named list of arguments passed to regression fitting functions
 #' @param paths Character vector of paths to store intput, intermediary results, outputs...
 #' @param cores Number of cores to use for parallel computing 
 fit_regressions=function(
-                  yvar,
-                  params,
-                  paths,
-                  cores,
-                  xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds")),
-                  chans=readRDS(file.path(paths["rds"],"chans.Rds")),
-                  events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
-                  transforms_chan=readRDS(file.path(paths["rds"],"transforms_chan.Rds")),
-                  transforms_pe=readRDS(file.path(paths["rds"],"transforms_pe.Rds")),
-                  regression_functions,
-                  verbose=TRUE,
-                  neural_networks_seed
-                  )
+                         yvar,
+                         params,
+                         paths,
+                         cores,
+                         xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds")),
+                         chans=readRDS(file.path(paths["rds"],"chans.Rds")),
+                         events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
+                         transforms_chan=readRDS(file.path(paths["rds"],"transforms_chan.Rds")),
+                         transforms_pe=readRDS(file.path(paths["rds"],"transforms_pe.Rds")),
+                         regression_functions,
+                         verbose=TRUE,
+                         neural_networks_seed
+                         )
 {   
     if(verbose){
         message("Fitting regression models")
     }
     
-    require(parallel)
     cl=makeCluster(min(cores,length(unique(events.code))))
     
     RNGkind("L'Ecuyer-CMRG")
@@ -238,23 +259,22 @@ fit_regressions=function(
 #' @param cores Number of cores to use for parallel computing
 
 predict_from_models=function(
-                      paths,
-                      prediction_events_downsampling,
-                      cores,
-                      chans=readRDS(file.path(paths["rds"],"chans.Rds")),
-                      events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
-                      models=readRDS(file.path(paths["rds"],"regression_models.Rds")),
-                      xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds")),
-                      train_set=readRDS(file.path(paths["rds"],"train_set.Rds")),
-                      verbose=TRUE,
-                      neural_networks_seed
-                      )
+                             paths,
+                             prediction_events_downsampling,
+                             cores,
+                             chans=readRDS(file.path(paths["rds"],"chans.Rds")),
+                             events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
+                             models=readRDS(file.path(paths["rds"],"regression_models.Rds")),
+                             xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds")),
+                             train_set=readRDS(file.path(paths["rds"],"train_set.Rds")),
+                             verbose=TRUE,
+                             neural_networks_seed
+                             )
 {   
     if(verbose){
         message("Imputing missing measurements")
     }
     
-    require(parallel)
     cl=makeCluster(cores)
     
     clusterEvalQ(

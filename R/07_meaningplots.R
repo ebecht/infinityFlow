@@ -53,7 +53,7 @@ plot_results=function(
         palette=jet.colors(100),
         pch=16,
         cex=min(1,1.1-0.15*log10(nrow(preds))),
-        res=72,
+        resolution=72,
         raster.height=360*4,
         raster.width=360*4
     )

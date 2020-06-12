@@ -4,11 +4,16 @@
 \alias{logicle_transform_input}
 \title{Transform FCS files}
 \usage{
-logicle_transform_input(yvar, paths, xp = readRDS(file.path(paths["rds"],
-  "xp.Rds")), chans = readRDS(file.path(paths["rds"], "chans.Rds")),
+logicle_transform_input(
+  yvar,
+  paths,
+  xp = readRDS(file.path(paths["rds"], "xp.Rds")),
+  chans = readRDS(file.path(paths["rds"], "chans.Rds")),
   events.code = readRDS(file.path(paths["rds"], "pe.Rds")),
-  annot = read.table(paths["annotation"], sep = ",", header = TRUE,
-  stringsAsFactors = FALSE), verbose = TRUE)
+  annot = read.table(paths["annotation"], sep = ",", header = TRUE, stringsAsFactors =
+    FALSE),
+  verbose = TRUE
+)
 }
 \arguments{
 \item{yvar}{name of the exploratory measurement}

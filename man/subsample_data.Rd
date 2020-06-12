@@ -4,8 +4,13 @@
 \alias{subsample_data}
 \title{Parsing FCS files}
 \usage{
-subsample_data(input_events_downsampling, paths, extra_args_read_FCS,
-  name_of_PE_parameter, verbose = TRUE)
+subsample_data(
+  input_events_downsampling,
+  paths,
+  extra_args_read_FCS,
+  name_of_PE_parameter,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{input_events_downsampling}{See \code{\link{infinity_flow}}}

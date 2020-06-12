@@ -1,5 +1,3 @@
-require(flowCore)
-
 correct_background=function(
                             paths,
                             FCS_export,
@@ -118,8 +116,7 @@ correct_background=function(
             message("\t","Exporting as CSV")
         }
         dir.create(file.path(paths["output"],"FCS_background_corrected/"),showWarnings=FALSE,recursive=TRUE)
-        require(data.table)
-        fwrite(as.data.frame(preds_rawbgc_linear),row.names=FALSE,file=file.path(paths["output"],"predicted_data_background_corrected.csv"))
+        write.csv(as.data.frame(preds_rawbgc_linear),row.names=FALSE,file=file.path(paths["output"],"predicted_data_background_corrected.csv"))
     }
 
     if(any(FCS_export=="split")){

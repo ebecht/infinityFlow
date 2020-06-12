@@ -12,8 +12,6 @@ perform_UMAP_dimensionality_reduction=function(
     if(verbose){
         message("Performing dimensionality reduction")
     }
-    
-    require(uwot)
 
     umap=do.call(uwot::umap,c(list(X=preds[[1]][,chans]),extra_args_UMAP))
     colnames(umap)=c("UMAP1","UMAP2")
