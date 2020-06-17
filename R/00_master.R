@@ -4,14 +4,21 @@
 #' @param path_to_intermediary_results Path to results to store temporary data. If left blank, will default to a temporary directory. It may be useful to store the intermediary results to further explore the data, tweak the pipeline or to resume computations.
 #' @param backbone_selection_file If that argument is missing and R is run interactively, the user will be prompted to state whether each channel in the FCS file should be considered backbone measurement, exploratory measurement or ignored. Otherwise, the user should run \code{\link{select_backbone_and_exploratory_markers}} in an interactive R session, save its output using \emph{write.csv(row.names=FALSE)} and set this \emph{backbone_selection_file} parameter to the path of the saved output.
 #' @param annotation Named character vector. Elements should be the targets of the exploratory antibodies, names should be the name of the FCS file where that exploratory antibody was measured.
-#' @param annotation Named character vector. Elements should be the isotype used in each of the well and that (e.g. IgG2). The corresponding isotype should be present in \emph{annotation} (e.g. Isotype_IgG2, with this capitalization exactly). Autofluorescence measurements should be listed here as "Blank"
-#' @param input_events_downsampling How many event should be kept per input FCS file. Default to no downsampling. In any case, half of the events will be used to train regression models and half to test the performance. Predictions will be made only on events from the test set.
+#' @param isotype Named character vector. Elements should be the isotype used in each of the well and that (e.g. IgG2). The corresponding isotype should be present in \emph{annotation} (e.g. Isotype_IgG2, with this capitalization exactly). Autofluorescence measurements should be listed here as "Blank"
+#' @param regression_functions named list of fitter_* functions (see ls("package:infinityFlow") for the complete list). The names should be desired names for the different models. Each object of the list will correspond to a machine learning model to train. Defaults to list(XGBoost = fitter_xgboost).
+#' @param extra_args_regression_params list of lists the same length as the regression_functions argument. Each element should be a named list, that will be passed as named arguments to the corresponding fitter_ function. Defaults to list(list(nrounds = 500, eta = 0.05)).
+#' @param input_events_downsampling How many event should be kept per input FCS file. Default to no downsampling. In any case, half of the events will be used to train regression models and half to test the performance. Predictions will be made only on events from the test set, and downsampled according to prediction_events_downsampling.
+#' @param prediction_events_downsampling How many event should be kept per input FCS file to output prediction for. Default to 1000.
 #' @param cores Number of cores to use for parallel computing. Defaults to 1 (no parallel computing)
-#' @param your_random_seed Set a seed for reproducible results. Defaults to 123
+#' @param your_random_seed Set a seed for computationally reproducible results. Defaults to 123
 #' @param verbose Whether to print information about progress
 #' @param extra_args_plotting list of named arguments to pass to plot_results. Defaults to list(chop_quantiles=0.005) which removes the top 0.05\% and bottom 0.05\% of the scale for each marker when mapping color palettes to intensities.
 #' @param extra_args_read_FCS list of named arguments to pass to flowCore:read.FCS. Defaults to list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE) which in our experience avoided issues with data loading.
 #' @param extra_args_UMAP list of named arguments to pass to uwot:umap. Defaults to list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L)
+#' @param neural_networks_seed Seed for computationally reproducible results when using neural networks (in additional to the other sources of stochasticity - sampling - that are made reproducible by the your_random_seed argument.
+#' @param extra_args_export Whether raw imputed data should be exported as a single concatenated FCS file, one FCS-file per well, no FCS file, and whether to export the raw imputed data to CSV. This should be a named list, passed to infinityFlow:::export_data. See ?export_data for help
+#' @param extra_args_correct_background Whether background-corrected imputed data should be exported as a single concatenated FCS file, one FCS-file per well, no FCS file, and whether to export the background-corrected imputed data to CSV. This should be a named list, passed to infinityFlow:::export_data. See ?correct_background for help
+#' @importFrom keras keras_model_sequential %>% layer_dense compile optimizer_sgd serialize_model
 #' @export
 
 infinity_flow=function(
@@ -38,46 +45,20 @@ infinity_flow=function(
                        verbose=TRUE,
 
                        extra_args_read_FCS=list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE),
-                       regression_functions=list(SVM=fitter_svm,XGBoost=fitter_xgboost,LM2=fitter_linear,NN=fitter_nn,LASSO=fitter_glmnet)[1],
+                       regression_functions=list(
+                           XGBoost=fitter_xgboost
+                       ),
                        extra_args_regression_params=list(
-                           list(type="eps-regression",cost=1,epsilon=0.5),
-                           list(nrounds=10),
-                           list(degree=2),
-                           list(
-                               object={
-                                   model=keras_model_sequential()
-                                   model %>%
-                                       layer_dense(units = 8, activation = "relu", input_shape=14) %>%
-                                       layer_dense(units = 8, activation = "relu") %>%
-                                       layer_dense(units = 8, activation = "relu") %>%
-                                       layer_dense(units = 8, activation = "relu") %>%
-                                       layer_dense(units = 8, activation = "relu") %>%
-                                       layer_dense(units = 8, activation = "relu") %>%
-                                       layer_dense(units = 8, activation = "relu") %>%
-                                       layer_dense(units = 8, activation = "relu") %>%
-                                       layer_dense(units = 1, activation = "linear")
-                                   model %>% compile(
-                                                 loss = "mean_squared_error",
-                                                 optimizer = optimizer_sgd(lr = 0.01)
-                                             )
-                                   serialize_model(model)
-                               },
-                               ##callbacks=list(callback_early_stopping(monitor = "val_loss", patience = 20)), ## This was moved inside fitter_nn because it causes crashes
-                               epochs=1000,
-                               validation_split=0.2,
-                               verbose=0,
-                               batch_size=128 ## If you want reproducibility with neural networks you should also use use_session_with_seed(your_random_seed + 3) before calling infinity flow. Set to NULL if you want to remove reproducibility of the NN (which can be good practice to ensure robustness)
+                           list(nrounds=500, eta = 0.05),
                            ),
-                           list(degree=2,alpha=1,nfolds=10)
-                       )[1],
                        extra_args_UMAP=list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L,n_threads=cores,n_sgd_threads=cores),
                        extra_args_export=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
                        extra_args_correct_background=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
                        extra_args_plotting=list(chop_quantiles=0.005),
-                       neural_networks_seed=your_random_seed + 3 ## Set to NULL to disable reproducibility
+                       neural_networks_seed = NULL ## Set to integer value to enforce computational reproducibility when using neural networks
                        ){
 
-    ## Making sure dependencies are installed. We make sure that users don't have to install complicated dependencies such as tensorflow and keras, unless they want to use them.
+    ## Making sure dependencies are installed.
     lapply(
         regression_functions,
         function(fun){
@@ -281,3 +262,5 @@ initialize=function(
         )
     )
 }
+
+utils::globalVariables(c("type"))

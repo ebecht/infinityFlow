@@ -1,6 +1,10 @@
 #' Exporting results
 #' @param paths Character vector of paths to store intput, intermediary results, outputs...
 #' @param FCS_export if FALSE, no FCS export. if "concatenated", export one FCS file with all the data. if "split", export the data in the result folder under the subfolder FCS, with each file corresponding to a (subsampled) input file.
+#' @importFrom utils read.csv write.csv
+#' @importFrom stats setNames
+#' @importFrom flowCore inverseLogicleTransform flowFrame write.FCS
+
 export_data=function(
                      paths,
                      FCS_export,
@@ -98,7 +102,7 @@ export_data=function(
                 FCS@parameters$desc=as.character(FCS@parameters$desc)
                 FCS@parameters$name=as.character(FCS@parameters$name)
                 FCS=generate_description(FCS)
-                invisible(write.FCS(FCS,file=file.path(paths["output"],"FCS","split",paste0(sub(".fcs","",file),"_target_",gsub("/","-",a[file]),".fcs"))))
+                invisible(write.FCS(FCS,filename=file.path(paths["output"],"FCS","split",paste0(sub(".fcs","",file),"_target_",gsub("/","-",a[file]),".fcs"))))
             }
         )
     }
@@ -111,7 +115,7 @@ export_data=function(
         FCS@parameters$desc=as.character(FCS@parameters$desc)
         FCS@parameters$name=as.character(FCS@parameters$name)
         FCS=generate_description(FCS)
-        invisible(write.FCS(FCS,file=file.path(paths["output"],"FCS","concatenated","concatenated_results.fcs")))
+        invisible(write.FCS(FCS,filename=file.path(paths["output"],"FCS","concatenated","concatenated_results.fcs")))
     }
 
     saveRDS(preds_raw,file.path(paths["rds"],"predictions_cbound.Rds"))

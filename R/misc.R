@@ -1,6 +1,7 @@
 #' Generates description for a flowFrame
 #'
 #' @param ff A flowframe
+#' @importFrom Biobase pData
 #' @return A flowframe with description consistent with pData(ff@parameters)
 
 generate_description<-function(ff){
@@ -51,6 +52,23 @@ generate_description<-function(ff){
 #' @param raster.height height of each embedded raster. Defaults to 480
 #' @param ... passed to plot (suggested: pch=16, cex=0.5 or less)
 #' @return NULL
+#' @importFrom grDevices colorRampPalette
+#' @importFrom grDevices png
+#' @importFrom grDevices pdf
+#' @importFrom grDevices dev.off
+#' @importFrom raster tmpDir
+#' @importFrom graphics par
+#' @importFrom graphics plot
+#' @importFrom graphics plot.new
+#' @importFrom graphics rect
+#' @importFrom graphics text
+#' @importFrom grid grid.raster
+#' @importFrom grid grid.newpage
+#' @importFrom grid grid.text
+#' @importFrom grid unit
+#' @importFrom grid gpar
+#' @importFrom png readPNG
+#' @importFrom utils tail
 #' @note Since pdf files are vectorized, they can get really big if a lot of data point are plotted. This function thus used bitmap images that are stored in a temporary directory (tmpDir()) and then import them in a single pdf. If you're interested in using the bitmap images, you can fetch them in tmpDir()
 
 color_biplot_by_channels <- function(
@@ -160,7 +178,8 @@ color_biplot_by_channels <- function(
 #' @description This This function will load the first of the input FCS files and extract the measured parameters as well as their labels. For each of these, it will ask the user whether it is part of the backbone measurements (and will be used as a predictor variable in regressions), exploratory measurements (used as dependent variable in regressions) or discarded (e.g. for Time, Sample IDs, Event number IDs, ...).
 #' @param files character vector of paths to FCS files
 #' @export
-
+#' @importFrom flowCore read.FCS parameters
+#' @importFrom Biobase pData
 select_backbone_and_exploratory_markers=function(files){
     if(!interactive()){
         stop("Interactive backbone selection requires an interactive R session")

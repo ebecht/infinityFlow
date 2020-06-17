@@ -1,7 +1,8 @@
 #' Plot the UMAP embedding of the backbone with color-coded intensities for backbone and predicted measurements
 #' @param paths Character vector of paths to store intput, intermediary results, outputs...
 #' @param chop_quantiles removes the top and bottom \emph{chop_quantiles} of the intensity scale for each marker when mapping intensities to colors.
-
+#' @importFrom stats quantile
+#' @importFrom matlab jet.colors
 plot_results=function(
                       paths,
                       chop_quantiles=0.005,

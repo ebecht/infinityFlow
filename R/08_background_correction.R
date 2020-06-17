@@ -1,3 +1,8 @@
+
+#' @importFrom utils read.csv
+#' @importFrom utils write.csv
+#' @importFrom flowCore write.FCS
+#' @importFrom flowCore flowFrame
 correct_background=function(
                             paths,
                             FCS_export,
@@ -134,7 +139,7 @@ correct_background=function(
         lapply(
             names(FCS_list),
             function(x){
-                invisible(write.FCS(FCS_list[[x]],file=file.path(paths["output"],"FCS_background_corrected/","split",paste0(sub(".fcs","",x),"_target_",gsub("/","-",a[x,"target"]),".fcs"))))
+                invisible(write.FCS(FCS_list[[x]],filename=file.path(paths["output"],"FCS_background_corrected/","split",paste0(sub(".fcs","",x),"_target_",gsub("/","-",a[x,"target"]),".fcs"))))
             }
         )   
     }
@@ -148,7 +153,7 @@ correct_background=function(
         FCS@parameters$name=as.character(FCS@parameters$name)
         FCS=generate_description(FCS)
         dir.create(file.path(paths["output"],"FCS_background_corrected/","concatenated"),recursive=TRUE,showWarnings=FALSE)
-        invisible(write.FCS(FCS,file=file.path(paths["output"],"FCS_background_corrected","concatenated","concatenated_results_background_corrected.fcs")))
+        invisible(write.FCS(FCS,filename=file.path(paths["output"],"FCS_background_corrected","concatenated","concatenated_results_background_corrected.fcs")))
     }
 
     saveRDS(preds_rawbgc,file.path(paths["rds"],"predictions_bgc_cbound.Rds"))

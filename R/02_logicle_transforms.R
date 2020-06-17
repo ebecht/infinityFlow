@@ -2,6 +2,9 @@
 #' @description Backbone measurements use a common transformation across the whole dataset. Exploratory measurements are transformed well/file-wise.
 #' @param yvar name of the exploratory measurement
 #' @param paths Character vector of paths to store intput, intermediary results, outputs...
+#' @importFrom utils read.table
+#' @importFrom stats quantile
+#' @importFrom flowCore logicleTransform inverseLogicleTransform
 logicle_transform_input=function(
                                  yvar,
                                  paths,

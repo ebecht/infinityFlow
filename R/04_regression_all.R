@@ -1,3 +1,5 @@
+utils::globalVariables(c("yvar", "chans"))
+
 #' Make sure a package is installed and produces an error otherwise
 test_dependency = function(packageName){
     if(!requireNamespace(packageName)){
@@ -7,6 +9,8 @@ test_dependency = function(packageName){
 
 #' Wrapper to SVM training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions
+#' @importFrom e1071 svm
+#' @importFrom stats predict
 #' @export
 fitter_svm=function(x = NULL, params = NULL){
     test_dependency("e1071")
@@ -21,6 +25,8 @@ fitter_svm=function(x = NULL, params = NULL){
 
 #' Wrapper to XGBoost training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions
+#' @importFrom stats predict
+#' @importFrom xgboost xgboost
 #' @export
 fitter_xgboost=function(x = NULL, params = NULL){
     test_dependency("xgboost")
@@ -36,6 +42,7 @@ fitter_xgboost=function(x = NULL, params = NULL){
 
 #' Wrapper to linear model training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions
+#' @importFrom stats lm predict
 #' @export
 fitter_linear=function(x = NULL, params = NULL){
     w=x[,"train_set"]==1
@@ -50,6 +57,8 @@ fitter_linear=function(x = NULL, params = NULL){
 
 #' Wrapper to glmnet. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions
+#' @importFrom stats as.formula predict
+#' @importFrom utils getS3method
 #' @export
 fitter_glmnet=function(x = NULL, params = NULL){
     test_dependency("glmnetUtils")
@@ -94,6 +103,8 @@ polynomial_formula=function(variables,degree){
 
 #' Wrapper to predict. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_svms
+#' @importFrom keras unserialize_model
+#' @importFrom xgboost xgb.Booster.complete xgb.parameters<-
 predict_wrapper=function(x){
     if("lm"%in%class(x)){
         xp = as.data.frame(xp)
@@ -115,6 +126,9 @@ predict_wrapper=function(x){
 
 #' Wrapper to Neural Network training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions. Defines model architecture
+#' @importFrom keras unserialize_model callback_early_stopping serialize_model
+#' @importFrom generics fit
+#' @importFrom stats predict
 #' @export
 fitter_nn=function(x,params){
     
@@ -154,6 +168,9 @@ fitter_nn=function(x,params){
 #' @param params Named list of arguments passed to regression fitting functions
 #' @param paths Character vector of paths to store intput, intermediary results, outputs...
 #' @param cores Number of cores to use for parallel computing 
+#' @importFrom parallel makeCluster mc.reset.stream clusterExport clusterEvalQ stopCluster
+#' @importFrom tensorflow use_session_with_seed tf
+#' @importFrom pbapply pblapply
 fit_regressions=function(
                          yvar,
                          params,
@@ -182,7 +199,6 @@ fit_regressions=function(
     
     colnames(xp)=make.names(colnames(xp))
 
-    
     if(verbose){
         message("\tRandomly selecting 50% of the subsetted input files to fit models")
     }

@@ -14,20 +14,22 @@ Imports: stats,
 	grDevices,
 	utils,
 	graphics,
-	pbmcapply,
+	pbapply,
 	matlab,
 	png,
 	raster,
 	grid,
-	uwot
+	uwot,
+	flowCore,
+	keras,
+	tensorflow,
+	glmnetUtils,
+	e1071,
+	xgboost,
+        gtools,
+	Biobase,
+	generics
 Suggests: knitr,
-	  rmarkdown,
-	  flowCore,
-	  keras,
-	  tensorflow,
-	  glmnetUtils,
-	  e1071,
-	  xgboost,
-          gtools
+	  rmarkdown
 VignetteBuilder: knitr
 RoxygenNote: 7.1.0

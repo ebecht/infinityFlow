@@ -4,6 +4,8 @@
 #' @param extra_args_read_FCS passed to flowCore:read.FCS
 #' @param name_of_PE_parameter Name of the exploratory measurement
 #' @description This function reads the input FCS files, downsample to a user-defined number of events if necessary, harmonize the input data names, save a concatenated expression matrix and the corresponding vector mapping events to their file of origin.
+#' @importFrom flowCore read.FCS
+#' @importFrom Biobase pData exprs
 subsample_data=function(
                         input_events_downsampling,
                         paths,
