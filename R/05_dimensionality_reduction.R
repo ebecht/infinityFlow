@@ -1,6 +1,10 @@
 #' Wrapper to perform and export UMAP dimensionality reduction on the backbone
 #' @param paths Character vector of paths to store intput, intermediary results, outputs...
 #' @param extra_args_UMAP Named list of arguments to pass to uwot:umap. Defaults to list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L)
+#' @param chans vector of backbone channels' names
+#' @param preds matrix of imputed data
+#' @param verbose Verbosity
+
 perform_UMAP_dimensionality_reduction=function(
                                                paths,
                                                extra_args_UMAP,

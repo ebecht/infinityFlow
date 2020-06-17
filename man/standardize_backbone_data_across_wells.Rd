@@ -20,6 +20,14 @@ standardize_backbone_data_across_wells(
 \item{paths}{Character vector of paths to store intput, intermediary results, outputs...}
 
 \item{scale_function}{Scaling function to apply. Should apply to a matrix (events x backbone measurements) and return a matrix of similar size. Defaults to scale(,center=TRUE,scale=FALSE)}
+
+\item{xp}{Logicle-transformed backbone expression matrix}
+
+\item{chans}{vector of backbone channels' names}
+
+\item{events.code}{vector of length nrow(xp) specifying from which well each event originates}
+
+\item{verbose}{Verbosity}
 }
 \description{
 Scaling of the backbone measurements

@@ -16,6 +16,12 @@ perform_UMAP_dimensionality_reduction(
 \item{paths}{Character vector of paths to store intput, intermediary results, outputs...}
 
 \item{extra_args_UMAP}{Named list of arguments to pass to uwot:umap. Defaults to list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L)}
+
+\item{chans}{vector of backbone channels' names}
+
+\item{preds}{matrix of imputed data}
+
+\item{verbose}{Verbosity}
 }
 \description{
 Wrapper to perform and export UMAP dimensionality reduction on the backbone

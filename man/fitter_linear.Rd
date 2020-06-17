@@ -8,6 +8,8 @@ fitter_linear(x = NULL, params = NULL)
 }
 \arguments{
 \item{x}{passed from fit_regressions}
+
+\item{params}{passed from fit_regressions}
 }
 \description{
 Wrapper to linear model training. Defined separetely to avoid passing too many objects in parLapplyLB

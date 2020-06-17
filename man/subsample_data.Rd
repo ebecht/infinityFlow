@@ -20,6 +20,8 @@ subsample_data(
 \item{extra_args_read_FCS}{passed to flowCore:read.FCS}
 
 \item{name_of_PE_parameter}{Name of the exploratory measurement}
+
+\item{verbose}{Verbosity}
 }
 \description{
 This function reads the input FCS files, downsample to a user-defined number of events if necessary, harmonize the input data names, save a concatenated expression matrix and the corresponding vector mapping events to their file of origin.

@@ -2,6 +2,11 @@
 #' @param yvar name of the exploratory measurement
 #' @param paths Character vector of paths to store intput, intermediary results, outputs...
 #' @param scale_function Scaling function to apply. Should apply to a matrix (events x backbone measurements) and return a matrix of similar size. Defaults to scale(,center=TRUE,scale=FALSE)
+#' @param xp Logicle-transformed backbone expression matrix
+#' @param chans vector of backbone channels' names
+#' @param events.code vector of length nrow(xp) specifying from which well each event originates
+#' @param verbose Verbosity
+
 standardize_backbone_data_across_wells=function(
                                                 yvar,
                                                 paths,

@@ -7,7 +7,7 @@
 predict_wrapper(x)
 }
 \arguments{
-\item{x}{passed from fit_svms}
+\item{x}{passed from predict_from_models}
 }
 \description{
 Wrapper to predict. Defined separetely to avoid passing too many objects in parLapplyLB

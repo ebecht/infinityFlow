@@ -8,6 +8,8 @@ fitter_glmnet(x = NULL, params = NULL)
 }
 \arguments{
 \item{x}{passed from fit_regressions}
+
+\item{params}{passed from fit_regressions}
 }
 \description{
 Wrapper to glmnet. Defined separetely to avoid passing too many objects in parLapplyLB

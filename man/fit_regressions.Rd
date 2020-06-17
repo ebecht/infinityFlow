@@ -27,6 +27,22 @@ fit_regressions(
 \item{paths}{Character vector of paths to store intput, intermediary results, outputs...}
 
 \item{cores}{Number of cores to use for parallel computing}
+
+\item{xp}{Logicle-transformed backbone expression matrix}
+
+\item{chans}{vector of backbone channels' names}
+
+\item{events.code}{vector of length nrow(xp) specifying from which well each event originates}
+
+\item{transforms_chan}{named list of logicle-transformations for backbone channels}
+
+\item{transforms_pe}{named list of logicle-transformations for Infinity channels}
+
+\item{regression_functions}{named list of fitter_* functions, passed from infinity_flow()}
+
+\item{verbose}{Verbosity}
+
+\item{neural_networks_seed}{Seed for computational reproducibility when using neural networks. Passed from infinity_flow()}
 }
 \description{
 Train SVM regressions

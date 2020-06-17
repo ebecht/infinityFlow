@@ -8,6 +8,8 @@ fitter_nn(x, params)
 }
 \arguments{
 \item{x}{passed from fit_regressions. Defines model architecture}
+
+\item{params}{passed from fit_regressions}
 }
 \description{
 Wrapper to Neural Network training. Defined separetely to avoid passing too many objects in parLapplyLB

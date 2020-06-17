@@ -49,8 +49,8 @@ infinity_flow=function(
                            XGBoost=fitter_xgboost
                        ),
                        extra_args_regression_params=list(
-                           list(nrounds=500, eta = 0.05),
-                           ),
+                           list(nrounds=500, eta = 0.05)
+                       ),
                        extra_args_UMAP=list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L,n_threads=cores,n_sgd_threads=cores),
                        extra_args_export=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
                        extra_args_correct_background=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
@@ -65,10 +65,6 @@ infinity_flow=function(
             fun(x = NULL, params = NULL)
         }
     )
-    
-    if(!is.null(neural_networks_seed)){
-        use_session_with_seed(neural_networks_seed)
-    }
 
     if(length(extra_args_regression_params) != length(regression_functions)){
         stop("extra_args_regression_params and regression_functions should be lists of the same lengths")

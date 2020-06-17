@@ -1,19 +1,13 @@
 utils::globalVariables(c("yvar", "chans"))
 
-#' Make sure a package is installed and produces an error otherwise
-test_dependency = function(packageName){
-    if(!requireNamespace(packageName)){
-        stop(paste("Please install the", packageName, "package to run SVM regression"))
-    }
-}
-
 #' Wrapper to SVM training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions
+#' @param params passed from fit_regressions
 #' @importFrom e1071 svm
 #' @importFrom stats predict
 #' @export
 fitter_svm=function(x = NULL, params = NULL){
-    test_dependency("e1071")
+    requireNamespace("e1071")
     if(!is.null(x) & !is.null(params)){
         w=x[,"train_set"]==1
         model=do.call(function(...){svm(...,x=x[w,chans],y=x[w,yvar])},params)
@@ -25,12 +19,13 @@ fitter_svm=function(x = NULL, params = NULL){
 
 #' Wrapper to XGBoost training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions
+#' @param params passed from fit_regressions
 #' @importFrom stats predict
 #' @importFrom xgboost xgboost
 #' @export
 fitter_xgboost=function(x = NULL, params = NULL){
-    test_dependency("xgboost")
-
+    requireNamespace("xgboost")
+    
     if(!is.null(x) & !is.null(params)){
         w=x[,"train_set"]==1
         model=do.call(function(...){xgboost(...,data=x[w,chans],label=x[w,yvar],nthread=1L)},params)
@@ -42,6 +37,7 @@ fitter_xgboost=function(x = NULL, params = NULL){
 
 #' Wrapper to linear model training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions
+#' @param params passed from fit_regressions
 #' @importFrom stats lm predict
 #' @export
 fitter_linear=function(x = NULL, params = NULL){
@@ -57,13 +53,14 @@ fitter_linear=function(x = NULL, params = NULL){
 
 #' Wrapper to glmnet. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions
+#' @param params passed from fit_regressions 
 #' @importFrom stats as.formula predict
 #' @importFrom utils getS3method
+#' @importFrom glmnet cv.glmnet
 #' @export
 fitter_glmnet=function(x = NULL, params = NULL){
-    test_dependency("glmnetUtils")
-    test_dependency("gtools")
-
+    requireNamespace("glmnetUtils")
+    
     if(!is.null(x) & !is.null(params)){
         w = x[,"train_set"] == 1
         fmla = paste0(make.names(yvar), "~", polynomial_formula(variables = chans, degree = params$degree))
@@ -77,7 +74,7 @@ fitter_glmnet=function(x = NULL, params = NULL){
                 use.model.frame = TRUE
             )
         )
-
+        fun = getS3method("cv.glmnet", "formula")
         model = do.call(getS3method("cv.glmnet", "formula"), params)
         model$call = NULL ## Slimming down object
         model$glmnet.fit$call = NULL ## Slimming down object
@@ -102,7 +99,7 @@ polynomial_formula=function(variables,degree){
 }
 
 #' Wrapper to predict. Defined separetely to avoid passing too many objects in parLapplyLB
-#' @param x passed from fit_svms
+#' @param x passed from predict_from_models 
 #' @importFrom keras unserialize_model
 #' @importFrom xgboost xgb.Booster.complete xgb.parameters<-
 predict_wrapper=function(x){
@@ -126,14 +123,15 @@ predict_wrapper=function(x){
 
 #' Wrapper to Neural Network training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions. Defines model architecture
+#' @param params passed from fit_regressions
 #' @importFrom keras unserialize_model callback_early_stopping serialize_model
 #' @importFrom generics fit
 #' @importFrom stats predict
 #' @export
 fitter_nn=function(x,params){
     
-    test_dependency("keras")
-    test_dependency("tensorflow")
+    requireNamespace("keras")
+    requireNamespace("tensorflow")
 
     if(!is.null(x) & !is.null(params)){
         model=unserialize_model(params$object)
@@ -167,7 +165,15 @@ fitter_nn=function(x,params){
 #' @param yvar name of the exploratory measurement
 #' @param params Named list of arguments passed to regression fitting functions
 #' @param paths Character vector of paths to store intput, intermediary results, outputs...
-#' @param cores Number of cores to use for parallel computing 
+#' @param cores Number of cores to use for parallel computing
+#' @param xp Logicle-transformed backbone expression matrix
+#' @param chans vector of backbone channels' names
+#' @param events.code vector of length nrow(xp) specifying from which well each event originates
+#' @param transforms_chan named list of logicle-transformations for backbone channels
+#' @param transforms_pe named list of logicle-transformations for Infinity channels
+#' @param regression_functions named list of fitter_* functions, passed from infinity_flow()
+#' @param neural_networks_seed Seed for computational reproducibility when using neural networks. Passed from infinity_flow()
+#' @param verbose Verbosity
 #' @importFrom parallel makeCluster mc.reset.stream clusterExport clusterEvalQ stopCluster
 #' @importFrom tensorflow use_session_with_seed tf
 #' @importFrom pbapply pblapply
@@ -273,6 +279,13 @@ fit_regressions=function(
 #' @param paths Character vector of paths to store intput, intermediary results, outputs...
 #' @param prediction_events_downsampling Number of events to predict data for per file
 #' @param cores Number of cores to use for parallel computing
+#' @param chans vector of backbone channels' names
+#' @param events.code vector of length nrow(xp) specifying from which well each event originates
+#' @param xp Logicle-transformed backbone expression matrix
+#' @param models list of list of machine learning models, created by infinityFlow:::fit_regressions
+#' @param train_set data.frame with nrow(xp) rows, specifying which events were used to train the models. Generated by infinityFlow:::fit_regressions
+#' @param neural_networks_seed Seed for computational reproducibility when using neural networks. Passed from infinity_flow()
+#' @param verbose Verbosity
 
 predict_from_models=function(
                              paths,
@@ -280,8 +293,8 @@ predict_from_models=function(
                              cores,
                              chans=readRDS(file.path(paths["rds"],"chans.Rds")),
                              events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
-                             models=readRDS(file.path(paths["rds"],"regression_models.Rds")),
                              xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds")),
+                             models=readRDS(file.path(paths["rds"],"regression_models.Rds")),
                              train_set=readRDS(file.path(paths["rds"],"train_set.Rds")),
                              verbose=TRUE,
                              neural_networks_seed
