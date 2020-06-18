@@ -18,7 +18,6 @@
 #' @param neural_networks_seed Seed for computationally reproducible results when using neural networks (in additional to the other sources of stochasticity - sampling - that are made reproducible by the your_random_seed argument.
 #' @param extra_args_export Whether raw imputed data should be exported as a single concatenated FCS file, one FCS-file per well, no FCS file, and whether to export the raw imputed data to CSV. This should be a named list, passed to infinityFlow:::export_data. See ?export_data for help
 #' @param extra_args_correct_background Whether background-corrected imputed data should be exported as a single concatenated FCS file, one FCS-file per well, no FCS file, and whether to export the background-corrected imputed data to CSV. This should be a named list, passed to infinityFlow:::export_data. See ?correct_background for help
-#' @importFrom keras keras_model_sequential %>% layer_dense compile optimizer_sgd serialize_model
 #' @export
 
 infinity_flow=function(
@@ -129,7 +128,8 @@ infinity_flow=function(
         prediction_events_downsampling=prediction_events_downsampling,
         cores=cores,
         verbose=verbose,
-        neural_networks_seed=neural_networks_seed
+        neural_networks_seed=neural_networks_seed,
+        regression_functions=regression_functions
     )
     
     ## UMAP dimensionality reduction

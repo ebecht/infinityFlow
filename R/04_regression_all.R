@@ -3,14 +3,15 @@ utils::globalVariables(c("yvar", "chans"))
 #' Wrapper to SVM training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions
 #' @param params passed from fit_regressions
-#' @importFrom e1071 svm
 #' @importFrom stats predict
 #' @export
 fitter_svm=function(x = NULL, params = NULL){
-    requireNamespace("e1071")
+    if(!requireNamespace("e1071", quietly = TRUE)){
+        stop("Please run install.packages('e1071')")
+    }
     if(!is.null(x) & !is.null(params)){
         w=x[,"train_set"]==1
-        model=do.call(function(...){svm(...,x=x[w,chans],y=x[w,yvar])},params)
+        model=do.call(function(...){e1071::svm(...,x=x[w,chans],y=x[w,yvar])},params)
         pred=predict(model,x[,chans])
         rm(list=setdiff(ls(),c("pred","model")))
         return(list(pred=pred,model=model))
@@ -21,14 +22,15 @@ fitter_svm=function(x = NULL, params = NULL){
 #' @param x passed from fit_regressions
 #' @param params passed from fit_regressions
 #' @importFrom stats predict
-#' @importFrom xgboost xgboost
 #' @export
 fitter_xgboost=function(x = NULL, params = NULL){
-    requireNamespace("xgboost")
+    if(!requireNamespace("xgboost", quietly = TRUE)){
+        stop("Please run install.packages(\"xgboost\")")
+    }
     
     if(!is.null(x) & !is.null(params)){
         w=x[,"train_set"]==1
-        model=do.call(function(...){xgboost(...,data=x[w,chans],label=x[w,yvar],nthread=1L)},params)
+        model=do.call(function(...){xgboost::xgboost(...,data=x[w,chans],label=x[w,yvar],nthread=1L)},params)
         pred=predict(model,x[,chans])
         rm(list=setdiff(ls(),c("pred","model")))
         return(list(pred=pred,model=model))
@@ -56,11 +58,11 @@ fitter_linear=function(x = NULL, params = NULL){
 #' @param params passed from fit_regressions 
 #' @importFrom stats as.formula predict
 #' @importFrom utils getS3method
-#' @importFrom glmnet cv.glmnet
 #' @export
 fitter_glmnet=function(x = NULL, params = NULL){
-    requireNamespace("glmnetUtils")
-    
+    if(!requireNamespace("glmnetUtils", quietly = TRUE)){
+        stop("Please run install.packages(\"glmnetUtils\")")
+    }
     if(!is.null(x) & !is.null(params)){
         w = x[,"train_set"] == 1
         fmla = paste0(make.names(yvar), "~", polynomial_formula(variables = chans, degree = params$degree))
@@ -100,23 +102,23 @@ polynomial_formula=function(variables,degree){
 
 #' Wrapper to predict. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from predict_from_models 
-#' @importFrom keras unserialize_model
-#' @importFrom xgboost xgb.Booster.complete xgb.parameters<-
 predict_wrapper=function(x){
     if("lm"%in%class(x)){
         xp = as.data.frame(xp)
     }
     if("cv.glmnet"%in%class(x)){
+        requireNamespace("glmnetUtils")
         xp = as.data.frame(xp)
         return(predict(x,xp,s=x$lambda.min)[,1])
     }
     if(class(x)=="raw"){
         requireNamespace("keras")
-        x = unserialize_model(x)
+        x = keras::unserialize_model(x)
     }
     if(class(x)=="xgb.Booster"){
-        x = xgb.Booster.complete(x)
-        xgb.parameters(x) <- list(nthread = 1)
+        requireNamespace("xgboost")
+        x = xgboost::xgb.Booster.complete(x)
+        xgboost::xgb.parameters(x) <- list(nthread = 1)
     }
     res=predict(x, xp)
 }
@@ -124,27 +126,26 @@ predict_wrapper=function(x){
 #' Wrapper to Neural Network training. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from fit_regressions. Defines model architecture
 #' @param params passed from fit_regressions
-#' @importFrom keras unserialize_model callback_early_stopping serialize_model
 #' @importFrom generics fit
 #' @importFrom stats predict
 #' @export
 fitter_nn=function(x,params){
+    if(!requireNamespace("tensorflow", quietly = TRUE) & !requireNamespace("keras", quietly = TRUE)){
+        stop("Please run install.packages(c(\"tensorflow\", \"keras\")) and make sure that install_tensorflow() and install_keras() have been run")
+    }
     
-    requireNamespace("keras")
-    requireNamespace("tensorflow")
-
     if(!is.null(x) & !is.null(params)){
-        model=unserialize_model(params$object)
+        model=keras::unserialize_model(params$object)
         params=params[setdiff(names(params),"object")]
 
-        early_stop=callback_early_stopping(monitor = "val_loss", patience = 20)
+        early_stop=keras::callback_early_stopping(monitor = "val_loss", patience = 20)
         callbacks=list(early_stop)
         
         w=x[,"train_set"]==1
 
         fit_history=do.call(
             function(...){
-                fit(
+                keras::fit(
                     ...,
                     object=model,
                     x=x[w,chans],
@@ -157,7 +158,7 @@ fitter_nn=function(x,params){
         
         pred = predict(model, x[, chans])
         rm(list=setdiff(ls(),c("pred","model","fit_history")))
-        return(list(pred = pred, model = serialize_model(model), fit_history = fit_history))
+        return(list(pred = pred, model = keras::serialize_model(model), fit_history = fit_history))
     }
 }
 
@@ -175,7 +176,6 @@ fitter_nn=function(x,params){
 #' @param neural_networks_seed Seed for computational reproducibility when using neural networks. Passed from infinity_flow()
 #' @param verbose Verbosity
 #' @importFrom parallel makeCluster mc.reset.stream clusterExport clusterEvalQ stopCluster
-#' @importFrom tensorflow use_session_with_seed tf
 #' @importFrom pbapply pblapply
 fit_regressions=function(
                          yvar,
@@ -221,7 +221,7 @@ fit_regressions=function(
     
     clusterExport(
         cl,
-        c("yvar","chans","neural_networks_seed"),
+        c("yvar","chans","neural_networks_seed", "regression_functions", "fitter_nn"),
         envir=env
     )
 
@@ -230,20 +230,20 @@ fit_regressions=function(
         {
             chans=make.names(chans)
             yvar=make.names(yvar)
-            library(tensorflow)
-            library(keras)
-            library(glmnetUtils)
-            library(glmnet)
-            if(!is.null(neural_networks_seed)){
-                use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
-            } else {
-                tensorflow:::tf$reset_default_graph()
-                config <- list()
-                config$intra_op_parallelism_threads <- 1L
-                config$inter_op_parallelism_threads <- 1L
-                session_conf <- do.call(tf$ConfigProto, config)
-                sess <- tf$Session(graph = tf$get_default_graph(), config = session_conf)
-                tensorflow:::call_hook("tensorflow.on_use_session", sess, TRUE)
+            if(any(sapply(regression_functions, function(x){identical(x, fitter_nn)}))){
+                if(requireNamespace("keras", quietly = TRUE) & requireNamespace("tensorflow", quietly = TRUE)){
+                    if(!is.null(neural_networks_seed)){
+                        tensorflow::use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
+                    } else {
+                        tensorflow::tf$reset_default_graph()
+                        config <- list()
+                        config$intra_op_parallelism_threads <- 1L
+                        config$inter_op_parallelism_threads <- 1L
+                        session_conf <- do.call(tensorflow::tf$ConfigProto, config)
+                        sess <- tensorflow::tf$Session(graph = tensorflow::tf$get_default_graph(), config = session_conf)
+                        tensorflow:::call_hook("tensorflow.on_use_session", sess, TRUE)
+                    }
+                }
             }
         }
     )
@@ -251,10 +251,11 @@ fit_regressions=function(
     if(verbose){
         message("\tFitting...")
     }
+    
     models=list()
     timings=numeric()
     for(i in seq_along(regression_functions)){
-        cat("\t",names(regression_functions)[i],"\n\n",sep="")
+        cat("\t\t",names(regression_functions)[i],"\n\n",sep="")
         t0=Sys.time()
         models[[i]]=pblapply(##parLapplyLB(
             X=d.e,
@@ -284,9 +285,9 @@ fit_regressions=function(
 #' @param xp Logicle-transformed backbone expression matrix
 #' @param models list of list of machine learning models, created by infinityFlow:::fit_regressions
 #' @param train_set data.frame with nrow(xp) rows, specifying which events were used to train the models. Generated by infinityFlow:::fit_regressions
+#' @param regression_functions named list of fitter_* functions, passed from infinity_flow()
 #' @param neural_networks_seed Seed for computational reproducibility when using neural networks. Passed from infinity_flow()
 #' @param verbose Verbosity
-
 predict_from_models=function(
                              paths,
                              prediction_events_downsampling,
@@ -296,6 +297,7 @@ predict_from_models=function(
                              xp=readRDS(file.path(paths["rds"],"xp_transformed_scaled.Rds")),
                              models=readRDS(file.path(paths["rds"],"regression_models.Rds")),
                              train_set=readRDS(file.path(paths["rds"],"train_set.Rds")),
+                             regression_functions = NULL,
                              verbose=TRUE,
                              neural_networks_seed
                              )
@@ -306,18 +308,6 @@ predict_from_models=function(
     
     cl=makeCluster(cores)
     
-    clusterEvalQ(
-        cl,
-        {
-            library(xgboost)
-            library(e1071)
-            library(keras)
-            library(tensorflow)
-            library(glmnetUtils)
-            library(glmnet)
-        }
-    )
-
     mc.reset.stream()
     
     env=environment()
@@ -343,7 +333,7 @@ predict_from_models=function(
     
     clusterExport(
         cl,
-        c("xp","chans","neural_networks_seed"),
+        c("xp","chans","neural_networks_seed", "regression_functions", "fitter_nn"),
         envir=env
     )
     invisible(clusterEvalQ(
@@ -351,16 +341,20 @@ predict_from_models=function(
         {
             colnames(xp)=make.names(colnames(xp))
             xp=xp[,make.names(chans)]
-            if(!is.null(neural_networks_seed)){
-                use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
-            }  else {
-                tensorflow:::tf$reset_default_graph()
-                config <- list()
-                config$intra_op_parallelism_threads <- 1L
-                config$inter_op_parallelism_threads <- 1L
-                session_conf <- do.call(tf$ConfigProto, config)
-                sess <- tf$Session(graph = tf$get_default_graph(), config = session_conf)
-                tensorflow:::call_hook("tensorflow.on_use_session", sess, TRUE)
+            if(any(sapply(regression_functions, function(x){identical(x, fitter_nn)}))){
+                if(requireNamespace("keras", quietly = TRUE) & requireNamespace("tensorflow", quietly = TRUE)){
+                    if(!is.null(neural_networks_seed)){
+                        tensorflow::use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
+                    }  else {
+                        tensorflow::tf$reset_default_graph()
+                        config <- list()
+                        config$intra_op_parallelism_threads <- 1L
+                        config$inter_op_parallelism_threads <- 1L
+                        session_conf <- do.call(tensorflow::tf$ConfigProto, config)
+                        sess <- tensorflow::tf$Session(graph = tensorflow::tf$get_default_graph(), config = session_conf)
+                        tensorflow:::call_hook("tensorflow.on_use_session", sess, TRUE)
+                    }
+                }
             }
         }
     ))
@@ -375,7 +369,7 @@ predict_from_models=function(
     preds=list()
     timings=numeric()
     for(i in seq_along(models)){
-        cat("\t",names(models)[i],"\n\n",sep="")
+        cat("\t\t",names(models)[i],"\n\n",sep="")
         t0=Sys.time()
         preds[[i]]=do.call(
             cbind,

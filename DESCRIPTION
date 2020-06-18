@@ -21,15 +21,15 @@ Imports: stats,
 	grid,
 	uwot,
 	flowCore,
-	glmnetUtils,
-	e1071,
-	xgboost,
         gtools,
 	Biobase,
-	generics,
+	generics
 Suggests: knitr,
 	rmarkdown,
 	keras,
-	tensorflow
+	tensorflow,
+	glmnetUtils,
+	e1071,
+	xgboost
 VignetteBuilder: knitr
 RoxygenNote: 7.1.0
