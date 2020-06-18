@@ -12,6 +12,7 @@
 #' @param verbose Verbosity
 #' @importFrom stats quantile
 #' @importFrom matlab jet.colors
+#' @noRd
 plot_results=function(
                       paths,
                       chop_quantiles=0.005,

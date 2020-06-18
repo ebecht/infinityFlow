@@ -4,6 +4,7 @@
 #' @param chans vector of backbone channels' names
 #' @param preds matrix of imputed data
 #' @param verbose Verbosity
+#' @noRd
 
 perform_UMAP_dimensionality_reduction=function(
                                                paths,

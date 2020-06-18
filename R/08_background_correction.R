@@ -19,6 +19,7 @@
 #' @importFrom utils write.csv
 #' @importFrom flowCore write.FCS
 #' @importFrom flowCore flowFrame
+#' @noRd
 correct_background=function(
                             paths,
                             FCS_export,

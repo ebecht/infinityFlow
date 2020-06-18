@@ -101,7 +101,8 @@ polynomial_formula=function(variables,degree){
 }
 
 #' Wrapper to predict. Defined separetely to avoid passing too many objects in parLapplyLB
-#' @param x passed from predict_from_models 
+#' @param x passed from predict_from_models
+#' @noRd
 predict_wrapper=function(x){
     if("lm"%in%class(x)){
         xp = as.data.frame(xp)
@@ -177,6 +178,7 @@ fitter_nn=function(x,params){
 #' @param verbose Verbosity
 #' @importFrom parallel makeCluster mc.reset.stream clusterExport clusterEvalQ stopCluster
 #' @importFrom pbapply pblapply
+#' @noRd
 fit_regressions=function(
                          yvar,
                          params,
@@ -288,6 +290,7 @@ fit_regressions=function(
 #' @param regression_functions named list of fitter_* functions, passed from infinity_flow()
 #' @param neural_networks_seed Seed for computational reproducibility when using neural networks. Passed from infinity_flow()
 #' @param verbose Verbosity
+#' @noRd
 predict_from_models=function(
                              paths,
                              prediction_events_downsampling,

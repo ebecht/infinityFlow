@@ -16,6 +16,7 @@
 #' @importFrom utils read.csv write.csv
 #' @importFrom stats setNames
 #' @importFrom flowCore inverseLogicleTransform flowFrame write.FCS
+#' @noRd
 
 export_data=function(
                      paths,

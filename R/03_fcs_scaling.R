@@ -6,7 +6,7 @@
 #' @param chans vector of backbone channels' names
 #' @param events.code vector of length nrow(xp) specifying from which well each event originates
 #' @param verbose Verbosity
-
+#' @noRd
 standardize_backbone_data_across_wells=function(
                                                 yvar,
                                                 paths,

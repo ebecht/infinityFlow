@@ -3,6 +3,7 @@
 #' @param ff A flowframe
 #' @importFrom Biobase pData
 #' @return A flowframe with description consistent with pData(ff@parameters)
+#' @noRd
 
 generate_description<-function(ff){
     res=ff
@@ -70,6 +71,7 @@ generate_description<-function(ff){
 #' @importFrom png readPNG
 #' @importFrom utils tail
 #' @note Since pdf files are vectorized, they can get really big if a lot of data point are plotted. This function thus used bitmap images that are stored in a temporary directory (tmpDir()) and then import them in a single pdf. If you're interested in using the bitmap images, you can fetch them in tmpDir()
+#' @noRd
 
 color_biplot_by_channels <- function(
                                      matrix,
@@ -227,7 +229,8 @@ select_backbone_and_exploratory_markers=function(files){
 #' Split a matrix into a list of chunks. Faster than using split on a data.frame
 #' @param mat A matrix
 #' @param vector A vector of length nrow(mat) if byrow=TRUE, ncol(mat) if byrow=FALSE
-#' @param byrow if TRUE split rows, if FALSE split columns 
+#' @param byrow if TRUE split rows, if FALSE split columns
+#' @noRd
 split_matrix=function (mat, vector, byrow = TRUE) 
 {
     if (byrow & nrow(mat) != length(vector)) {
@@ -252,7 +255,8 @@ split_matrix=function (mat, vector, byrow = TRUE)
     res
 }
 
-## Linear scale with chosen boundaries
+#' Linear scale with chosen boundaries
+#' @noRd
 minmax_scale=function(matrix,min=1,max=1000,na.rm=TRUE){
     apply(matrix,2,function(x){
         a=(max-min)/(max(x,na.rm=na.rm)-min(x,na.rm=na.rm))
