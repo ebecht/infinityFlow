@@ -8,4 +8,4 @@ You can learn more about the Infinity Flow approach using the following sources:
 1. The peer-reviewed article - [pending]
 1. [An imaged digest of the paper](https://twitter.com/EtienneBecht/status/1274039148781826049)
 
-To learn how to apply the computational pipeline, check out the (vignette)[https://htmlpreview.github.io/?https://github.com/ebecht/infinityFlow/blob/master/doc/basic_usage.html]
+To learn how to apply the computational pipeline, check out the vignette: https://htmlpreview.github.io/?https://github.com/ebecht/infinityFlow/blob/master/doc/basic_usage.html
