@@ -11,6 +11,12 @@ fitter_svm(x = NULL, params = NULL)
 
 \item{params}{passed from fit_regressions}
 }
+\value{
+A list with two elements: predictions and a fitted model
+}
 \description{
 Wrapper to SVM training. Defined separetely to avoid passing too many objects in parLapplyLB
+}
+\examples{
+fitter_svm()
 }

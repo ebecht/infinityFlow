@@ -1,12 +1,12 @@
 Package: infinityFlow
 Title: Augmenting Massively Parallel Cytometry Experiments Using Multivariate Non-Linear Regressions
-Version: 0.2.0
+Version: 0.99.0
 Authors@R: c(
-               person("Etienne","Becht",middle=NULL,email="etienne_becht@protonmail.com",role=c("cre","aut"))
+               person("Etienne","Becht",middle=NULL,email="etienne.becht@protonmail.com",role=c("cre","aut"))
 	   )
 Description: Pipeline to analyze and merge data files produced by BioLegend's LEGENDScreen or BD Human Cell Surface Marker Screening Panel (BD Lyoplates).
 Depends:
-	R (>= 3.0.0)
+	R (>= 4.0.0)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
@@ -23,7 +23,9 @@ Imports: stats,
 	flowCore,
         gtools,
 	Biobase,
-	generics
+	generics,
+	parallel,
+	methods
 Suggests: knitr,
 	rmarkdown,
 	keras,
@@ -33,3 +35,4 @@ Suggests: knitr,
 	xgboost
 VignetteBuilder: knitr
 RoxygenNote: 7.1.0
+biocViews: Software, FlowCytometry, CellBasedAssays, SingleCell, Proteomics

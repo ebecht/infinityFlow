@@ -77,7 +77,7 @@ color_biplot_by_channels <- function(
                                      matrix,
                                      x_axis,
                                      y_axis,
-                                     global_across_channels=T,
+                                     global_across_channels=TRUE,
                                      palette=c("blue","green","red"),
                                      resolution=72,
                                      data_transformation_reverse=identity,
@@ -90,10 +90,10 @@ color_biplot_by_channels <- function(
     regular_channels=setdiff(colnames(matrix),c(x_axis,y_axis))
 
     if(global_across_channels){
-        data_range=range(matrix[,regular_channels],na.rm=T)
-        data_range=matrix(rep(data_range,length(regular_channels)),ncol=length(regular_channels),nrow=2,byrow=F,dimnames=list(c("min","max"),regular_channels))
+        data_range=range(matrix[,regular_channels],na.rm=TRUE)
+        data_range=matrix(rep(data_range,length(regular_channels)),ncol=length(regular_channels),nrow=2,byrow=FALSE,dimnames=list(c("min","max"),regular_channels))
     } else {
-        data_range=apply(matrix[,regular_channels],na.rm=T,2,range,na.rm=T)
+        data_range=apply(matrix[,regular_channels],na.rm=TRUE,2,range,na.rm=TRUE)
         rownames(data_range)=c("min","max")
     }
 
@@ -142,19 +142,19 @@ color_biplot_by_channels <- function(
             labels.x_coords=seq(x_coords[1],x_coords[length(x_coords)],length.out=5)
 
             rect(border=NA,ybottom=ylims[1],ytop=ylims[2],xleft=x_coords[-length(x_coords)],xright=x_coords[-1],col=color.scale)
-            text(xpd=T,y=ylims[1],pos=1,labels=labels,x=labels.x_coords)
-            text(xpd=T,y=ylims[2],pos=3,labels=paste(pname,"intensity"),x=mean(xlims))
+            text(xpd=TRUE,y=ylims[1],pos=1,labels=labels,x=labels.x_coords)
+            text(xpd=TRUE,y=ylims[2],pos=3,labels=paste(pname,"intensity"),x=mean(xlims))
             dev.off()
 
             return(list(main.file=mainplot,scale.file=colorscale))
-        },simplify=F,xp=xp,data.range=data_range,x=x,y=y)
+        },simplify=FALSE,xp=xp,data.range=data_range,x=x,y=y)
 
         file=file_name
 
         pdf(file)
         if(global_across_channels){
             plot.new()
-            grid.raster(readPNG(rasters[[1]]$scale.file,native=T))
+            grid.raster(readPNG(rasters[[1]]$scale.file,native=TRUE))
         }
         sapply(rasters,function(x){
             par("mar"=c(0,0,0,0))
@@ -162,11 +162,11 @@ color_biplot_by_channels <- function(
             label=sub(".png","",sub("mainplot_","",tail(strsplit(x$main.file,"/")[[1]],1),fixed=TRUE),fixed=TRUE)
             
             if(!global_across_channels){
-                grid.raster(readPNG(x$main.file,native=T),y=0.6,height=0.8)
-                grid.raster(readPNG(x$scale.file,native=T),y=0.1,height=0.2)
+                grid.raster(readPNG(x$main.file,native=TRUE),y=0.6,height=0.8)
+                grid.raster(readPNG(x$scale.file,native=TRUE),y=0.1,height=0.2)
             }
             if(global_across_channels){
-                grid.raster(readPNG(x$main.file,native=T))
+                grid.raster(readPNG(x$main.file,native=TRUE))
             }
             grid.text(x=unit(1,"npc"),y=unit(1,"npc"),label=label,just=c(1,1),gp=gpar(col="white",cex=0.1))
             return(NULL)
@@ -182,6 +182,18 @@ color_biplot_by_channels <- function(
 #' @export
 #' @importFrom flowCore read.FCS parameters
 #' @importFrom Biobase pData
+#' @importFrom methods is
+#' @return A data.frame
+#' @examples
+#' data(steady_state_lung)
+#' dir = tempdir()
+#' fcs_tmp = file.path(dir, "tmp.fcs")
+#' library(flowCore)
+#' write.FCS(steady_state_lung[[1]], file = fcs_tmp)
+#' if(interactive()){
+#'     select_backbone_and_exploratory_markers(fcs_tmp)
+#' }
+
 select_backbone_and_exploratory_markers=function(files){
     if(!interactive()){
         stop("Interactive backbone selection requires an interactive R session")

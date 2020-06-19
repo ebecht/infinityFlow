@@ -10,7 +10,7 @@
 #' @param input_events_downsampling How many event should be kept per input FCS file. Default to no downsampling. In any case, half of the events will be used to train regression models and half to test the performance. Predictions will be made only on events from the test set, and downsampled according to prediction_events_downsampling.
 #' @param prediction_events_downsampling How many event should be kept per input FCS file to output prediction for. Default to 1000.
 #' @param cores Number of cores to use for parallel computing. Defaults to 1 (no parallel computing)
-#' @param your_random_seed Set a seed for computationally reproducible results. Defaults to 123
+#' @param your_random_seed Deprecated; Was used to set a seed for computationally reproducible results. Defaults to 123.
 #' @param verbose Whether to print information about progress
 #' @param extra_args_plotting list of named arguments to pass to plot_results. Defaults to list(chop_quantiles=0.005) which removes the top 0.05\% and bottom 0.05\% of the scale for each marker when mapping color palettes to intensities.
 #' @param extra_args_read_FCS list of named arguments to pass to flowCore:read.FCS. Defaults to list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE) which in our experience avoided issues with data loading.
@@ -19,6 +19,7 @@
 #' @param extra_args_export Whether raw imputed data should be exported as a single concatenated FCS file, one FCS-file per well, no FCS file, and whether to export the raw imputed data to CSV. This should be a named list, passed to infinityFlow:::export_data. See ?export_data for help
 #' @param extra_args_correct_background Whether background-corrected imputed data should be exported as a single concatenated FCS file, one FCS-file per well, no FCS file, and whether to export the background-corrected imputed data to CSV. This should be a named list, passed to infinityFlow:::export_data. See ?correct_background for help
 #' @export
+#' @return Raw and background-corrected imputed expression data for every Infinity antibody
 
 infinity_flow=function(
                        ## Input FCS files
@@ -87,7 +88,7 @@ infinity_flow=function(
     
     ## Subsample FCS files
     M = input_events_downsampling ## Number of cells to downsample to for each file
-    set.seed(your_random_seed)
+    ## set.seed(your_random_seed)
     subsample_data(
         input_events_downsampling=input_events_downsampling,
         paths=paths,
@@ -111,7 +112,7 @@ infinity_flow=function(
     )
 
     ## Regression models training and predictions
-    set.seed(your_random_seed+1)
+    ## set.seed(your_random_seed+1)
     timings_fit=fit_regressions(
         regression_functions=regression_functions,
         yvar=name_of_PE_parameter,
@@ -122,7 +123,7 @@ infinity_flow=function(
         neural_networks_seed=neural_networks_seed
         )
 
-    set.seed(your_random_seed+2)
+    ## set.seed(your_random_seed+2)
     timings_pred=predict_from_models(
         paths=paths,
         prediction_events_downsampling=prediction_events_downsampling,

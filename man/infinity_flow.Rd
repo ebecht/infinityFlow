@@ -49,7 +49,7 @@ infinity_flow(
 
 \item{cores}{Number of cores to use for parallel computing. Defaults to 1 (no parallel computing)}
 
-\item{your_random_seed}{Set a seed for computationally reproducible results. Defaults to 123}
+\item{your_random_seed}{Deprecated; Was used to set a seed for computationally reproducible results. Defaults to 123.}
 
 \item{verbose}{Whether to print information about progress}
 
@@ -68,6 +68,9 @@ infinity_flow(
 \item{extra_args_plotting}{list of named arguments to pass to plot_results. Defaults to list(chop_quantiles=0.005) which removes the top 0.05\% and bottom 0.05\% of the scale for each marker when mapping color palettes to intensities.}
 
 \item{neural_networks_seed}{Seed for computationally reproducible results when using neural networks (in additional to the other sources of stochasticity - sampling - that are made reproducible by the your_random_seed argument.}
+}
+\value{
+Raw and background-corrected imputed expression data for every Infinity antibody
 }
 \description{
 Wrapper to the Infinity Flow pipeline

@@ -5,6 +5,9 @@ utils::globalVariables(c("yvar", "chans"))
 #' @param params passed from fit_regressions
 #' @importFrom stats predict
 #' @export
+#' @return A list with two elements: predictions and a fitted model
+#' @examples
+#' fitter_svm()
 fitter_svm=function(x = NULL, params = NULL){
     if(!requireNamespace("e1071", quietly = TRUE)){
         stop("Please run install.packages('e1071')")
@@ -23,6 +26,9 @@ fitter_svm=function(x = NULL, params = NULL){
 #' @param params passed from fit_regressions
 #' @importFrom stats predict
 #' @export
+#' @return A list with two elements: predictions and a fitted model
+#' @examples
+#' fitter_xgboost()
 fitter_xgboost=function(x = NULL, params = NULL){
     if(!requireNamespace("xgboost", quietly = TRUE)){
         stop("Please run install.packages(\"xgboost\")")
@@ -43,15 +49,20 @@ fitter_xgboost=function(x = NULL, params = NULL){
 #' @param params passed from fit_regressions
 #' @importFrom stats lm predict
 #' @export
+#' @return A list with two elements: predictions and a fitted model
+#' @examples
+#' fitter_linear()
 fitter_linear=function(x = NULL, params = NULL){
-    w=x[,"train_set"]==1
-    fmla=paste0(make.names(yvar),"~",polynomial_formula(variables=chans,degree=params$degree))
-    model=lm(formula=fmla,data=as.data.frame(x[w,c(chans,yvar)]))
-    pred=predict(model,as.data.frame(x[,chans]))
-    rm(list=setdiff(ls(),c("pred","model")))
-    model$model=NULL ## Trim down for slimmer objects
-    model$qr$qr=NULL ## Trim down for slimmer objects
-    return(list(pred=pred,model=model))
+    if(!is.null(x) & !is.null(params)){
+        w=x[,"train_set"]==1
+        fmla=paste0(make.names(yvar),"~",polynomial_formula(variables=chans,degree=params$degree))
+        model=lm(formula=fmla,data=as.data.frame(x[w,c(chans,yvar)]))
+        pred=predict(model,as.data.frame(x[,chans]))
+        rm(list=setdiff(ls(),c("pred","model")))
+        model$model=NULL ## Trim down for slimmer objects
+        model$qr$qr=NULL ## Trim down for slimmer objects
+        return(list(pred=pred,model=model))
+    }
 }
 
 #' Wrapper to glmnet. Defined separetely to avoid passing too many objects in parLapplyLB
@@ -60,6 +71,9 @@ fitter_linear=function(x = NULL, params = NULL){
 #' @importFrom stats as.formula predict
 #' @importFrom utils getS3method
 #' @export
+#' @return A list with two elements: predictions and a fitted model
+#' @examples
+#' fitter_glmnet()
 fitter_glmnet=function(x = NULL, params = NULL){
     if(!requireNamespace("glmnetUtils", quietly = TRUE)){
         stop("Please run install.packages(\"glmnetUtils\")")
@@ -105,19 +119,19 @@ polynomial_formula=function(variables,degree){
 #' @param x passed from predict_from_models
 #' @noRd
 predict_wrapper=function(x){
-    if("lm"%in%class(x)){
+    if(is(x, "lm")){
         xp = as.data.frame(xp)
     }
-    if("cv.glmnet"%in%class(x)){
+    if(is(x, "cv.glmnet")){
         requireNamespace("glmnetUtils")
         xp = as.data.frame(xp)
         return(predict(x,xp,s=x$lambda.min)[,1])
     }
-    if(class(x)=="raw"){
+    if(is(x, "raw")){
         requireNamespace("keras")
         x = keras::unserialize_model(x)
     }
-    if(class(x)=="xgb.Booster"){
+    if(is(x, "xgb.Booster")){
         requireNamespace("xgboost")
         x = xgboost::xgb.Booster.complete(x)
         xgboost::xgb.parameters(x) <- list(nthread = 1)
@@ -131,6 +145,9 @@ predict_wrapper=function(x){
 #' @importFrom generics fit
 #' @importFrom stats predict
 #' @export
+#' @return A list with two elements: predictions and a fitted model
+#' @examples
+#' fitter_xgboost()
 fitter_nn=function(x,params){
     if(!requireNamespace("tensorflow", quietly = TRUE) & !requireNamespace("keras", quietly = TRUE)){
         stop("Please run install.packages(c(\"tensorflow\", \"keras\")) and make sure that install_tensorflow() and install_keras() have been run")

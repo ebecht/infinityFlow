@@ -37,7 +37,7 @@ subsample_data=function(
     xp=sapply(files,function(file){
         xp=do.call(read.FCS,c(list(filename=file),extra_args_read_FCS))
         annot=pData(xp@parameters)
-        ns[file]<<-nrow(xp)
+        ## ns[file]<<-nrow(xp)
         xp=exprs(xp)
         targets = annot$desc
         targets[is.na(targets)] = annot$name[is.na(targets)]
@@ -45,6 +45,7 @@ subsample_data=function(
         colnames(xp)[colnames(xp)==name_of_PE_parameter]=name_of_PE_parameter
         xp
     },simplify=FALSE)
+    ns = vapply(xp, nrow, 1L)
     xp=do.call(rbind,xp)
 
     ## Map which events originate from which file.
