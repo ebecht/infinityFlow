@@ -1,0 +1,264 @@
+---
+title: "Basic usage of the infinityFlow package"
+author: "Etienne Becht"
+date: "June 2020"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{basic_usage}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+# Introduction
+Thank you for your interest in the ***Infinity Flow*** approach. This vignette describes how to apply the package to your massively parallel cytometry (e.g. *LEGENDScreen* or *Lyoplates kits*) experiment, using the default machine learning toolkit XGBoost. Other machine learning models are covered in a separate vignette.
+
+This vignette will cove:
+1. Package installation
+1. Setting up your input data
+1. Specifying the Backbone and Infinity antibodies
+1. Running the Infinity Flow computational pipeline
+1. Description of the output
+
+# Package installation
+You can install the latest version from github using
+```{r, installation, eval=FALSE}
+if(!require(devtools)){
+	install.packages("devtools")
+}
+if(!require(infinityFlow)){
+	library(devtools)
+	install_github("ebecht/infinityFlow")
+}
+```
+
+# Setting up your input data
+
+Now that the package is installed, we load the package and attach its example data. We also load flowCore that will be used to manipulate FCS files in R.
+```{r, load_package, eval = TRUE, cache = TRUE}
+library(infinityFlow)
+data(steady_state_lung)
+library(flowCore)
+```
+
+The example data is a subset of a massively parallel cytometry experiment of the mouse lung at steady state. The example data contains 10 FCS files, each with a distinct PE-conjugated Infinity antibody. To mimick real world-conditions, we will write this flowSet to disk as a set of 10 distinct FCS files. In this vignette we will use a temporary directory, but you can use the directory of your choice.
+
+```{r, load_example, eval=TRUE}
+dir <- file.path(tempdir(), "infinity_flow_example")
+print(dir)
+input_dir <- file.path(dir, "fcs")
+write.flowSet(steady_state_lung, outdir = input_dir)
+list.files(input_dir)
+```
+
+The second input we have to manually produce is the annotation of the experiment. In the context of a massively parallel cytometry experiment, we need to know what is the protein target of each Infinity antibody, and what is its isotype. For the example dataset, the annotation is provided in the package and looks like this:
+
+```{r, load_annotation}
+data(steady_state_lung_annotation)
+print(steady_state_lung_annotation)
+```
+
+The `steady_state_lung_annotation` data.frame contains one line per FCS file, with `rownames(steady_state_lung_annotation) == sampleNames(steady_state_lung)`. The first column specifies the antibodies targeted by the Infinity antibody in each FCS file, and the second column specifies its isotype (species and constant region of the antibody).
+
+That is all we need in terms of inputs! To recap you only need
+1. a folder with FCS files from your massively parallel cytometry experiment.
+2. a table specifying the antibody targets and antibody isotypes for the Infinity antibodies from your massively parallel cytometry experiment.
+
+# Specifying the Backbone and Infinity antibodies
+
+Now that we have our input data, we need to specify which antibodies are part of the Backbone, and which one is the Infinity antibody. We provide an interactive function to specify this directly in R. This function can be run once, its output save for future use by downstream function in the ***infinityFlow*** package. The `select_backbone_and_exploratory_markers` function will parse an FCS file in the input directory, and for each acquisition channel, ask the user whether it should be used as a predictor (Backbone), exploratory target (Infinity antibodies), or omitted (e.g. Time or Event ID columns...). 
+
+```{r, eval = FALSE}
+backbone_specification <- select_backbone_and_exploratory_markers(list.files(input_dir, pattern = ".fcs", full.names = TRUE))
+```
+Below is an example of the interactive execution of the `select_backbone_and_exploratory_markers` function for the example data. The resulting data.frame is printed too.
+
+```
+For each data channel, enter either: backbone, exploratory or discard (can be abbreviated)
+FSC-A (FSC-A):discard
+FSC-H (FSC-H):backbone
+FSC-W (FSC-W):b
+SSC-A (SSC-A):d
+SSC-H (SSC-H):b
+SSC-W (SSC-W):b
+CD69-CD301b (FJComp-APC-A):b
+Zombie (FJComp-APC-eFlour780-A):b
+MHCII (FJComp-Alexa Fluor 700-A):b
+CD4 (FJComp-BUV395-A):b
+CD44 (FJComp-BUV737-A):b
+CD8 (FJComp-BV421-A):b
+CD11c (FJComp-BV510-A):b
+CD11b (FJComp-BV605-A):b
+F480 (FJComp-BV650-A):b
+Ly6C (FJComp-BV711-A):b
+Lineage (FJComp-BV786-A):b
+CD45a488 (FJComp-GFP-A):b
+Legend (FJComp-PE(yg)-A):exploratory
+CD24 (FJComp-PE-Cy7(yg)-A):b
+CD103 (FJComp-PerCP-Cy5-5-A):b
+Time (Time):d
+                         name        desc        type
+$P1                     FSC-A        <NA>     discard
+$P2                     FSC-H        <NA>    backbone
+$P3                     FSC-W        <NA>    backbone
+$P4                     SSC-A        <NA>     discard
+$P5                     SSC-H        <NA>    backbone
+$P6                     SSC-W        <NA>    backbone
+$P7              FJComp-APC-A CD69-CD301b    backbone
+$P8    FJComp-APC-eFlour780-A      Zombie    backbone
+$P9  FJComp-Alexa Fluor 700-A       MHCII    backbone
+$P10          FJComp-BUV395-A         CD4    backbone
+$P11          FJComp-BUV737-A        CD44    backbone
+$P12           FJComp-BV421-A         CD8    backbone
+$P13           FJComp-BV510-A       CD11c    backbone
+$P14           FJComp-BV605-A       CD11b    backbone
+$P15           FJComp-BV650-A        F480    backbone
+$P16           FJComp-BV711-A        Ly6C    backbone
+$P17           FJComp-BV786-A     Lineage    backbone
+$P18             FJComp-GFP-A    CD45a488    backbone
+$P19          FJComp-PE(yg)-A      Legend exploratory
+$P20      FJComp-PE-Cy7(yg)-A        CD24    backbone
+$P21     FJComp-PerCP-Cy5-5-A       CD103    backbone
+$P22                     Time        <NA>     discard
+Is selection correct? (yes/no): yes
+```
+We cannot run this function interactively from this vignette, so we load the result from the package instead:
+
+```{r, backbone specification input}
+data(steady_state_lung_backbone_specification)
+print(head(steady_state_lung_backbone_specification))
+```
+
+You need to save this backbone specification file as a CSV file for future use.
+
+```{r, backbone specification output}
+write.csv(steady_state_lung_backbone_specification, file = file.path(dir, "backbone_selection_file.csv"), row.names = FALSE)
+```
+
+# Running the Infinity Flow computational pipeline
+
+Now that we have our input data, FCS files annotation and specification of the Backbone and Infinity antibodies, we have everything we need to run the pipeline.
+
+All the pipeline is package into a single function, `infinity_flow()`.
+
+Here is a description of the basic arguments it requires:
+
+1. path_to_fcs: path a the folder with input FCS files
+1. path_to_output: path to a folder where the output will be saved.
+1. backbone_selection_file: the CSV file specifying backbone and Infinity antibodies, created in the *Specifying the Backbone and Infinity antibodies* section above.
+1. annotation: A named vector of Infinity antibody targets per FCS file. We will create it from the annotation table we created in the *Setting up your input data* section
+1. isotype: Same as annotation, but specifying Infinity antibody isotypes rather than antibody targets.
+
+We have everything we need in our input folder to fill these arguments:
+```{r, inspect input directory}
+list.files(dir)
+```
+
+First, input FCS files:
+```{r, input FCS files path argument}
+path_to_fcs <- file.path(dir, "fcs")
+head(list.files(path_to_fcs, pattern = ".fcs"))
+```
+
+Output directory. It will be created if it doesn't already exist
+```{r, output path argument}
+path_to_output <- file.path(dir, "output")
+````
+
+Backbone selection file:
+```{r, backbone selection file path argument}
+list.files(dir)
+backbone_selection_file <- file.path(dir, "backbone_selection_file.csv")
+head(read.csv(backbone_selection_file))
+```
+
+Annotation of Infinity antibody targets and isotypes:
+```{r, targets and isotypes arguments}
+targets <- steady_state_lung_annotation$Infinity_target
+names(targets) <- rownames(steady_state_lung_annotation)
+isotypes <- steady_state_lung_annotation$Infinity_isotype
+names(isotypes) <- rownames(steady_state_lung_annotation)
+head(targets)
+head(isotypes)
+```
+
+Other arguments are not necessary, but it is worth considering the number of input cells and the number of output cells. This will notably be important if you are using a computer with limited RAM. For the example data it does not matter as we only have access to 2,000 cells per well, but if you run the pipeline on your own data I suggest you start by low values, and ramp up once everything is setup.
+
+```{r, input and output events downsampling argument}
+input_events_downsampling <- 1000
+prediction_events_downsampling <- 500
+```
+
+There is also an argument to store temporary files, which can be useful to further analyze the data in R:
+
+```{r, input temporary directory path}
+path_to_intermediary_results <- file.path(dir, "tmp")
+```
+
+At last, now let us execute the pipeline:
+
+```{r}
+print(backbone_selection_file)
+print(read.csv(backbone_selection_file, stringsAsFactors = FALSE))
+```
+
+```{r, pipeline execution, eval = TRUE, cache = TRUE}
+imputed_data <- infinity_flow(
+	path_to_fcs = path_to_fcs,
+	path_to_output = path_to_output,
+	path_to_intermediary_results = path_to_intermediary_results,
+	backbone_selection_file = backbone_selection_file,
+	annotation = targets,
+	isotype = isotypes,
+	input_events_downsampling = input_events_downsampling,
+	prediction_events_downsampling = prediction_events_downsampling,
+	verbose = TRUE,
+	cores = 2L
+)
+```
+
+The above command populated our output directory with new sets of files which we describe in the next section.
+
+# Description of the output
+
+The output mainly consists of
+1. Sets of FCS files with imputed data
+2. PDF of a UMAP embedding of the Backbone data, color-coded by imputed expression of the Infinity antibody
+
+Each of the above comes in two flavours, either **raw** or **background-corrected**.
+
+At the end of the pipeline, input FCS files are augmented with imputed data. Feel free to explore these files in whatever flow cytometry software you are comfortable with! They should look pretty much like regular FCS files, although they are computationnally derived. You can find the output FCS files in the `path_to_output` directory, specifically:
+```{r}
+head(list.files(path_to_fcs)) ## Input files
+fcs_raw <- file.path(path_to_output, "output", "FCS", "split")
+head(list.files(fcs_raw)) ## Raw output FCS files
+fcs_bgc <- file.path(path_to_output, "output", "FCS_background_corrected", "split") ## Background-corrected output FCS files
+head(list.files(fcs_bgc)) ## Background-corrected output FCS files
+```
+
+Finally, the pipeline produces two PDF files, with a UMAP embedding of the backbone data color-coded by the imputed data. This is a very informative output and a good way to start analyzing your data. These files are present in the `path_to_output` directory. The example dataset is very small but here is the result for illustration purposes:
+
+
+```{r, echo = FALSE}
+knitr::include_graphics(file.path(path_to_output, "umap_plot_annotated.pdf"))
+```
+
+# Conclusion
+
+Thank you for following this vignette, I hope you made it through the end without too much headache and that it was informative. Feel free to raise an issue on infinityFlow's \url[github]{https://github.com/ebecht/infinityFlow/issues} if you run into unsolvable issues.
+
+
+```{r, debugging, eval = FALSE, echo = FALSE}
+files = list.files(dir, recursive = TRUE)
+sapply(
+	files,
+	function(x){
+		file.copy(from = file.path(dir, x), to = "~/Desktop/test/", recursive = TRUE)
+	}
+)
+```
