@@ -4,7 +4,7 @@ author: "Etienne Becht"
 date: "June 2020"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{basic_usage}
+  %\VignetteIndexEntry{Basic usage of the infinityFlow package}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -40,6 +40,7 @@ if(!require(infinityFlow)){
 # Setting up your input data
 
 Now that the package is installed, we load the package and attach its example data. We also load flowCore that will be used to manipulate FCS files in R.
+
 ```{r, load_package, eval = TRUE, cache = TRUE}
 library(infinityFlow)
 data(steady_state_lung)
@@ -187,14 +188,15 @@ head(targets)
 head(isotypes)
 ```
 
-Other arguments are not necessary, but it is worth considering the number of input cells and the number of output cells. This will notably be important if you are using a computer with limited RAM. For the example data it does not matter as we only have access to 2,000 cells per well, but if you run the pipeline on your own data I suggest you start by low values, and ramp up once everything is setup.
+Other arguments are not necessary, but it is worth considering the number of input cells and the number of output cells. This will notably be important if you are using a computer with limited RAM. For the example data it does not matter as we only have access to 2,000 cells per well, but if you run the pipeline on your own data I suggest you start by low values, and ramp up once everything is setup. Another optional argument is `cores` which controls multicore computing, which can speed up execution at the cost of memory usage. In this vignette we use cores = 1, but you probably want to increase this to 4 or 8 or more if your computer can accomodate it.
 
 ```{r, input and output events downsampling argument}
 input_events_downsampling <- 1000
 prediction_events_downsampling <- 500
+cores = 1L
 ```
 
-There is also an argument to store temporary files, which can be useful to further analyze the data in R:
+There is also an argument to store temporary files, which can be useful to further analyze the data in R. If missing, this argument will default to a temporary directory.
 
 ```{r, input temporary directory path}
 path_to_intermediary_results <- file.path(dir, "tmp")
@@ -207,7 +209,7 @@ print(backbone_selection_file)
 print(read.csv(backbone_selection_file, stringsAsFactors = FALSE))
 ```
 
-```{r, pipeline execution, eval = TRUE, cache = TRUE}
+```{r, pipeline execution, eval = TRUE}
 imputed_data <- infinity_flow(
 	path_to_fcs = path_to_fcs,
 	path_to_output = path_to_output,
@@ -218,7 +220,7 @@ imputed_data <- infinity_flow(
 	input_events_downsampling = input_events_downsampling,
 	prediction_events_downsampling = prediction_events_downsampling,
 	verbose = TRUE,
-	cores = 2L
+	cores = cores
 )
 ```
 
@@ -241,10 +243,13 @@ fcs_bgc <- file.path(path_to_output, "output", "FCS_background_corrected", "spli
 head(list.files(fcs_bgc)) ## Background-corrected output FCS files
 ```
 
-Finally, the pipeline produces two PDF files, with a UMAP embedding of the backbone data color-coded by the imputed data. This is a very informative output and a good way to start analyzing your data. These files are present in the `path_to_output` directory. The example dataset is very small but here is the result for illustration purposes:
+Finally, the pipeline produces two PDF files, with a UMAP embedding of the backbone data color-coded by the imputed data. This is a very informative output and a good way to start analyzing your data. These files are present in the `path_to_output` directory. The example dataset is very small but feel free to look at the result for illustration purposes. This PDF is available at 
 
+```{r}
+file.path(path_to_output, "umap_plot_annotated.pdf")
+```
 
-```{r, echo = FALSE}
+```{r, eval = FALSE, echo = FALSE}
 knitr::include_graphics(file.path(path_to_output, "umap_plot_annotated.pdf"))
 ```
 

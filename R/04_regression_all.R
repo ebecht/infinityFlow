@@ -27,11 +27,12 @@ fitter_xgboost=function(x = NULL, params = NULL){
     if(!requireNamespace("xgboost", quietly = TRUE)){
         stop("Please run install.packages(\"xgboost\")")
     }
-    
+
     if(!is.null(x) & !is.null(params)){
         w=x[,"train_set"]==1
-        model=do.call(function(...){xgboost::xgboost(...,data=x[w,chans],label=x[w,yvar],nthread=1L)},params)
-        pred=predict(model,x[,chans])
+        args = c(list(data = x[w, chans], label = x[w, yvar], nthread = 1L, verbose = 0), params)
+        model = do.call(xgboost::xgboost, args)
+        pred=predict(model, x[, chans])
         rm(list=setdiff(ls(),c("pred","model")))
         return(list(pred=pred,model=model))
     }
@@ -176,7 +177,7 @@ fitter_nn=function(x,params){
 #' @param regression_functions named list of fitter_* functions, passed from infinity_flow()
 #' @param neural_networks_seed Seed for computational reproducibility when using neural networks. Passed from infinity_flow()
 #' @param verbose Verbosity
-#' @importFrom parallel makeCluster mc.reset.stream clusterExport clusterEvalQ stopCluster
+#' @importFrom parallel makeCluster clusterExport clusterEvalQ stopCluster
 #' @importFrom pbapply pblapply
 #' @noRd
 fit_regressions=function(
@@ -197,16 +198,28 @@ fit_regressions=function(
     if(verbose){
         message("Fitting regression models")
     }
+
+    chans = make.names(chans)
+    yvar = make.names(yvar)
+    colnames(xp)=make.names(colnames(xp))
+    
+    requireNamespace("parallel")
     
     cl=makeCluster(min(cores,length(unique(events.code))))
     
     RNGkind("L'Ecuyer-CMRG")
+
+    if(.Platform$OS.type == "windows") {
+        mc.reset.stream = function() return(invisible(NULL))
+    } else {
+        mc.reset.stream = parallel::mc.reset.stream
+    }
+    
     mc.reset.stream()
 
     env=environment()
     
-    colnames(xp)=make.names(colnames(xp))
-
+    
     if(verbose){
         message("\tRandomly selecting 50% of the subsetted input files to fit models")
     }
@@ -253,15 +266,18 @@ fit_regressions=function(
     if(verbose){
         message("\tFitting...")
     }
-    
+
     models=list()
     timings=numeric()
+    
     for(i in seq_along(regression_functions)){
         cat("\t\t",names(regression_functions)[i],"\n\n",sep="")
         t0=Sys.time()
-        models[[i]]=pblapply(##parLapplyLB(
+        fun = regression_functions[[i]]
+        environment(fun) = environment() ## Fixing issue with scoping when cores = 1L
+        models[[i]]=pblapply(
             X=d.e,
-            FUN=regression_functions[[i]],
+            FUN=fun,
             params=params[[i]],
             cl=cl
         )
@@ -270,8 +286,8 @@ fit_regressions=function(
         cat("\t",dt," seconds","\n",sep="")
         timings=c(timings,dt)
     }
+
     names(models)=names(regression_functions)
-    
     stopCluster(cl)
     saveRDS(models,file=file.path(paths["rds"],"regression_models.Rds"))
     saveRDS(train_set,file=file.path(paths["rds"],"train_set.Rds"))
@@ -308,9 +324,20 @@ predict_from_models=function(
     if(verbose){
         message("Imputing missing measurements")
     }
+
+    xp_raw = xp
+    chans = make.names(chans)
+    colnames(xp)=make.names(colnames(xp))
+    xp = xp[, chans]
     
+    requireNamespace("parallel")
     cl=makeCluster(cores)
     
+    if(.Platform$OS.type == "windows") {
+        mc.reset.stream = function() return(invisible(NULL))
+    } else {
+        mc.reset.stream = parallel::mc.reset.stream
+    }
     mc.reset.stream()
     
     env=environment()
@@ -333,6 +360,7 @@ predict_from_models=function(
     pred_set=which(do.call(c,spl))
     
     xp=xp[pred_set,]
+    xp_raw = xp_raw[pred_set, ]
     
     clusterExport(
         cl,
@@ -371,6 +399,8 @@ predict_from_models=function(
     }
     preds=list()
     timings=numeric()
+    fun = predict_wrapper
+    environment(fun) = environment() ## Fixing issue with scoping when cores = 1L
     for(i in seq_along(models)){
         cat("\t\t",names(models)[i],"\n\n",sep="")
         t0=Sys.time()
@@ -380,7 +410,7 @@ predict_from_models=function(
             pblapply(
                 cl=cl,
                 X=models[[i]],
-                FUN=predict_wrapper
+                FUN=fun
             )
         )
         t1=Sys.time()
@@ -395,7 +425,7 @@ predict_from_models=function(
     if(verbose){
         message("\tConcatenating predictions")
     }
-    preds=lapply(preds,function(x){cbind(xp,x)})
+    preds=lapply(preds,function(x){cbind(xp_raw,x)})
     preds=lapply(preds,as.matrix)
     names(preds)=names(models)
 
