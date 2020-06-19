@@ -1,4 +1,4 @@
-#Infinity Flow: High-throughput single-cell quantification of 100s of proteins using conventional flow cytometry and machine learning
+# Infinity Flow: High-throughput single-cell quantification of 100s of proteins using conventional flow cytometry and machine learning
 
 This repository contains the software package ***infinityFlow*** designed to analyze massively-parallel cytometry experiments, such as BioLegend's *LEGENDScreen* or's BD *Cell surface screening panels*. 
 
