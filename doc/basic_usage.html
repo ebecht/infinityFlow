@@ -101,7 +101,14 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p>Thank you for your interest in the <strong><em>Infinity Flow</em></strong> approach. This vignette describes how to apply the package to your massively parallel cytometry (e.g. <em>LEGENDScreen</em> or <em>Lyoplates kits</em>) experiment, using the default machine learning toolkit XGBoost. Other machine learning models are covered in a separate vignette.</p>
-<p>This vignette will cover: 1. Package installation 2. Setting up your input data 3. Specifying the Backbone and Infinity antibodies 4. Running the Infinity Flow computational pipeline 5. Description of the output</p>
+<p>This vignette will cover:</p>
+<ol style="list-style-type: decimal">
+<li>Package installation</li>
+<li>Setting up your input data</li>
+<li>Specifying the Backbone and Infinity antibodies</li>
+<li>Running the Infinity Flow computational pipeline</li>
+<li>Description of the output</li>
+</ol>
 </div>
 <div id="package-installation" class="section level1">
 <h1>Package installation</h1>
@@ -123,10 +130,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>The example data is a subset of a massively parallel cytometry experiment of the mouse lung at steady state. The example data contains 10 FCS files, each with a distinct PE-conjugated Infinity antibody. To mimick real world-conditions, we will write this flowSet to disk as a set of 10 distinct FCS files. In this vignette we will use a temporary directory, but you can use the directory of your choice.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dir &lt;-<span class="st"> </span><span class="kw">file.path</span>(<span class="kw">tempdir</span>(), <span class="st">&quot;infinity_flow_example&quot;</span>)
 <span class="kw">print</span>(dir)
-<span class="co">#&gt; [1] &quot;/tmp/RtmpOe84SB/infinity_flow_example&quot;</span>
+<span class="co">#&gt; [1] &quot;/tmp/RtmpqaubnW/infinity_flow_example&quot;</span>
 input_dir &lt;-<span class="st"> </span><span class="kw">file.path</span>(dir, <span class="st">&quot;fcs&quot;</span>)
 <span class="kw">write.flowSet</span>(steady_state_lung, <span class="dt">outdir =</span> input_dir)
-<span class="co">#&gt; [1] &quot;/tmp/RtmpOe84SB/infinity_flow_example/fcs&quot;</span>
+<span class="co">#&gt; [1] &quot;/tmp/RtmpqaubnW/infinity_flow_example/fcs&quot;</span>
 <span class="kw">list.files</span>(input_dir)
 <span class="co">#&gt;  [1] &quot;annotation.txt&quot;                      &quot;Plate1_Specimen_001_B12_B12_024.fcs&quot;</span>
 <span class="co">#&gt;  [3] &quot;Plate1_Specimen_001_D8_D08_044.fcs&quot;  &quot;Plate1_Specimen_001_H11_H11_095.fcs&quot;</span>
@@ -293,14 +300,14 @@ cores =<span class="st"> </span>1L</code></pre></div>
     <span class="dt">verbose =</span> <span class="ot">TRUE</span>,
     <span class="dt">cores =</span> cores
 )
-<span class="co">#&gt; /tmp/RtmpOe84SB/infinity_flow_example/tmp and /tmp/RtmpOe84SB/infinity_flow_example/tmp/subsetted_fcs and /tmp/RtmpOe84SB/infinity_flow_example/tmp/rds and /tmp/RtmpOe84SB/infinity_flow_example/output: directories not found, creating directory(ies)</span>
+<span class="co">#&gt; /tmp/RtmpqaubnW/infinity_flow_example/tmp and /tmp/RtmpqaubnW/infinity_flow_example/tmp/subsetted_fcs and /tmp/RtmpqaubnW/infinity_flow_example/tmp/rds and /tmp/RtmpqaubnW/infinity_flow_example/output: directories not found, creating directory(ies)</span>
 <span class="co">#&gt; Using directories...</span>
-<span class="co">#&gt;  input: /tmp/RtmpOe84SB/infinity_flow_example/fcs</span>
-<span class="co">#&gt;  intermediary: /tmp/RtmpOe84SB/infinity_flow_example/tmp</span>
-<span class="co">#&gt;  subset: /tmp/RtmpOe84SB/infinity_flow_example/tmp/subsetted_fcs</span>
-<span class="co">#&gt;  rds: /tmp/RtmpOe84SB/infinity_flow_example/tmp/rds</span>
-<span class="co">#&gt;  annotation: /tmp/RtmpOe84SB/infinity_flow_example/tmp/annotation.csv</span>
-<span class="co">#&gt;  output: /tmp/RtmpOe84SB/infinity_flow_example/output</span>
+<span class="co">#&gt;  input: /tmp/RtmpqaubnW/infinity_flow_example/fcs</span>
+<span class="co">#&gt;  intermediary: /tmp/RtmpqaubnW/infinity_flow_example/tmp</span>
+<span class="co">#&gt;  subset: /tmp/RtmpqaubnW/infinity_flow_example/tmp/subsetted_fcs</span>
+<span class="co">#&gt;  rds: /tmp/RtmpqaubnW/infinity_flow_example/tmp/rds</span>
+<span class="co">#&gt;  annotation: /tmp/RtmpqaubnW/infinity_flow_example/tmp/annotation.csv</span>
+<span class="co">#&gt;  output: /tmp/RtmpqaubnW/infinity_flow_example/output</span>
 <span class="co">#&gt; Parsing and subsampling input data</span>
 <span class="co">#&gt;  Downsampling to 1000 events per input file</span>
 <span class="co">#&gt;  Concatenating expression matrices</span>
@@ -319,30 +326,30 @@ cores =<span class="st"> </span>1L</code></pre></div>
 <span class="co">#&gt;  Fitting...</span>
 <span class="co">#&gt;      XGBoost</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  10.424 seconds</span>
+<span class="co">#&gt;  7.912858 seconds</span>
 <span class="co">#&gt; Imputing missing measurements</span>
 <span class="co">#&gt;  Randomly drawing events to predict from the test set</span>
 <span class="co">#&gt;  Imputing...</span>
 <span class="co">#&gt;      XGBoost</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  2.143252 seconds</span>
+<span class="co">#&gt;  1.890237 seconds</span>
 <span class="co">#&gt;  Concatenating predictions</span>
 <span class="co">#&gt;  Writing to disk</span>
 <span class="co">#&gt; Performing dimensionality reduction</span>
-<span class="co">#&gt; 15:48:40 UMAP embedding parameters a = 1.262 b = 1.003</span>
-<span class="co">#&gt; 15:48:40 Read 5000 rows and found 17 numeric columns</span>
-<span class="co">#&gt; 15:48:40 Using Annoy for neighbor search, n_neighbors = 15</span>
-<span class="co">#&gt; 15:48:41 Building Annoy index with metric = euclidean, n_trees = 50</span>
+<span class="co">#&gt; 15:52:51 UMAP embedding parameters a = 1.262 b = 1.003</span>
+<span class="co">#&gt; 15:52:51 Read 5000 rows and found 17 numeric columns</span>
+<span class="co">#&gt; 15:52:51 Using Annoy for neighbor search, n_neighbors = 15</span>
+<span class="co">#&gt; 15:52:52 Building Annoy index with metric = euclidean, n_trees = 50</span>
 <span class="co">#&gt; 0%   10   20   30   40   50   60   70   80   90   100%</span>
 <span class="co">#&gt; [----|----|----|----|----|----|----|----|----|----|</span>
 <span class="co">#&gt; **************************************************|</span>
-<span class="co">#&gt; 15:48:41 Writing NN index file to temp file /tmp/RtmpOe84SB/file303167a93fdb</span>
-<span class="co">#&gt; 15:48:41 Searching Annoy index using 1 thread, search_k = 1500</span>
-<span class="co">#&gt; 15:48:43 Annoy recall = 100%</span>
-<span class="co">#&gt; 15:48:43 Commencing smooth kNN distance calibration using 1 thread</span>
-<span class="co">#&gt; 15:48:43 Initializing from normalized Laplacian + noise</span>
-<span class="co">#&gt; 15:48:44 Commencing optimization for 1000 epochs, with 102036 positive edges using 1 thread</span>
-<span class="co">#&gt; 15:48:54 Optimization finished</span>
+<span class="co">#&gt; 15:52:52 Writing NN index file to temp file /tmp/RtmpqaubnW/file39686c4b54f9</span>
+<span class="co">#&gt; 15:52:52 Searching Annoy index using 1 thread, search_k = 1500</span>
+<span class="co">#&gt; 15:52:53 Annoy recall = 100%</span>
+<span class="co">#&gt; 15:52:54 Commencing smooth kNN distance calibration using 1 thread</span>
+<span class="co">#&gt; 15:52:54 Initializing from normalized Laplacian + noise</span>
+<span class="co">#&gt; 15:52:54 Commencing optimization for 1000 epochs, with 101742 positive edges using 1 thread</span>
+<span class="co">#&gt; 15:53:04 Optimization finished</span>
 <span class="co">#&gt; Exporting results</span>
 <span class="co">#&gt;  Transforming predictions back to a linear scale</span>
 <span class="co">#&gt;  Exporting FCS files (1 per well)</span>
@@ -390,9 +397,9 @@ fcs_bgc &lt;-<span class="st"> </span><span class="kw">file.path</span>(path_to_
 <span class="co">#&gt; [6] &quot;Plate3_Specimen_001_C11_C11_035_target_SSEA-3.fcs&quot;</span></code></pre></div>
 <p>Finally, the pipeline produces two PDF files, with a UMAP embedding of the backbone data color-coded by the imputed data. This is a very informative output and a good way to start analyzing your data. These files are present in the <code>path_to_output</code> directory. The example dataset is very small but feel free to look at the result for illustration purposes. This PDF is available at</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">file.path</span>(path_to_output, <span class="st">&quot;umap_plot_annotated.pdf&quot;</span>) ## Raw plot
-<span class="co">#&gt; [1] &quot;/tmp/RtmpOe84SB/infinity_flow_example/output/umap_plot_annotated.pdf&quot;</span>
+<span class="co">#&gt; [1] &quot;/tmp/RtmpqaubnW/infinity_flow_example/output/umap_plot_annotated.pdf&quot;</span>
 <span class="kw">file.path</span>(path_to_output, <span class="st">&quot;umap_plot_annotated_backgroundcorrected.pdf&quot;</span>) ## Background-corrected plot
-<span class="co">#&gt; [1] &quot;/tmp/RtmpOe84SB/infinity_flow_example/output/umap_plot_annotated_backgroundcorrected.pdf&quot;</span></code></pre></div>
+<span class="co">#&gt; [1] &quot;/tmp/RtmpqaubnW/infinity_flow_example/output/umap_plot_annotated_backgroundcorrected.pdf&quot;</span></code></pre></div>
 </div>
 <div id="conclusion" class="section level1">
 <h1>Conclusion</h1>

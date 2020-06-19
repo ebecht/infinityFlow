@@ -19,6 +19,7 @@ knitr::opts_chunk$set(
 Thank you for your interest in the ***Infinity Flow*** approach. This vignette describes how to apply the package to your massively parallel cytometry (e.g. *LEGENDScreen* or *Lyoplates kits*) experiment, using the default machine learning toolkit XGBoost. Other machine learning models are covered in a separate vignette.
 
 This vignette will cover:
+
 1. Package installation
 2. Setting up your input data
 3. Specifying the Backbone and Infinity antibodies
