@@ -20,10 +20,10 @@ Thank you for your interest in the ***Infinity Flow*** approach. This vignette d
 
 This vignette will cove:
 1. Package installation
-1. Setting up your input data
-1. Specifying the Backbone and Infinity antibodies
-1. Running the Infinity Flow computational pipeline
-1. Description of the output
+2. Setting up your input data
+3. Specifying the Backbone and Infinity antibodies
+4. Running the Infinity Flow computational pipeline
+5. Description of the output
 
 # Package installation
 You can install the latest version from github using
