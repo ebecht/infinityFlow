@@ -101,7 +101,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p>Thank you for your interest in the <strong><em>Infinity Flow</em></strong> approach. This vignette describes how to apply the package to your massively parallel cytometry (e.g. <em>LEGENDScreen</em> or <em>Lyoplates kits</em>) experiment, using the default machine learning toolkit XGBoost. Other machine learning models are covered in a separate vignette.</p>
-<p>This vignette will cove: 1. Package installation 1. Setting up your input data 1. Specifying the Backbone and Infinity antibodies 1. Running the Infinity Flow computational pipeline 1. Description of the output</p>
+<p>This vignette will cover: 1. Package installation 2. Setting up your input data 3. Specifying the Backbone and Infinity antibodies 4. Running the Infinity Flow computational pipeline 5. Description of the output</p>
 </div>
 <div id="package-installation" class="section level1">
 <h1>Package installation</h1>
@@ -123,10 +123,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>The example data is a subset of a massively parallel cytometry experiment of the mouse lung at steady state. The example data contains 10 FCS files, each with a distinct PE-conjugated Infinity antibody. To mimick real world-conditions, we will write this flowSet to disk as a set of 10 distinct FCS files. In this vignette we will use a temporary directory, but you can use the directory of your choice.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dir &lt;-<span class="st"> </span><span class="kw">file.path</span>(<span class="kw">tempdir</span>(), <span class="st">&quot;infinity_flow_example&quot;</span>)
 <span class="kw">print</span>(dir)
-<span class="co">#&gt; [1] &quot;/tmp/RtmpeGQ6aE/infinity_flow_example&quot;</span>
+<span class="co">#&gt; [1] &quot;/tmp/RtmpOe84SB/infinity_flow_example&quot;</span>
 input_dir &lt;-<span class="st"> </span><span class="kw">file.path</span>(dir, <span class="st">&quot;fcs&quot;</span>)
 <span class="kw">write.flowSet</span>(steady_state_lung, <span class="dt">outdir =</span> input_dir)
-<span class="co">#&gt; [1] &quot;/tmp/RtmpeGQ6aE/infinity_flow_example/fcs&quot;</span>
+<span class="co">#&gt; [1] &quot;/tmp/RtmpOe84SB/infinity_flow_example/fcs&quot;</span>
 <span class="kw">list.files</span>(input_dir)
 <span class="co">#&gt;  [1] &quot;annotation.txt&quot;                      &quot;Plate1_Specimen_001_B12_B12_024.fcs&quot;</span>
 <span class="co">#&gt;  [3] &quot;Plate1_Specimen_001_D8_D08_044.fcs&quot;  &quot;Plate1_Specimen_001_H11_H11_095.fcs&quot;</span>
@@ -148,12 +148,16 @@ input_dir &lt;-<span class="st"> </span><span class="kw">file.path</span>(dir, <
 <span class="co">#&gt; Plate3_Specimen_001_E5_E05_053.fcs          TCR Vg3            SHIgG</span>
 <span class="co">#&gt; Plate3_Specimen_001_F5_F05_065.fcs            SHIgG            SHIgG</span>
 <span class="co">#&gt; Plate3_Specimen_001_G2_G02_074.fcs             rIgM             rIgM</span></code></pre></div>
-<p>The <code>steady_state_lung_annotation</code> data.frame contains one line per FCS file, with <code>rownames(steady_state_lung_annotation) == sampleNames(steady_state_lung)</code>. The first column specifies the antibodies targeted by the Infinity antibody in each FCS file, and the second column specifies its isotype (species and constant region of the antibody).</p>
-<p>That is all we need in terms of inputs! To recap you only need 1. a folder with FCS files from your massively parallel cytometry experiment. 2. a table specifying the antibody targets and antibody isotypes for the Infinity antibodies from your massively parallel cytometry experiment.</p>
+<p>The <code>steady_state_lung_annotation</code> data.frame contains one line per FCS file, with <code>rownames(steady_state_lung_annotation) == sampleNames(steady_state_lung)</code>. The first column specifies the proteins targeted by the Infinity antibody in each FCS file, and the second column specifies its isotype (species and constant region of the antibody).</p>
+<p>That is all we need in terms of inputs! To recap you only need</p>
+<ol style="list-style-type: decimal">
+<li>a folder with FCS files from your massively parallel cytometry experiment.</li>
+<li>a table specifying the antibody targets and antibody isotypes for the Infinity antibodies from your massively parallel cytometry experiment.</li>
+</ol>
 </div>
 <div id="specifying-the-backbone-and-infinity-antibodies" class="section level1">
 <h1>Specifying the Backbone and Infinity antibodies</h1>
-<p>Now that we have our input data, we need to specify which antibodies are part of the Backbone, and which one is the Infinity antibody. We provide an interactive function to specify this directly in R. This function can be run once, its output save for future use by downstream function in the <strong><em>infinityFlow</em></strong> package. The <code>select_backbone_and_exploratory_markers</code> function will parse an FCS file in the input directory, and for each acquisition channel, ask the user whether it should be used as a predictor (Backbone), exploratory target (Infinity antibodies), or omitted (e.g. Time or Event ID columns...).</p>
+<p>Now that we have our input data, we need to specify which antibodies are part of the Backbone, and which one is the Infinity antibody. We provide an interactive function to specify this directly in R. This function can be run once, its output saved for future use by downstream functions in the <strong><em>infinityFlow</em></strong> package. The <code>select_backbone_and_exploratory_markers</code> function will parse an FCS file in the input directory, and for each acquisition channel, ask the user whether it should be used as a predictor (Backbone), exploratory target (Infinity antibodies), or omitted (e.g. Time or Event ID columns...).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">backbone_specification &lt;-<span class="st"> </span><span class="kw">select_backbone_and_exploratory_markers</span>(<span class="kw">list.files</span>(input_dir, <span class="dt">pattern =</span> <span class="st">&quot;.fcs&quot;</span>, <span class="dt">full.names =</span> <span class="ot">TRUE</span>))</code></pre></div>
 <p>Below is an example of the interactive execution of the <code>select_backbone_and_exploratory_markers</code> function for the example data. The resulting data.frame is printed too.</p>
 <pre><code>For each data channel, enter either: backbone, exploratory or discard (can be abbreviated)
@@ -219,10 +223,10 @@ Is selection correct? (yes/no): yes</code></pre>
 <div id="running-the-infinity-flow-computational-pipeline" class="section level1">
 <h1>Running the Infinity Flow computational pipeline</h1>
 <p>Now that we have our input data, FCS files annotation and specification of the Backbone and Infinity antibodies, we have everything we need to run the pipeline.</p>
-<p>All the pipeline is package into a single function, <code>infinity_flow()</code>.</p>
+<p>All the pipeline is packaged into a single function, <code>infinity_flow()</code>.</p>
 <p>Here is a description of the basic arguments it requires:</p>
 <ol style="list-style-type: decimal">
-<li>path_to_fcs: path a the folder with input FCS files</li>
+<li>path_to_fcs: path to the folder with input FCS files</li>
 <li>path_to_output: path to a folder where the output will be saved.</li>
 <li>backbone_selection_file: the CSV file specifying backbone and Infinity antibodies, created in the <em>Specifying the Backbone and Infinity antibodies</em> section above.</li>
 <li>annotation: A named vector of Infinity antibody targets per FCS file. We will create it from the annotation table we created in the <em>Setting up your input data</em> section</li>
@@ -270,39 +274,13 @@ isotypes &lt;-<span class="st"> </span>steady_state_lung_annotation<span class="
 <span class="co">#&gt;                             &quot;SHIgG&quot;                             &quot;SHIgG&quot; </span>
 <span class="co">#&gt;  Plate3_Specimen_001_A9_A09_009.fcs  Plate3_Specimen_001_C6_C06_030.fcs </span>
 <span class="co">#&gt;                             &quot;SHIgG&quot;                             &quot;SHIgG&quot;</span></code></pre></div>
-<p>Other arguments are not necessary, but it is worth considering the number of input cells and the number of output cells. This will notably be important if you are using a computer with limited RAM. For the example data it does not matter as we only have access to 2,000 cells per well, but if you run the pipeline on your own data I suggest you start by low values, and ramp up once everything is setup. Another optional argument is <code>cores</code> which controls multicore computing, which can speed up execution at the cost of memory usage. In this vignette we use cores = 1, but you probably want to increase this to 4 or 8 or more if your computer can accomodate it.</p>
+<p>Other arguments are optional, but it is notably worth considering the number of input cells and the number of output cells. This will notably be important if you are using a computer with limited RAM. For the example data it does not matter as we only have access to 2,000 cells per well, but if you run the pipeline on your own data I suggest you start by low values, and ramp up (to 20,000 or 50,000 input cells, and e.g. 10,000 output cells per well) once everything is setup. Another optional argument is <code>cores</code> which controls multicore computing, which can speed up execution at the cost of memory usage. In this vignette we use cores = 1, but you probably want to increase this to 4 or 8 or more if your computer can accomodate it.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">input_events_downsampling &lt;-<span class="st"> </span><span class="dv">1000</span>
 prediction_events_downsampling &lt;-<span class="st"> </span><span class="dv">500</span>
 cores =<span class="st"> </span>1L</code></pre></div>
 <p>There is also an argument to store temporary files, which can be useful to further analyze the data in R. If missing, this argument will default to a temporary directory.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">path_to_intermediary_results &lt;-<span class="st"> </span><span class="kw">file.path</span>(dir, <span class="st">&quot;tmp&quot;</span>)</code></pre></div>
 <p>At last, now let us execute the pipeline:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>(backbone_selection_file)
-<span class="co">#&gt; [1] &quot;/tmp/RtmpeGQ6aE/infinity_flow_example/backbone_selection_file.csv&quot;</span>
-<span class="kw">print</span>(<span class="kw">read.csv</span>(backbone_selection_file, <span class="dt">stringsAsFactors =</span> <span class="ot">FALSE</span>))
-<span class="co">#&gt;                        name        desc        type</span>
-<span class="co">#&gt; 1                     FSC-A        &lt;NA&gt;     discard</span>
-<span class="co">#&gt; 2                     FSC-H        &lt;NA&gt;    backbone</span>
-<span class="co">#&gt; 3                     FSC-W        &lt;NA&gt;    backbone</span>
-<span class="co">#&gt; 4                     SSC-A        &lt;NA&gt;     discard</span>
-<span class="co">#&gt; 5                     SSC-H        &lt;NA&gt;    backbone</span>
-<span class="co">#&gt; 6                     SSC-W        &lt;NA&gt;    backbone</span>
-<span class="co">#&gt; 7              FJComp-APC-A CD69-CD301b    backbone</span>
-<span class="co">#&gt; 8    FJComp-APC-eFlour780-A      Zombie     discard</span>
-<span class="co">#&gt; 9  FJComp-Alexa Fluor 700-A       MHCII    backbone</span>
-<span class="co">#&gt; 10          FJComp-BUV395-A         CD4    backbone</span>
-<span class="co">#&gt; 11          FJComp-BUV737-A        CD44    backbone</span>
-<span class="co">#&gt; 12           FJComp-BV421-A         CD8    backbone</span>
-<span class="co">#&gt; 13           FJComp-BV510-A       CD11c    backbone</span>
-<span class="co">#&gt; 14           FJComp-BV605-A       CD11b    backbone</span>
-<span class="co">#&gt; 15           FJComp-BV650-A        F480    backbone</span>
-<span class="co">#&gt; 16           FJComp-BV711-A        Ly6C    backbone</span>
-<span class="co">#&gt; 17           FJComp-BV786-A     Lineage    backbone</span>
-<span class="co">#&gt; 18             FJComp-GFP-A    CD45a488    backbone</span>
-<span class="co">#&gt; 19          FJComp-PE(yg)-A      Legend exploratory</span>
-<span class="co">#&gt; 20      FJComp-PE-Cy7(yg)-A        CD24    backbone</span>
-<span class="co">#&gt; 21     FJComp-PerCP-Cy5-5-A       CD103    backbone</span>
-<span class="co">#&gt; 22                     Time        &lt;NA&gt;     discard</span></code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">imputed_data &lt;-<span class="st"> </span><span class="kw">infinity_flow</span>(
     <span class="dt">path_to_fcs =</span> path_to_fcs,
     <span class="dt">path_to_output =</span> path_to_output,
@@ -315,14 +293,14 @@ cores =<span class="st"> </span>1L</code></pre></div>
     <span class="dt">verbose =</span> <span class="ot">TRUE</span>,
     <span class="dt">cores =</span> cores
 )
-<span class="co">#&gt; /tmp/RtmpeGQ6aE/infinity_flow_example/tmp and /tmp/RtmpeGQ6aE/infinity_flow_example/tmp/subsetted_fcs and /tmp/RtmpeGQ6aE/infinity_flow_example/tmp/rds and /tmp/RtmpeGQ6aE/infinity_flow_example/output: directories not found, creating directory(ies)</span>
+<span class="co">#&gt; /tmp/RtmpOe84SB/infinity_flow_example/tmp and /tmp/RtmpOe84SB/infinity_flow_example/tmp/subsetted_fcs and /tmp/RtmpOe84SB/infinity_flow_example/tmp/rds and /tmp/RtmpOe84SB/infinity_flow_example/output: directories not found, creating directory(ies)</span>
 <span class="co">#&gt; Using directories...</span>
-<span class="co">#&gt;  input: /tmp/RtmpeGQ6aE/infinity_flow_example/fcs</span>
-<span class="co">#&gt;  intermediary: /tmp/RtmpeGQ6aE/infinity_flow_example/tmp</span>
-<span class="co">#&gt;  subset: /tmp/RtmpeGQ6aE/infinity_flow_example/tmp/subsetted_fcs</span>
-<span class="co">#&gt;  rds: /tmp/RtmpeGQ6aE/infinity_flow_example/tmp/rds</span>
-<span class="co">#&gt;  annotation: /tmp/RtmpeGQ6aE/infinity_flow_example/tmp/annotation.csv</span>
-<span class="co">#&gt;  output: /tmp/RtmpeGQ6aE/infinity_flow_example/output</span>
+<span class="co">#&gt;  input: /tmp/RtmpOe84SB/infinity_flow_example/fcs</span>
+<span class="co">#&gt;  intermediary: /tmp/RtmpOe84SB/infinity_flow_example/tmp</span>
+<span class="co">#&gt;  subset: /tmp/RtmpOe84SB/infinity_flow_example/tmp/subsetted_fcs</span>
+<span class="co">#&gt;  rds: /tmp/RtmpOe84SB/infinity_flow_example/tmp/rds</span>
+<span class="co">#&gt;  annotation: /tmp/RtmpOe84SB/infinity_flow_example/tmp/annotation.csv</span>
+<span class="co">#&gt;  output: /tmp/RtmpOe84SB/infinity_flow_example/output</span>
 <span class="co">#&gt; Parsing and subsampling input data</span>
 <span class="co">#&gt;  Downsampling to 1000 events per input file</span>
 <span class="co">#&gt;  Concatenating expression matrices</span>
@@ -341,30 +319,30 @@ cores =<span class="st"> </span>1L</code></pre></div>
 <span class="co">#&gt;  Fitting...</span>
 <span class="co">#&gt;      XGBoost</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  8.336515 seconds</span>
+<span class="co">#&gt;  10.424 seconds</span>
 <span class="co">#&gt; Imputing missing measurements</span>
 <span class="co">#&gt;  Randomly drawing events to predict from the test set</span>
 <span class="co">#&gt;  Imputing...</span>
 <span class="co">#&gt;      XGBoost</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  1.430036 seconds</span>
+<span class="co">#&gt;  2.143252 seconds</span>
 <span class="co">#&gt;  Concatenating predictions</span>
 <span class="co">#&gt;  Writing to disk</span>
 <span class="co">#&gt; Performing dimensionality reduction</span>
-<span class="co">#&gt; 23:14:12 UMAP embedding parameters a = 1.262 b = 1.003</span>
-<span class="co">#&gt; 23:14:12 Read 5000 rows and found 17 numeric columns</span>
-<span class="co">#&gt; 23:14:12 Using Annoy for neighbor search, n_neighbors = 15</span>
-<span class="co">#&gt; 23:14:13 Building Annoy index with metric = euclidean, n_trees = 50</span>
+<span class="co">#&gt; 15:48:40 UMAP embedding parameters a = 1.262 b = 1.003</span>
+<span class="co">#&gt; 15:48:40 Read 5000 rows and found 17 numeric columns</span>
+<span class="co">#&gt; 15:48:40 Using Annoy for neighbor search, n_neighbors = 15</span>
+<span class="co">#&gt; 15:48:41 Building Annoy index with metric = euclidean, n_trees = 50</span>
 <span class="co">#&gt; 0%   10   20   30   40   50   60   70   80   90   100%</span>
 <span class="co">#&gt; [----|----|----|----|----|----|----|----|----|----|</span>
 <span class="co">#&gt; **************************************************|</span>
-<span class="co">#&gt; 23:14:13 Writing NN index file to temp file /tmp/RtmpeGQ6aE/file311c9bf977d</span>
-<span class="co">#&gt; 23:14:13 Searching Annoy index using 1 thread, search_k = 1500</span>
-<span class="co">#&gt; 23:14:14 Annoy recall = 100%</span>
-<span class="co">#&gt; 23:14:14 Commencing smooth kNN distance calibration using 1 thread</span>
-<span class="co">#&gt; 23:14:15 Initializing from normalized Laplacian + noise</span>
-<span class="co">#&gt; 23:14:15 Commencing optimization for 1000 epochs, with 101624 positive edges using 1 thread</span>
-<span class="co">#&gt; 23:14:25 Optimization finished</span>
+<span class="co">#&gt; 15:48:41 Writing NN index file to temp file /tmp/RtmpOe84SB/file303167a93fdb</span>
+<span class="co">#&gt; 15:48:41 Searching Annoy index using 1 thread, search_k = 1500</span>
+<span class="co">#&gt; 15:48:43 Annoy recall = 100%</span>
+<span class="co">#&gt; 15:48:43 Commencing smooth kNN distance calibration using 1 thread</span>
+<span class="co">#&gt; 15:48:43 Initializing from normalized Laplacian + noise</span>
+<span class="co">#&gt; 15:48:44 Commencing optimization for 1000 epochs, with 102036 positive edges using 1 thread</span>
+<span class="co">#&gt; 15:48:54 Optimization finished</span>
 <span class="co">#&gt; Exporting results</span>
 <span class="co">#&gt;  Transforming predictions back to a linear scale</span>
 <span class="co">#&gt;  Exporting FCS files (1 per well)</span>
@@ -383,26 +361,42 @@ cores =<span class="st"> </span>1L</code></pre></div>
 </div>
 <div id="description-of-the-output" class="section level1">
 <h1>Description of the output</h1>
-<p>The output mainly consists of 1. Sets of FCS files with imputed data 2. PDF of a UMAP embedding of the Backbone data, color-coded by imputed expression of the Infinity antibody</p>
+<p>The output mainly consists of</p>
+<ol style="list-style-type: decimal">
+<li>Sets of FCS files with imputed data, which can be used for further downstream analysis.</li>
+<li>PDFs of a UMAP embedding of the Backbone data, color-coded by imputed expression of the Infinity antibody</li>
+</ol>
 <p>Each of the above comes in two flavours, either <strong>raw</strong> or <strong>background-corrected</strong>.</p>
 <p>At the end of the pipeline, input FCS files are augmented with imputed data. Feel free to explore these files in whatever flow cytometry software you are comfortable with! They should look pretty much like regular FCS files, although they are computationnally derived. You can find the output FCS files in the <code>path_to_output</code> directory, specifically:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(<span class="kw">list.files</span>(path_to_fcs)) ## Input files
 <span class="co">#&gt; [1] &quot;annotation.txt&quot;                      &quot;Plate1_Specimen_001_B12_B12_024.fcs&quot;</span>
 <span class="co">#&gt; [3] &quot;Plate1_Specimen_001_D8_D08_044.fcs&quot;  &quot;Plate1_Specimen_001_H11_H11_095.fcs&quot;</span>
 <span class="co">#&gt; [5] &quot;Plate3_Specimen_001_A3_A03_003.fcs&quot;  &quot;Plate3_Specimen_001_A9_A09_009.fcs&quot;</span>
-fcs_raw &lt;-<span class="st"> </span><span class="kw">file.path</span>(path_to_output, <span class="st">&quot;output&quot;</span>, <span class="st">&quot;FCS&quot;</span>, <span class="st">&quot;split&quot;</span>)
+fcs_raw &lt;-<span class="st"> </span><span class="kw">file.path</span>(path_to_output, <span class="st">&quot;FCS&quot;</span>, <span class="st">&quot;split&quot;</span>)
 <span class="kw">head</span>(<span class="kw">list.files</span>(fcs_raw)) ## Raw output FCS files
-<span class="co">#&gt; character(0)</span>
-fcs_bgc &lt;-<span class="st"> </span><span class="kw">file.path</span>(path_to_output, <span class="st">&quot;output&quot;</span>, <span class="st">&quot;FCS_background_corrected&quot;</span>, <span class="st">&quot;split&quot;</span>) ## Background-corrected output FCS files
+<span class="co">#&gt; [1] &quot;Plate1_Specimen_001_B12_B12_024_target_CD28.fcs&quot;        </span>
+<span class="co">#&gt; [2] &quot;Plate1_Specimen_001_D8_D08_044_target_CD49b(pan-NK).fcs&quot;</span>
+<span class="co">#&gt; [3] &quot;Plate1_Specimen_001_H11_H11_095_target_CD137.fcs&quot;       </span>
+<span class="co">#&gt; [4] &quot;Plate3_Specimen_001_A3_A03_003_target_KLRG1.fcs&quot;        </span>
+<span class="co">#&gt; [5] &quot;Plate3_Specimen_001_A9_A09_009_target_Ly-49c-F-I-H.fcs&quot; </span>
+<span class="co">#&gt; [6] &quot;Plate3_Specimen_001_C11_C11_035_target_SSEA-3.fcs&quot;</span>
+fcs_bgc &lt;-<span class="st"> </span><span class="kw">file.path</span>(path_to_output, <span class="st">&quot;FCS_background_corrected&quot;</span>, <span class="st">&quot;split&quot;</span>) ## Background-corrected output FCS files
 <span class="kw">head</span>(<span class="kw">list.files</span>(fcs_bgc)) ## Background-corrected output FCS files
-<span class="co">#&gt; character(0)</span></code></pre></div>
+<span class="co">#&gt; [1] &quot;Plate1_Specimen_001_B12_B12_024_target_CD28.fcs&quot;        </span>
+<span class="co">#&gt; [2] &quot;Plate1_Specimen_001_D8_D08_044_target_CD49b(pan-NK).fcs&quot;</span>
+<span class="co">#&gt; [3] &quot;Plate1_Specimen_001_H11_H11_095_target_CD137.fcs&quot;       </span>
+<span class="co">#&gt; [4] &quot;Plate3_Specimen_001_A3_A03_003_target_KLRG1.fcs&quot;        </span>
+<span class="co">#&gt; [5] &quot;Plate3_Specimen_001_A9_A09_009_target_Ly-49c-F-I-H.fcs&quot; </span>
+<span class="co">#&gt; [6] &quot;Plate3_Specimen_001_C11_C11_035_target_SSEA-3.fcs&quot;</span></code></pre></div>
 <p>Finally, the pipeline produces two PDF files, with a UMAP embedding of the backbone data color-coded by the imputed data. This is a very informative output and a good way to start analyzing your data. These files are present in the <code>path_to_output</code> directory. The example dataset is very small but feel free to look at the result for illustration purposes. This PDF is available at</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">file.path</span>(path_to_output, <span class="st">&quot;umap_plot_annotated.pdf&quot;</span>)
-<span class="co">#&gt; [1] &quot;/tmp/RtmpeGQ6aE/infinity_flow_example/output/umap_plot_annotated.pdf&quot;</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">file.path</span>(path_to_output, <span class="st">&quot;umap_plot_annotated.pdf&quot;</span>) ## Raw plot
+<span class="co">#&gt; [1] &quot;/tmp/RtmpOe84SB/infinity_flow_example/output/umap_plot_annotated.pdf&quot;</span>
+<span class="kw">file.path</span>(path_to_output, <span class="st">&quot;umap_plot_annotated_backgroundcorrected.pdf&quot;</span>) ## Background-corrected plot
+<span class="co">#&gt; [1] &quot;/tmp/RtmpOe84SB/infinity_flow_example/output/umap_plot_annotated_backgroundcorrected.pdf&quot;</span></code></pre></div>
 </div>
 <div id="conclusion" class="section level1">
 <h1>Conclusion</h1>
-<p>Thank you for following this vignette, I hope you made it through the end without too much headache and that it was informative. Feel free to raise an issue on infinityFlow's  if you run into unsolvable issues.</p>
+<p>Thank you for following this vignette, I hope you made it through the end without too much headache and that it was informative. Feel free to raise an issue on infinityFlow's [github]{<a href="https://github.com/ebecht/infinityFlow/issues" class="uri">https://github.com/ebecht/infinityFlow/issues</a>} if you run into unsolvable issues.</p>
 </div>
 
 
