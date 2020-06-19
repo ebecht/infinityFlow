@@ -406,4 +406,3 @@ predict_from_models=function(
     saveRDS(pred_set,file=file.path(paths["rds"],"sampling_preds.Rds"))   
     list(timings=timings)
 }
-

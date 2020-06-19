@@ -177,7 +177,7 @@ color_biplot_by_channels <- function(
 }
 
 #' @title For each parameter in the FCS files, interactively specify whether it is part of the backbone, the exploratory markers or should be ignored.
-#' @description This This function will load the first of the input FCS files and extract the measured parameters as well as their labels. For each of these, it will ask the user whether it is part of the backbone measurements (and will be used as a predictor variable in regressions), exploratory measurements (used as dependent variable in regressions) or discarded (e.g. for Time, Sample IDs, Event number IDs, ...).
+#' @description This This function will load the first of the input FCS files and extract the measured parameters as well as their labels. For each of these, it will ask the user whether it is part of the backbone measurements (and will be used as a predictor variable in regressions), Infinity (exploratory) measurements (usually PE-conjugated or APC-conjugated, used as dependent variable in regressions) or discarded (e.g. for Time, Sample IDs, Event number IDs, ...).
 #' @param files character vector of paths to FCS files
 #' @export
 #' @importFrom flowCore read.FCS parameters
@@ -264,3 +264,21 @@ minmax_scale=function(matrix,min=1,max=1000,na.rm=TRUE){
         a*x+b
     })
 }
+
+## Documentation of data objects
+
+#' Subset of a massively parallel cytometry experiment of mouse lung single cells
+#' @docType data
+#' @format a flowSet containing 10 flowFrames (thus corresponding to 10 FCS files)
+#' @source \url{https://flowrepository.org/id/FR-FCM-Z2LP}
+"steady_state_lung"
+
+#' Target and isotypes annotation for the data object infinityFlow::steady_state_lnug
+#' @docType data
+#' @format a data.frame specifying the Infinity antibody targets and isotypes for each flowFrame of the steady_state_lung flowSet 
+"steady_state_lung_annotation"
+
+#' Backbone and Infinity antibodies specification for the data object infinityFlow::steady_state_lnug
+#' @docType data
+#' @format a data.frame specifying the Infinity antibody targets and isotypes for each flowFrame of the steady_state_lung flowSet 
+"steady_state_lung_backbone_specification"

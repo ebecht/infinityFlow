@@ -10,5 +10,5 @@ select_backbone_and_exploratory_markers(files)
 \item{files}{character vector of paths to FCS files}
 }
 \description{
-This This function will load the first of the input FCS files and extract the measured parameters as well as their labels. For each of these, it will ask the user whether it is part of the backbone measurements (and will be used as a predictor variable in regressions), exploratory measurements (used as dependent variable in regressions) or discarded (e.g. for Time, Sample IDs, Event number IDs, ...).
+This This function will load the first of the input FCS files and extract the measured parameters as well as their labels. For each of these, it will ask the user whether it is part of the backbone measurements (and will be used as a predictor variable in regressions), Infinity (exploratory) measurements (usually PE-conjugated or APC-conjugated, used as dependent variable in regressions) or discarded (e.g. for Time, Sample IDs, Event number IDs, ...).
 }
