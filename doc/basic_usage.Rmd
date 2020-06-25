@@ -54,7 +54,7 @@ The example data is a subset of a massively parallel cytometry experiment of the
 dir <- file.path(tempdir(), "infinity_flow_example")
 print(dir)
 input_dir <- file.path(dir, "fcs")
-write.flowSet(steady_state_lung, outdir = input_dir)
+write.flowSet(steady_state_lung, outdir = input_dir) ## Omit this if you already have FCS files
 list.files(input_dir)
 ```
 
