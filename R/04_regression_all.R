@@ -91,8 +91,9 @@ fitter_glmnet=function(x = NULL, params = NULL){
                 use.model.frame = TRUE
             )
         )
-        fun = getS3method("cv.glmnet", "formula")
-        model = do.call(getS3method("cv.glmnet", "formula"), params)
+        
+        fun = getS3method("cv.glmnet", "formula", envir = asNamespace("glmnetUtils"))
+        model = do.call(fun, params)
         model$call = NULL ## Slimming down object
         model$glmnet.fit$call = NULL ## Slimming down object
         attributes(model$terms)[[".Environment"]] = NULL ## Slimming down object
@@ -135,6 +136,9 @@ predict_wrapper=function(x){
         requireNamespace("xgboost")
         x = xgboost::xgb.Booster.complete(x)
         xgboost::xgb.parameters(x) <- list(nthread = 1)
+    }
+    if(is(x, "svm")){
+        requireNamespace("e1071")
     }
     res=predict(x, xp)
 }
@@ -262,21 +266,21 @@ fit_regressions=function(
         {
             chans=make.names(chans)
             yvar=make.names(yvar)
-            if(any(sapply(regression_functions, function(x){identical(x, fitter_nn)}))){
-                if(requireNamespace("keras", quietly = TRUE) & requireNamespace("tensorflow", quietly = TRUE)){
-                    if(!is.null(neural_networks_seed)){
-                        tensorflow::use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
-                    } else {
-                        tensorflow::tf$reset_default_graph()
-                        config <- list()
-                        config$intra_op_parallelism_threads <- 1L
-                        config$inter_op_parallelism_threads <- 1L
-                        session_conf <- do.call(tensorflow::tf$ConfigProto, config)
-                        sess <- tensorflow::tf$Session(graph = tensorflow::tf$get_default_graph(), config = session_conf)
-                        tensorflow:::call_hook("tensorflow.on_use_session", sess, TRUE)
-                    }
-                }
-            }
+            ## if(any(sapply(regression_functions, function(x){identical(x, fitter_nn)}))){
+            ##     if(requireNamespace("keras", quietly = TRUE) & requireNamespace("tensorflow", quietly = TRUE)){
+            ##         if(!is.null(neural_networks_seed)){
+            ##             tensorflow::use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
+            ##         } else {
+            ##             tensorflow::tf$reset_default_graph()
+            ##             config <- list()
+            ##             config$intra_op_parallelism_threads <- 1L
+            ##             config$inter_op_parallelism_threads <- 1L
+            ##             session_conf <- do.call(tensorflow::tf$ConfigProto, config)
+            ##             sess <- tensorflow::tf$Session(graph = tensorflow::tf$get_default_graph(), config = session_conf)
+            ##             tensorflow:::call_hook("tensorflow.on_use_session", sess, TRUE)
+            ##         }
+            ##     }
+            ## }
         }
     )
     
@@ -389,21 +393,21 @@ predict_from_models=function(
         {
             colnames(xp)=make.names(colnames(xp))
             xp=xp[,make.names(chans)]
-            if(any(sapply(regression_functions, function(x){identical(x, fitter_nn)}))){
-                if(requireNamespace("keras", quietly = TRUE) & requireNamespace("tensorflow", quietly = TRUE)){
-                    if(!is.null(neural_networks_seed)){
-                        tensorflow::use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
-                    }  else {
-                        tensorflow::tf$reset_default_graph()
-                        config <- list()
-                        config$intra_op_parallelism_threads <- 1L
-                        config$inter_op_parallelism_threads <- 1L
-                        session_conf <- do.call(tensorflow::tf$ConfigProto, config)
-                        sess <- tensorflow::tf$Session(graph = tensorflow::tf$get_default_graph(), config = session_conf)
-                        tensorflow:::call_hook("tensorflow.on_use_session", sess, TRUE)
-                    }
-                }
-            }
+            ## if(any(sapply(regression_functions, function(x){identical(x, fitter_nn)}))){
+            ##     if(requireNamespace("keras", quietly = TRUE) & requireNamespace("tensorflow", quietly = TRUE)){
+            ##         if(!is.null(neural_networks_seed)){
+            ##             tensorflow::use_session_with_seed(neural_networks_seed) ## This will make results reproducible, disable GPU and CPU parallelism (which is good actually). Source: https://keras.rstudio.com/articles/faq.html#how-can-i-obtain-reproducible-results-using-keras-during-development
+            ##         }  else {                        
+            ##             tensorflow::tf$reset_default_graph()
+            ##             config <- list()
+            ##             config$intra_op_parallelism_threads <- 1L
+            ##             config$inter_op_parallelism_threads <- 1L
+            ##             session_conf <- do.call(tensorflow::tf$ConfigProto, config)
+            ##             sess <- tensorflow::tf$Session(graph = tensorflow::tf$get_default_graph(), config = session_conf)
+            ##             tensorflow:::call_hook("tensorflow.on_use_session", sess, TRUE)
+            ##         }
+            ##     }
+            ## }
         }
     ))
     
