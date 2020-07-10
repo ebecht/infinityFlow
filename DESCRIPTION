@@ -6,10 +6,11 @@ Authors@R: c(
 	   )
 Description: Pipeline to analyze and merge data files produced by BioLegend's LEGENDScreen or BD Human Cell Surface Marker Screening Panel (BD Lyoplates).
 Depends:
-	R (>= 4.0.0)
+	R (>= 4.0.0),
+	flowCore
 License: GPL-3
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 Imports: stats,
 	grDevices,
 	utils,
@@ -20,7 +21,6 @@ Imports: stats,
 	raster,
 	grid,
 	uwot,
-	flowCore,
         gtools,
 	Biobase,
 	generics,
