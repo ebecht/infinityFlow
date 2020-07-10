@@ -65,7 +65,11 @@ data(steady_state_lung_annotation)
 print(steady_state_lung_annotation)
 ```
 
-The `steady_state_lung_annotation` data.frame contains one line per FCS file, with `rownames(steady_state_lung_annotation) == sampleNames(steady_state_lung)`. The first column specifies the proteins targeted by the Infinity antibody in each FCS file, and the second column specifies its isotype (species and constant region of the antibody).
+The `steady_state_lung_annotation` data.frame contains one line per FCS file, with `rownames(steady_state_lung_annotation) == sampleNames(steady_state_lung)`. The first column specifies the proteins targeted by the Infinity antibody in each FCS file, and the second column specifies its isotype (species and constant region of the antibody). If you load an annotation file from disk, use this command:
+
+```
+steady_state_lung_annotation = read.csv("path/to/targets/and/isotypes/annotation/file", row.names = 1, stringsAsFactors = FALSE)
+```
 
 That is all we need in terms of inputs! To recap you only need
 

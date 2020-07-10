@@ -1,0 +1,27 @@
+citHeader("Please cite 'Infinity Flow: High-throughput single-cell quantification of 100s of proteins using conventional flow cytometry and machine learning, by Becht, Tolstrup, Dutertre, Ginhoux, Newell, Gottardo and Headley, 2020' if you use this package in your publications")
+
+citEntry(
+    entry  ="UNPUBLISHED",
+    title  = "Infinity Flow: High-throughput single-cell quantification of 100s of proteins using conventional flow cytometry and machine learning",
+    author = personList(
+        as.person("Etienne Becht"),
+        as.person("Daniel Tolstrup"),
+        as.person("Charles-Antoine Dutertre"),
+        as.person("Florent Ginhoux"),
+        as.person("Evan W. Newell"),
+        as.person("Raphael Gottardo"),
+        as.person("Mark B. Headley")
+    ),
+    journal = "bioRxiv",
+    year    = "2020",
+    volume  = "",
+    number  = "",
+    pages   = "",
+    PMID    = "",
+    doi     = "",
+    note = "Submitted",
+    textVersion = paste("Becht, Tolstrup, Dutertre, Ginhoux, Newell, Gottardo and Headley",
+                        "Infinity Flow: High-throughput single-cell quantification of 100s of proteins using conventional flow cytometry and machine learning",
+                        "2020"
+                        )
+)

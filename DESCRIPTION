@@ -1,6 +1,6 @@
 Package: infinityFlow
 Title: Augmenting Massively Parallel Cytometry Experiments Using Multivariate Non-Linear Regressions
-Version: 0.99.3
+Version: 0.99.4
 Authors@R: c(
                person("Etienne","Becht",middle=NULL,email="etienne.becht@protonmail.com",role=c("cre","aut"))
 	   )
@@ -34,5 +34,5 @@ Suggests: knitr,
 	glmnetUtils,
 	e1071
 VignetteBuilder: knitr
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 biocViews: Software, FlowCytometry, CellBasedAssays, SingleCell, Proteomics

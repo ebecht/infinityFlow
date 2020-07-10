@@ -130,10 +130,10 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <p>The example data is a subset of a massively parallel cytometry experiment of the mouse lung at steady state. The example data contains 10 FCS files, each with a distinct PE-conjugated Infinity antibody. To mimick real world-conditions, we will write this flowSet to disk as a set of 10 distinct FCS files. In this vignette we will use a temporary directory, but you can use the directory of your choice.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dir &lt;-<span class="st"> </span><span class="kw">file.path</span>(<span class="kw">tempdir</span>(), <span class="st">&quot;infinity_flow_example&quot;</span>)
 <span class="kw">print</span>(dir)
-<span class="co">#&gt; [1] &quot;/tmp/Rtmp5mubnc/infinity_flow_example&quot;</span>
+<span class="co">#&gt; [1] &quot;/tmp/RtmprNuO7t/infinity_flow_example&quot;</span>
 input_dir &lt;-<span class="st"> </span><span class="kw">file.path</span>(dir, <span class="st">&quot;fcs&quot;</span>)
 <span class="kw">write.flowSet</span>(steady_state_lung, <span class="dt">outdir =</span> input_dir) ## Omit this if you already have FCS files
-<span class="co">#&gt; [1] &quot;/tmp/Rtmp5mubnc/infinity_flow_example/fcs&quot;</span>
+<span class="co">#&gt; [1] &quot;/tmp/RtmprNuO7t/infinity_flow_example/fcs&quot;</span>
 <span class="kw">list.files</span>(input_dir)
 <span class="co">#&gt;  [1] &quot;annotation.txt&quot;                      &quot;Plate1_Specimen_001_B12_B12_024.fcs&quot;</span>
 <span class="co">#&gt;  [3] &quot;Plate1_Specimen_001_D8_D08_044.fcs&quot;  &quot;Plate1_Specimen_001_H11_H11_095.fcs&quot;</span>
@@ -155,7 +155,8 @@ input_dir &lt;-<span class="st"> </span><span class="kw">file.path</span>(dir, <
 <span class="co">#&gt; Plate3_Specimen_001_E5_E05_053.fcs          TCR Vg3            SHIgG</span>
 <span class="co">#&gt; Plate3_Specimen_001_F5_F05_065.fcs            SHIgG            SHIgG</span>
 <span class="co">#&gt; Plate3_Specimen_001_G2_G02_074.fcs             rIgM             rIgM</span></code></pre></div>
-<p>The <code>steady_state_lung_annotation</code> data.frame contains one line per FCS file, with <code>rownames(steady_state_lung_annotation) == sampleNames(steady_state_lung)</code>. The first column specifies the proteins targeted by the Infinity antibody in each FCS file, and the second column specifies its isotype (species and constant region of the antibody).</p>
+<p>The <code>steady_state_lung_annotation</code> data.frame contains one line per FCS file, with <code>rownames(steady_state_lung_annotation) == sampleNames(steady_state_lung)</code>. The first column specifies the proteins targeted by the Infinity antibody in each FCS file, and the second column specifies its isotype (species and constant region of the antibody). If you load an annotation file from disk, use this command:</p>
+<pre><code>steady_state_lung_annotation = read.csv(&quot;path/to/targets/and/isotypes/annotation/file&quot;, row.names = 1, stringsAsFactors = FALSE)</code></pre>
 <p>That is all we need in terms of inputs! To recap you only need</p>
 <ol style="list-style-type: decimal">
 <li>a folder with FCS files from your massively parallel cytometry experiment.</li>
@@ -300,14 +301,14 @@ cores =<span class="st"> </span>1L</code></pre></div>
     <span class="dt">verbose =</span> <span class="ot">TRUE</span>,
     <span class="dt">cores =</span> cores
 )
-<span class="co">#&gt; /tmp/Rtmp5mubnc/infinity_flow_example/tmp and /tmp/Rtmp5mubnc/infinity_flow_example/tmp/subsetted_fcs and /tmp/Rtmp5mubnc/infinity_flow_example/tmp/rds and /tmp/Rtmp5mubnc/infinity_flow_example/output: directories not found, creating directory(ies)</span>
+<span class="co">#&gt; /tmp/RtmprNuO7t/infinity_flow_example/tmp and /tmp/RtmprNuO7t/infinity_flow_example/tmp/subsetted_fcs and /tmp/RtmprNuO7t/infinity_flow_example/tmp/rds and /tmp/RtmprNuO7t/infinity_flow_example/output: directories not found, creating directory(ies)</span>
 <span class="co">#&gt; Using directories...</span>
-<span class="co">#&gt;  input: /tmp/Rtmp5mubnc/infinity_flow_example/fcs</span>
-<span class="co">#&gt;  intermediary: /tmp/Rtmp5mubnc/infinity_flow_example/tmp</span>
-<span class="co">#&gt;  subset: /tmp/Rtmp5mubnc/infinity_flow_example/tmp/subsetted_fcs</span>
-<span class="co">#&gt;  rds: /tmp/Rtmp5mubnc/infinity_flow_example/tmp/rds</span>
-<span class="co">#&gt;  annotation: /tmp/Rtmp5mubnc/infinity_flow_example/tmp/annotation.csv</span>
-<span class="co">#&gt;  output: /tmp/Rtmp5mubnc/infinity_flow_example/output</span>
+<span class="co">#&gt;  input: /tmp/RtmprNuO7t/infinity_flow_example/fcs</span>
+<span class="co">#&gt;  intermediary: /tmp/RtmprNuO7t/infinity_flow_example/tmp</span>
+<span class="co">#&gt;  subset: /tmp/RtmprNuO7t/infinity_flow_example/tmp/subsetted_fcs</span>
+<span class="co">#&gt;  rds: /tmp/RtmprNuO7t/infinity_flow_example/tmp/rds</span>
+<span class="co">#&gt;  annotation: /tmp/RtmprNuO7t/infinity_flow_example/tmp/annotation.csv</span>
+<span class="co">#&gt;  output: /tmp/RtmprNuO7t/infinity_flow_example/output</span>
 <span class="co">#&gt; Parsing and subsampling input data</span>
 <span class="co">#&gt;  Downsampling to 1000 events per input file</span>
 <span class="co">#&gt;  Concatenating expression matrices</span>
@@ -326,30 +327,30 @@ cores =<span class="st"> </span>1L</code></pre></div>
 <span class="co">#&gt;  Fitting...</span>
 <span class="co">#&gt;      XGBoost</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  8.439857 seconds</span>
+<span class="co">#&gt;  7.209784 seconds</span>
 <span class="co">#&gt; Imputing missing measurements</span>
 <span class="co">#&gt;  Randomly drawing events to predict from the test set</span>
 <span class="co">#&gt;  Imputing...</span>
 <span class="co">#&gt;      XGBoost</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  1.693088 seconds</span>
+<span class="co">#&gt;  1.523647 seconds</span>
 <span class="co">#&gt;  Concatenating predictions</span>
 <span class="co">#&gt;  Writing to disk</span>
 <span class="co">#&gt; Performing dimensionality reduction</span>
-<span class="co">#&gt; 11:30:32 UMAP embedding parameters a = 1.262 b = 1.003</span>
-<span class="co">#&gt; 11:30:32 Read 5000 rows and found 17 numeric columns</span>
-<span class="co">#&gt; 11:30:32 Using Annoy for neighbor search, n_neighbors = 15</span>
-<span class="co">#&gt; 11:30:32 Building Annoy index with metric = euclidean, n_trees = 50</span>
+<span class="co">#&gt; 19:44:53 UMAP embedding parameters a = 1.262 b = 1.003</span>
+<span class="co">#&gt; 19:44:53 Read 5000 rows and found 17 numeric columns</span>
+<span class="co">#&gt; 19:44:53 Using Annoy for neighbor search, n_neighbors = 15</span>
+<span class="co">#&gt; 19:44:54 Building Annoy index with metric = euclidean, n_trees = 50</span>
 <span class="co">#&gt; 0%   10   20   30   40   50   60   70   80   90   100%</span>
 <span class="co">#&gt; [----|----|----|----|----|----|----|----|----|----|</span>
 <span class="co">#&gt; **************************************************|</span>
-<span class="co">#&gt; 11:30:33 Writing NN index file to temp file /tmp/Rtmp5mubnc/file3df5977e7d4</span>
-<span class="co">#&gt; 11:30:33 Searching Annoy index using 1 thread, search_k = 1500</span>
-<span class="co">#&gt; 11:30:34 Annoy recall = 100%</span>
-<span class="co">#&gt; 11:30:34 Commencing smooth kNN distance calibration using 1 thread</span>
-<span class="co">#&gt; 11:30:34 Initializing from normalized Laplacian + noise</span>
-<span class="co">#&gt; 11:30:34 Commencing optimization for 1000 epochs, with 101870 positive edges using 1 thread</span>
-<span class="co">#&gt; 11:30:44 Optimization finished</span>
+<span class="co">#&gt; 19:44:55 Writing NN index file to temp file /tmp/RtmprNuO7t/file155356f20135</span>
+<span class="co">#&gt; 19:44:55 Searching Annoy index using 1 thread, search_k = 1500</span>
+<span class="co">#&gt; 19:44:55 Annoy recall = 100%</span>
+<span class="co">#&gt; 19:44:56 Commencing smooth kNN distance calibration using 1 thread</span>
+<span class="co">#&gt; 19:44:56 Initializing from normalized Laplacian + noise</span>
+<span class="co">#&gt; 19:44:56 Commencing optimization for 1000 epochs, with 102290 positive edges using 1 thread</span>
+<span class="co">#&gt; 19:45:06 Optimization finished</span>
 <span class="co">#&gt; Exporting results</span>
 <span class="co">#&gt;  Transforming predictions back to a linear scale</span>
 <span class="co">#&gt;  Exporting FCS files (1 per well)</span>
@@ -397,9 +398,9 @@ fcs_bgc &lt;-<span class="st"> </span><span class="kw">file.path</span>(path_to_
 <span class="co">#&gt; [6] &quot;Plate3_Specimen_001_C11_C11_035_target_SSEA-3.fcs&quot;</span></code></pre></div>
 <p>Finally, the pipeline produces two PDF files, with a UMAP embedding of the backbone data color-coded by the imputed data. This is a very informative output and a good way to start analyzing your data. These files are present in the <code>path_to_output</code> directory. The example dataset is very small but feel free to look at the result for illustration purposes. This PDF is available at</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">file.path</span>(path_to_output, <span class="st">&quot;umap_plot_annotated.pdf&quot;</span>) ## Raw plot
-<span class="co">#&gt; [1] &quot;/tmp/Rtmp5mubnc/infinity_flow_example/output/umap_plot_annotated.pdf&quot;</span>
+<span class="co">#&gt; [1] &quot;/tmp/RtmprNuO7t/infinity_flow_example/output/umap_plot_annotated.pdf&quot;</span>
 <span class="kw">file.path</span>(path_to_output, <span class="st">&quot;umap_plot_annotated_backgroundcorrected.pdf&quot;</span>) ## Background-corrected plot
-<span class="co">#&gt; [1] &quot;/tmp/Rtmp5mubnc/infinity_flow_example/output/umap_plot_annotated_backgroundcorrected.pdf&quot;</span></code></pre></div>
+<span class="co">#&gt; [1] &quot;/tmp/RtmprNuO7t/infinity_flow_example/output/umap_plot_annotated_backgroundcorrected.pdf&quot;</span></code></pre></div>
 </div>
 <div id="conclusion" class="section level1">
 <h1>Conclusion</h1>
