@@ -120,8 +120,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
     <span class="kw">library</span>(devtools)
     <span class="kw">install_github</span>(<span class="st">&quot;ebecht/infinityFlow&quot;</span>)
 }</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(flowCore)
-<span class="kw">library</span>(infinityFlow)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(infinityFlow)
 
 <span class="kw">data</span>(steady_state_lung)
 <span class="kw">data</span>(steady_state_lung_annotation)
@@ -130,7 +129,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 dir &lt;-<span class="st"> </span><span class="kw">file.path</span>(<span class="kw">tempdir</span>(), <span class="st">&quot;infinity_flow_example&quot;</span>)
 input_dir &lt;-<span class="st"> </span><span class="kw">file.path</span>(dir, <span class="st">&quot;fcs&quot;</span>)
 <span class="kw">write.flowSet</span>(steady_state_lung, <span class="dt">outdir =</span> input_dir)
-<span class="co">#&gt; [1] &quot;/tmp/Rtmp5WBQl7/infinity_flow_example/fcs&quot;</span>
+<span class="co">#&gt; [1] &quot;/tmp/RtmpYu5BZp/infinity_flow_example/fcs&quot;</span>
 
 <span class="kw">write.csv</span>(steady_state_lung_backbone_specification, <span class="dt">file =</span> <span class="kw">file.path</span>(dir, <span class="st">&quot;backbone_selection_file.csv&quot;</span>), <span class="dt">row.names =</span> <span class="ot">FALSE</span>)
 
@@ -154,7 +153,7 @@ cores =<span class="st"> </span>1L</code></pre></div>
 </div>
 <div id="the-regression_functions-argument" class="section level1">
 <h1>The <code>regression_functions</code> argument</h1>
-<p>This argument is a list of functions which specifies how many models to train per well and which ones. Each type of machine learning model is supported through a wrapper in the <strong><em>infinityFlow</em></strong> package, and has a name of the form <code>fitter_*</code>. See below for the complete list:</p>
+<p>This argument is a list of functions which specifies how many models to train per well and which ones. Each type of machine learning model is supported through a wrapper in the <em>infinityFlow</em> package, and has a name of the form <code>fitter_*</code>. See below for the complete list:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>(<span class="kw">grep</span>(<span class="st">&quot;fitter_&quot;</span>, <span class="kw">ls</span>(<span class="st">&quot;package:infinityFlow&quot;</span>), <span class="dt">value =</span> <span class="ot">TRUE</span>))
 <span class="co">#&gt; [1] &quot;fitter_glmnet&quot;  &quot;fitter_linear&quot;  &quot;fitter_nn&quot;      &quot;fitter_svm&quot;    </span>
 <span class="co">#&gt; [5] &quot;fitter_xgboost&quot;</span></code></pre></div>
@@ -266,12 +265,12 @@ imputed_data &lt;-<span class="st"> </span><span class="kw">infinity_flow</span>
     <span class="dt">cores =</span> cores
 )
 <span class="co">#&gt; Using directories...</span>
-<span class="co">#&gt;  input: /tmp/Rtmp5WBQl7/infinity_flow_example/fcs</span>
-<span class="co">#&gt;  intermediary: /tmp/Rtmp5WBQl7/infinity_flow_example/tmp</span>
-<span class="co">#&gt;  subset: /tmp/Rtmp5WBQl7/infinity_flow_example/tmp/subsetted_fcs</span>
-<span class="co">#&gt;  rds: /tmp/Rtmp5WBQl7/infinity_flow_example/tmp/rds</span>
-<span class="co">#&gt;  annotation: /tmp/Rtmp5WBQl7/infinity_flow_example/tmp/annotation.csv</span>
-<span class="co">#&gt;  output: /tmp/Rtmp5WBQl7/infinity_flow_example/output</span>
+<span class="co">#&gt;  input: /tmp/RtmpYu5BZp/infinity_flow_example/fcs</span>
+<span class="co">#&gt;  intermediary: /tmp/RtmpYu5BZp/infinity_flow_example/tmp</span>
+<span class="co">#&gt;  subset: /tmp/RtmpYu5BZp/infinity_flow_example/tmp/subsetted_fcs</span>
+<span class="co">#&gt;  rds: /tmp/RtmpYu5BZp/infinity_flow_example/tmp/rds</span>
+<span class="co">#&gt;  annotation: /tmp/RtmpYu5BZp/infinity_flow_example/tmp/annotation.csv</span>
+<span class="co">#&gt;  output: /tmp/RtmpYu5BZp/infinity_flow_example/output</span>
 <span class="co">#&gt; Parsing and subsampling input data</span>
 <span class="co">#&gt;  Downsampling to 1000 events per input file</span>
 <span class="co">#&gt;  Concatenating expression matrices</span>
@@ -290,48 +289,48 @@ imputed_data &lt;-<span class="st"> </span><span class="kw">infinity_flow</span>
 <span class="co">#&gt;  Fitting...</span>
 <span class="co">#&gt;      XGBoost</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  9.534229 seconds</span>
+<span class="co">#&gt;  7.559568 seconds</span>
 <span class="co">#&gt;      SVM</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  1.003363 seconds</span>
+<span class="co">#&gt;  0.8068573 seconds</span>
 <span class="co">#&gt;      LASSO2</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  7.52319 seconds</span>
+<span class="co">#&gt;  6.116791 seconds</span>
 <span class="co">#&gt;      LM</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  0.07620192 seconds</span>
+<span class="co">#&gt;  0.06456208 seconds</span>
 <span class="co">#&gt; Imputing missing measurements</span>
 <span class="co">#&gt;  Randomly drawing events to predict from the test set</span>
 <span class="co">#&gt;  Imputing...</span>
 <span class="co">#&gt;      XGBoost</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  2.000606 seconds</span>
+<span class="co">#&gt;  1.513278 seconds</span>
 <span class="co">#&gt;      SVM</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  1.474077 seconds</span>
+<span class="co">#&gt;  1.29186 seconds</span>
 <span class="co">#&gt;      LASSO2</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  1.298271 seconds</span>
+<span class="co">#&gt;  0.6605074 seconds</span>
 <span class="co">#&gt;      LM</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  0.06238985 seconds</span>
+<span class="co">#&gt;  0.0357666 seconds</span>
 <span class="co">#&gt;  Concatenating predictions</span>
 <span class="co">#&gt;  Writing to disk</span>
 <span class="co">#&gt; Performing dimensionality reduction</span>
-<span class="co">#&gt; 18:08:38 UMAP embedding parameters a = 1.262 b = 1.003</span>
-<span class="co">#&gt; 18:08:38 Read 5000 rows and found 17 numeric columns</span>
-<span class="co">#&gt; 18:08:38 Using Annoy for neighbor search, n_neighbors = 15</span>
-<span class="co">#&gt; 18:08:38 Building Annoy index with metric = euclidean, n_trees = 50</span>
+<span class="co">#&gt; 19:21:50 UMAP embedding parameters a = 1.262 b = 1.003</span>
+<span class="co">#&gt; 19:21:50 Read 5000 rows and found 17 numeric columns</span>
+<span class="co">#&gt; 19:21:50 Using Annoy for neighbor search, n_neighbors = 15</span>
+<span class="co">#&gt; 19:21:50 Building Annoy index with metric = euclidean, n_trees = 50</span>
 <span class="co">#&gt; 0%   10   20   30   40   50   60   70   80   90   100%</span>
 <span class="co">#&gt; [----|----|----|----|----|----|----|----|----|----|</span>
 <span class="co">#&gt; **************************************************|</span>
-<span class="co">#&gt; 18:08:39 Writing NN index file to temp file /tmp/Rtmp5WBQl7/file5bea358a04f3</span>
-<span class="co">#&gt; 18:08:39 Searching Annoy index using 1 thread, search_k = 1500</span>
-<span class="co">#&gt; 18:08:40 Annoy recall = 100%</span>
-<span class="co">#&gt; 18:08:40 Commencing smooth kNN distance calibration using 1 thread</span>
-<span class="co">#&gt; 18:08:41 Initializing from normalized Laplacian + noise</span>
-<span class="co">#&gt; 18:08:41 Commencing optimization for 1000 epochs, with 102010 positive edges using 1 thread</span>
-<span class="co">#&gt; 18:08:52 Optimization finished</span>
+<span class="co">#&gt; 19:21:51 Writing NN index file to temp file /tmp/RtmpYu5BZp/file4129f0f929d</span>
+<span class="co">#&gt; 19:21:51 Searching Annoy index using 1 thread, search_k = 1500</span>
+<span class="co">#&gt; 19:21:51 Annoy recall = 100%</span>
+<span class="co">#&gt; 19:21:52 Commencing smooth kNN distance calibration using 1 thread</span>
+<span class="co">#&gt; 19:21:52 Initializing from normalized Laplacian + noise</span>
+<span class="co">#&gt; 19:21:52 Commencing optimization for 1000 epochs, with 101754 positive edges using 1 thread</span>
+<span class="co">#&gt; 19:22:01 Optimization finished</span>
 <span class="co">#&gt; Exporting results</span>
 <span class="co">#&gt;  Transforming predictions back to a linear scale</span>
 <span class="co">#&gt;  Exporting FCS files (1 per well)</span>
@@ -348,48 +347,48 @@ imputed_data &lt;-<span class="st"> </span><span class="kw">infinity_flow</span>
 <span class="co">#&gt;  Producing plot</span></code></pre></div>
 <p>Our model names are appended to the predicted markers in the output. For more discussion about the outputs (including output files written to disk and plots), see the <a href="basic_usage.html">basic usage vignette</a></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">   <span class="kw">print</span>(imputed_data<span class="op">$</span>bgc[<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>, ])
-<span class="co">#&gt;      FSC-A      FSC-H     FSC-W   SSC-A      SSC-H      SSC-W CD69-CD301b</span>
-<span class="co">#&gt; 3 32859.87 -2.1452424 1.3004626 8654.45  0.9182352  0.7844959   -2.063537</span>
-<span class="co">#&gt; 5 43608.00 -0.7393602 0.2670576 3692.46 -0.1769030 -0.2410487    1.070597</span>
-<span class="co">#&gt;      Zombie      MHCII        CD4      CD44        CD8     CD11c     CD11b</span>
-<span class="co">#&gt; 3 299.31223  0.3458004 -2.2039795 1.1258929 -1.6157887 0.1735992 1.7460077</span>
-<span class="co">#&gt; 5 -99.66527 -1.0175825 -0.9684353 0.1033653 -0.3845943 0.2564877 0.8890243</span>
-<span class="co">#&gt;         F480       Ly6C    Lineage   CD45a488 FJComp-PE(yg)-A       CD24</span>
-<span class="co">#&gt; 3 1.43461814  1.7668502 -2.6759187  0.7965220        1.129994  0.1660313</span>
-<span class="co">#&gt; 5 0.02264125 -0.5782225 -0.9524925 -0.5375827        1.329581 -0.6896044</span>
-<span class="co">#&gt;       CD103     Time CD137.LASSO2_bgc CD137.LM_bgc CD137.SVM_bgc</span>
-<span class="co">#&gt; 3 1.6669930 2817.607       0.56318493    0.1090642     1.2227003</span>
-<span class="co">#&gt; 5 0.2772005 2466.706       0.06101084    0.0575776    -0.2291964</span>
+<span class="co">#&gt;      FSC-A      FSC-H      FSC-W   SSC-A      SSC-H      SSC-W CD69-CD301b</span>
+<span class="co">#&gt; 1 35078.91 -1.4616077 -0.1276476 3908.92 -0.1146309 -0.4555032  -0.8479648</span>
+<span class="co">#&gt; 2 42699.96 -0.6192954 -0.5446181 2580.14 -0.6884429 -0.9316325  -0.9159736</span>
+<span class="co">#&gt;      Zombie      MHCII        CD4        CD44        CD8      CD11c       CD11b</span>
+<span class="co">#&gt; 1 225.77528 -1.4266899  0.1725131  0.01325412 -1.6205431  0.2696721 -1.14417103</span>
+<span class="co">#&gt; 2 -23.56643  0.7554099 -0.4301668 -0.12243451 -0.5923413 -2.2293012  0.06371716</span>
+<span class="co">#&gt;        F480      Ly6C     Lineage  CD45a488 FJComp-PE(yg)-A      CD24</span>
+<span class="co">#&gt; 1 -0.492355  1.251795 -1.87131030 -1.882234       1.8424852 0.4689622</span>
+<span class="co">#&gt; 2 -0.715654 -1.307596 -0.01396658  0.248426       0.4504774 0.6618849</span>
+<span class="co">#&gt;        CD103     Time CD137.LASSO2_bgc CD137.LM_bgc CD137.SVM_bgc</span>
+<span class="co">#&gt; 1 -1.9055573 296.6008        0.2958891    0.6564392     0.4747183</span>
+<span class="co">#&gt; 2 -0.8393557 841.1022       -0.3698534   -0.3892074    -0.3421496</span>
 <span class="co">#&gt;   CD137.XGBoost_bgc CD28.LASSO2_bgc CD28.LM_bgc CD28.SVM_bgc CD28.XGBoost_bgc</span>
-<span class="co">#&gt; 3        -0.3886328      0.07161657 -0.29364757  -0.09044011       -0.6625075</span>
-<span class="co">#&gt; 5        -0.1397716      0.05399648  0.04782923   0.04084691        0.3005340</span>
+<span class="co">#&gt; 1         0.4193851      -0.3704135 -0.02990656   -0.2958936       -0.5644863</span>
+<span class="co">#&gt; 2        -0.1766314      -0.7098080 -0.34409702   -1.7359788       -0.6596026</span>
 <span class="co">#&gt;   CD49b(pan-NK).LASSO2_bgc CD49b(pan-NK).LM_bgc CD49b(pan-NK).SVM_bgc</span>
-<span class="co">#&gt; 3               -0.1963101          -0.05667896            0.02219718</span>
-<span class="co">#&gt; 5                0.4656097           0.16038101            0.61572513</span>
+<span class="co">#&gt; 1                0.5940715            0.5552845             0.9994789</span>
+<span class="co">#&gt; 2               -0.3463035           -0.3873123            -0.3869850</span>
 <span class="co">#&gt;   CD49b(pan-NK).XGBoost_bgc KLRG1.LASSO2_bgc KLRG1.LM_bgc KLRG1.SVM_bgc</span>
-<span class="co">#&gt; 3               -0.23385492      0.002918804   -0.1280181    -0.1891422</span>
-<span class="co">#&gt; 5                0.07923568      0.340717625    0.2626362    -0.7304185</span>
+<span class="co">#&gt; 1                 1.0629206        0.1587895    0.2558809     0.7003256</span>
+<span class="co">#&gt; 2                -0.3986636       -0.1437810   -0.2265058    -0.7417221</span>
 <span class="co">#&gt;   KLRG1.XGBoost_bgc Ly-49c/F/I/H.LASSO2_bgc Ly-49c/F/I/H.LM_bgc</span>
-<span class="co">#&gt; 3        -0.6001133              0.59240144          -0.2111478</span>
-<span class="co">#&gt; 5         0.4505542              0.05483269           0.1463673</span>
+<span class="co">#&gt; 1         0.4153565             -0.04031773          0.08052792</span>
+<span class="co">#&gt; 2        -0.4603347             -0.29042554         -0.28771597</span>
 <span class="co">#&gt;   Ly-49c/F/I/H.SVM_bgc Ly-49c/F/I/H.XGBoost_bgc Podoplanin.LASSO2_bgc</span>
-<span class="co">#&gt; 3            0.7580827               -0.9764462           -0.17150060</span>
-<span class="co">#&gt; 5           -0.4994389                0.4167188           -0.01817265</span>
+<span class="co">#&gt; 1            0.2671273                0.3017453            -0.1909061</span>
+<span class="co">#&gt; 2           -0.8290322               -0.8241633            -0.6091175</span>
 <span class="co">#&gt;   Podoplanin.LM_bgc Podoplanin.SVM_bgc Podoplanin.XGBoost_bgc rIgM.LASSO2_bgc</span>
-<span class="co">#&gt; 3       -0.92895398         0.07758797             -0.1997421   -4.401225e-16</span>
-<span class="co">#&gt; 5       -0.00719607        -0.69892311              0.3322251    3.449237e-16</span>
-<span class="co">#&gt;    rIgM.LM_bgc  rIgM.SVM_bgc rIgM.XGBoost_bgc SHIgG.LASSO2_bgc  SHIgG.LM_bgc</span>
-<span class="co">#&gt; 3 1.631903e-15 -1.650115e-16     6.760505e-17     5.524297e-16 -8.940419e-17</span>
-<span class="co">#&gt; 5 5.328382e-16 -3.220208e-16    -8.940419e-17    -3.896258e-16  6.760505e-17</span>
+<span class="co">#&gt; 1        0.08620751        -0.06741006              0.2765605    4.034227e-16</span>
+<span class="co">#&gt; 2       -0.61831601        -1.11740510             -0.4055967    8.940419e-17</span>
+<span class="co">#&gt;     rIgM.LM_bgc rIgM.SVM_bgc rIgM.XGBoost_bgc SHIgG.LASSO2_bgc  SHIgG.LM_bgc</span>
+<span class="co">#&gt; 1  5.960279e-17 -2.98014e-17     6.716353e-16     1.240069e-15  9.558524e-16</span>
+<span class="co">#&gt; 2 -9.740645e-17 -2.98014e-17    -2.704202e-16    -3.300230e-16 -6.142401e-16</span>
 <span class="co">#&gt;   SHIgG.SVM_bgc SHIgG.XGBoost_bgc SSEA-3.LASSO2_bgc SSEA-3.LM_bgc</span>
-<span class="co">#&gt; 3 -3.700343e-16      1.210268e-15         0.9744609     0.2742498</span>
-<span class="co">#&gt; 5 -6.840528e-16     -9.878614e-16        -0.1156342     0.1272408</span>
+<span class="co">#&gt; 1  2.384112e-16      5.190413e-16         0.5338640     0.2068913</span>
+<span class="co">#&gt; 2  8.664482e-16      3.345208e-15         0.1361974    -0.1542928</span>
 <span class="co">#&gt;   SSEA-3.SVM_bgc SSEA-3.XGBoost_bgc TCR Vg3.LASSO2_bgc TCR Vg3.LM_bgc</span>
-<span class="co">#&gt; 3      1.1278812          0.5531739          0.2353065    -0.38597948</span>
-<span class="co">#&gt; 5     -0.7584055         -0.2926596          0.1567185     0.09881684</span>
-<span class="co">#&gt;   TCR Vg3.SVM_bgc TCR Vg3.XGBoost_bgc    UMAP1    UMAP2 PE_id</span>
-<span class="co">#&gt; 3      -0.9841902          -0.6766347 599.6355 493.3159     1</span>
-<span class="co">#&gt; 5       0.5267482           0.8629833 703.6625 520.1462     1</span></code></pre></div>
+<span class="co">#&gt; 1      1.0305912         0.18022798        -0.08626277      0.1121439</span>
+<span class="co">#&gt; 2     -0.3005692        -0.08928518         0.09453456     -0.1396825</span>
+<span class="co">#&gt;   TCR Vg3.SVM_bgc TCR Vg3.XGBoost_bgc     UMAP1    UMAP2 PE_id</span>
+<span class="co">#&gt; 1       0.9433005         1.233453733  35.23354 363.0460     1</span>
+<span class="co">#&gt; 2      -0.1056373         0.001555429 987.56677 657.3799     1</span></code></pre></div>
 </div>
 <div id="neural-networks" class="section level1">
 <h1>Neural networks</h1>
@@ -411,14 +410,11 @@ unmet_dependencies &lt;-<span class="st"> </span><span class="kw">setdiff</span>
      <span class="kw">install_keras</span>() ## Instal keras unsing the R interface - can take a while
 }
 
-<span class="cf">if</span>(<span class="op">!</span><span class="kw">require</span>(devtools)){
-    <span class="kw">install.packages</span>(<span class="st">&quot;devtools&quot;</span>)
+<span class="cf">if</span> (<span class="op">!</span><span class="kw">requireNamespace</span>(<span class="st">&quot;BiocManager&quot;</span>, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)){
+    <span class="kw">install.packages</span>(<span class="st">&quot;BiocManager&quot;</span>)
 }
-<span class="cf">if</span>(<span class="op">!</span><span class="kw">require</span>(infinityFlow)){
-    <span class="kw">library</span>(devtools)
-    <span class="kw">install_github</span>(<span class="st">&quot;ebecht/infinityFlow&quot;</span>)
-}
-<span class="kw">library</span>(flowCore)
+BiocManager<span class="op">::</span><span class="kw">install</span>(<span class="st">&quot;infinityFlow&quot;</span>)
+
 <span class="kw">library</span>(infinityFlow)
 
 <span class="kw">data</span>(steady_state_lung)
@@ -482,6 +478,10 @@ imputed_data &lt;-<span class="st"> </span><span class="kw">infinity_flow</span>
     <span class="dt">cores =</span> 1L
 )</code></pre></div>
 </div>
+<div id="conclusion" class="section level1">
+<h1>Conclusion</h1>
+<p>Thank you for following this vignette, I hope you made it through the end without too much headache and that it was informative. General questions about proper usage of the package are best asked on the <a href="https://support.bioconductor.org/">Bioconductor support site</a> to maximize visibility for future users. If you encounter bugs, feel free to raise an issue on infinityFlow's <a href="https://github.com/ebecht/infinityFlow/issues">github</a>.</p>
+</div>
 <div id="information-about-the-r-session-when-this-vignette-was-built" class="section level1">
 <h1>Information about the R session when this vignette was built</h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sessionInfo</span>()
@@ -510,7 +510,7 @@ imputed_data &lt;-<span class="st"> </span><span class="kw">infinity_flow</span>
 <span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; other attached packages:</span>
-<span class="co">#&gt; [1] e1071_1.7-3         glmnetUtils_1.1.5   infinityFlow_0.99.5</span>
+<span class="co">#&gt; [1] e1071_1.7-3         glmnetUtils_1.1.5   infinityFlow_0.99.6</span>
 <span class="co">#&gt; [4] flowCore_2.0.1     </span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; loaded via a namespace (and not attached):</span>

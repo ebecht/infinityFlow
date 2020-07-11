@@ -100,7 +100,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
-<p>Thank you for your interest in the <strong><em>Infinity Flow</em></strong> approach. This vignette describes how to apply the package to your massively parallel cytometry (e.g. <em>LEGENDScreen</em> or <em>Lyoplates kits</em>) experiment. Massively parallel cytometry experiments are cytometry experiments where a sample is aliquoted in <em>n</em> subsamples, each stained with a fixed panel of &quot;Backbone&quot; antibodies. Each aliquot is in addition stained with a unique &quot;Infinity&quot; exploratory antibody. The goal of the <strong><em>infinityFlow</em></strong> package is to use information from the ubiquitous Backbone staining to predict the expression of sparsely-measured Infinity antibodies across the entire dataset. To learn more about this type of experiments and details about the Infinity Flow approach, please consult <a href="https://www.biorxiv.org/content/10.1101/2020.06.17.152926v1">Becht et al, 2020</a>. In this vignette we achieve this by using the XGBoost machine-learning framework implemented in the (xgboost R package)[<a href="https://cran.r-project.org/web/packages/xgboost/index.html" class="uri">https://cran.r-project.org/web/packages/xgboost/index.html</a>]. This vignette aims at explaining how to apply a basic <strong><em>infinityFlow</em></strong> analysis. Advanced usages, including different machine learning models and custom hyperparameters values, are covered in a <a href="training_non_default_regression_models.html">dedicated vignette</a>.</p>
+<p>Thank you for your interest in the <em>Infinity Flow</em> approach. This vignette describes how to apply the package to your massively parallel cytometry (e.g. <em>LEGENDScreen</em> or <em>Lyoplates kits</em>) experiment. Massively parallel cytometry experiments are cytometry experiments where a sample is aliquoted in <em>n</em> subsamples, each stained with a fixed panel of &quot;Backbone&quot; antibodies. Each aliquot is in addition stained with a unique &quot;Infinity&quot; exploratory antibody. The goal of the <em>infinityFlow</em> package is to use information from the ubiquitous Backbone staining to predict the expression of sparsely-measured Infinity antibodies across the entire dataset. To learn more about this type of experiments and details about the Infinity Flow approach, please consult <a href="https://www.biorxiv.org/content/10.1101/2020.06.17.152926v1">Becht et al, 2020</a>. In this vignette we achieve this by using the XGBoost machine-learning framework implemented in the <a href="https://CRAN.R-project.org/package=xgboost">xgboost R package</a>. This vignette aims at explaining how to apply a basic <em>infinityFlow</em> analysis. Advanced usages, including different machine learning models and custom hyperparameters values, are covered in a <a href="training_non_default_regression_models.html">dedicated vignette</a>.</p>
 <p>This vignette will cover:</p>
 <ol style="list-style-type: decimal">
 <li>Package installation</li>
@@ -112,7 +112,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 </div>
 <div id="package-installation" class="section level1">
 <h1>Package installation</h1>
-<p>You can install the latest version from github using</p>
+<p>You can install the package from Bioconductor using</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="cf">if</span> (<span class="op">!</span><span class="kw">requireNamespace</span>(<span class="st">&quot;BiocManager&quot;</span>, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)){
     <span class="kw">install.packages</span>(<span class="st">&quot;BiocManager&quot;</span>)
 }
@@ -127,10 +127,10 @@ BiocManager<span class="op">::</span><span class="kw">install</span>(<span class
 <p>The example data is a subset of a massively parallel cytometry experiment of the mouse lung at steady state. The example data contains 10 FCS files. To mimick real world-conditions, we will write this set of FCS files to disk. In this vignette we will use a temporary directory, but you can use the directory of your choice.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dir &lt;-<span class="st"> </span><span class="kw">file.path</span>(<span class="kw">tempdir</span>(), <span class="st">&quot;infinity_flow_example&quot;</span>)
 <span class="kw">print</span>(dir)
-<span class="co">#&gt; [1] &quot;/tmp/Rtmp5WBQl7/infinity_flow_example&quot;</span>
+<span class="co">#&gt; [1] &quot;/tmp/RtmpYu5BZp/infinity_flow_example&quot;</span>
 input_dir &lt;-<span class="st"> </span><span class="kw">file.path</span>(dir, <span class="st">&quot;fcs&quot;</span>)
 <span class="kw">write.flowSet</span>(steady_state_lung, <span class="dt">outdir =</span> input_dir) ## Omit this if you already have FCS files
-<span class="co">#&gt; [1] &quot;/tmp/Rtmp5WBQl7/infinity_flow_example/fcs&quot;</span>
+<span class="co">#&gt; [1] &quot;/tmp/RtmpYu5BZp/infinity_flow_example/fcs&quot;</span>
 <span class="kw">list.files</span>(input_dir)
 <span class="co">#&gt;  [1] &quot;annotation.txt&quot;                      &quot;Plate1_Specimen_001_B12_B12_024.fcs&quot;</span>
 <span class="co">#&gt;  [3] &quot;Plate1_Specimen_001_D8_D08_044.fcs&quot;  &quot;Plate1_Specimen_001_H11_H11_095.fcs&quot;</span>
@@ -138,7 +138,7 @@ input_dir &lt;-<span class="st"> </span><span class="kw">file.path</span>(dir, <
 <span class="co">#&gt;  [7] &quot;Plate3_Specimen_001_C11_C11_035.fcs&quot; &quot;Plate3_Specimen_001_C6_C06_030.fcs&quot; </span>
 <span class="co">#&gt;  [9] &quot;Plate3_Specimen_001_E5_E05_053.fcs&quot;  &quot;Plate3_Specimen_001_F5_F05_065.fcs&quot; </span>
 <span class="co">#&gt; [11] &quot;Plate3_Specimen_001_G2_G02_074.fcs&quot;</span></code></pre></div>
-<p>The second input we have to manually produce is the annotation of the experiment. In the context of a massively parallel cytometry experiment, we need to know what is the protein target of each Infinity antibody, and what is its isotype. For the example dataset, the annotation is provided in the package and looks like this:</p>
+<p>The second input we have to manually produce is the annotation of the experiment. In the context of a massively parallel cytometry experiment, we need to know what is the protein target of each Infinity (usually PE-conjugated or APC-conjugated) antibody, and what is its isotype. For the example dataset, the annotation is provided in the package and looks like this:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(steady_state_lung_annotation)
 <span class="kw">print</span>(steady_state_lung_annotation)
 <span class="co">#&gt;                                     Infinity_target Infinity_isotype</span>
@@ -162,7 +162,7 @@ input_dir &lt;-<span class="st"> </span><span class="kw">file.path</span>(dir, <
 </div>
 <div id="specifying-the-backbone-and-infinity-antibodies" class="section level1">
 <h1>Specifying the Backbone and Infinity antibodies</h1>
-<p>Now that we have our input data, we need to specify which antibodies are part of the Backbone, and which one is the Infinity antibody. We provide an interactive function to specify this directly in R. This function can be run once, its output saved for future use by downstream functions in the <strong><em>infinityFlow</em></strong> package. The <code>select_backbone_and_exploratory_markers</code> function will parse an FCS file in the input directory, and for each acquisition channel, ask the user whether it should be used as a predictor (Backbone), exploratory target (Infinity antibodies), or omitted (e.g. Time or Event ID columns...).</p>
+<p>Now that we have our input data, we need to specify which antibodies are part of the Backbone, and which one is the Infinity antibody. We provide an interactive function to specify this directly in R. This function can be run once, its output saved for future use by downstream functions in the <em>infinityFlow</em> package. The <code>select_backbone_and_exploratory_markers</code> function will parse an FCS file in the input directory, and for each acquisition channel, ask the user whether it should be used as a predictor (Backbone), exploratory target (Infinity antibodies), or omitted (e.g. Time or Event ID columns...).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">backbone_specification &lt;-<span class="st"> </span><span class="kw">select_backbone_and_exploratory_markers</span>(<span class="kw">list.files</span>(input_dir, <span class="dt">pattern =</span> <span class="st">&quot;.fcs&quot;</span>, <span class="dt">full.names =</span> <span class="ot">TRUE</span>))</code></pre></div>
 <p>Below is an example of the interactive execution of the <code>select_backbone_and_exploratory_markers</code> function for the example data. The resulting data.frame is printed too.</p>
 <pre><code>For each data channel, enter either: backbone, exploratory or discard (can be abbreviated)
@@ -279,7 +279,7 @@ isotypes &lt;-<span class="st"> </span>steady_state_lung_annotation<span class="
 <span class="co">#&gt;                             &quot;SHIgG&quot;                             &quot;SHIgG&quot; </span>
 <span class="co">#&gt;  Plate3_Specimen_001_A9_A09_009.fcs  Plate3_Specimen_001_C6_C06_030.fcs </span>
 <span class="co">#&gt;                             &quot;SHIgG&quot;                             &quot;SHIgG&quot;</span></code></pre></div>
-<p>Other arguments are optional, but it is notably worth considering the number of input cells and the number of output cells. This will notably be important if you are using a computer with limited RAM. For the example data it does not matter as we only have access to 2,000 cells per well, but if you run the pipeline on your own data I suggest you start by low values, and ramp up (to 20,000 or 50,000 input cells, and e.g. 10,000 output cells per well) once everything is setup. Another optional argument is <code>cores</code> which controls multicore computing, which can speed up execution at the cost of memory usage. In this vignette we use xocores = 1, but you probably want to increase this to 4 or 8 or more if your computer can accomodate it.</p>
+<p>Other arguments are optional, but it is notably worth considering the number of input cells and the number of output cells. This will notably be important if you are using a computer with limited RAM. For the example data it does not matter as we only have access to 2,000 cells per well, but if you run the pipeline on your own data I suggest you start by low values, and ramp up (to 20,000 or 50,000 input cells, and e.g. 10,000 output cells per well) once everything is setup. Another optional argument is <code>cores</code> which controls multicore computing, which can speed up execution at the cost of memory usage. In this vignette we use cores = 1, but you probably want to increase this to 4 or 8 or more if your computer can accomodate it.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">input_events_downsampling &lt;-<span class="st"> </span><span class="dv">1000</span>
 prediction_events_downsampling &lt;-<span class="st"> </span><span class="dv">500</span>
 cores =<span class="st"> </span>1L</code></pre></div>
@@ -298,14 +298,14 @@ cores =<span class="st"> </span>1L</code></pre></div>
     <span class="dt">verbose =</span> <span class="ot">TRUE</span>,
     <span class="dt">cores =</span> cores
 )
-<span class="co">#&gt; /tmp/Rtmp5WBQl7/infinity_flow_example/tmp and /tmp/Rtmp5WBQl7/infinity_flow_example/tmp/subsetted_fcs and /tmp/Rtmp5WBQl7/infinity_flow_example/tmp/rds and /tmp/Rtmp5WBQl7/infinity_flow_example/output: directories not found, creating directory(ies)</span>
+<span class="co">#&gt; /tmp/RtmpYu5BZp/infinity_flow_example/tmp and /tmp/RtmpYu5BZp/infinity_flow_example/tmp/subsetted_fcs and /tmp/RtmpYu5BZp/infinity_flow_example/tmp/rds and /tmp/RtmpYu5BZp/infinity_flow_example/output: directories not found, creating directory(ies)</span>
 <span class="co">#&gt; Using directories...</span>
-<span class="co">#&gt;  input: /tmp/Rtmp5WBQl7/infinity_flow_example/fcs</span>
-<span class="co">#&gt;  intermediary: /tmp/Rtmp5WBQl7/infinity_flow_example/tmp</span>
-<span class="co">#&gt;  subset: /tmp/Rtmp5WBQl7/infinity_flow_example/tmp/subsetted_fcs</span>
-<span class="co">#&gt;  rds: /tmp/Rtmp5WBQl7/infinity_flow_example/tmp/rds</span>
-<span class="co">#&gt;  annotation: /tmp/Rtmp5WBQl7/infinity_flow_example/tmp/annotation.csv</span>
-<span class="co">#&gt;  output: /tmp/Rtmp5WBQl7/infinity_flow_example/output</span>
+<span class="co">#&gt;  input: /tmp/RtmpYu5BZp/infinity_flow_example/fcs</span>
+<span class="co">#&gt;  intermediary: /tmp/RtmpYu5BZp/infinity_flow_example/tmp</span>
+<span class="co">#&gt;  subset: /tmp/RtmpYu5BZp/infinity_flow_example/tmp/subsetted_fcs</span>
+<span class="co">#&gt;  rds: /tmp/RtmpYu5BZp/infinity_flow_example/tmp/rds</span>
+<span class="co">#&gt;  annotation: /tmp/RtmpYu5BZp/infinity_flow_example/tmp/annotation.csv</span>
+<span class="co">#&gt;  output: /tmp/RtmpYu5BZp/infinity_flow_example/output</span>
 <span class="co">#&gt; Parsing and subsampling input data</span>
 <span class="co">#&gt;  Downsampling to 1000 events per input file</span>
 <span class="co">#&gt;  Concatenating expression matrices</span>
@@ -324,30 +324,30 @@ cores =<span class="st"> </span>1L</code></pre></div>
 <span class="co">#&gt;  Fitting...</span>
 <span class="co">#&gt;      XGBoost</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  8.964397 seconds</span>
+<span class="co">#&gt;  7.478139 seconds</span>
 <span class="co">#&gt; Imputing missing measurements</span>
 <span class="co">#&gt;  Randomly drawing events to predict from the test set</span>
 <span class="co">#&gt;  Imputing...</span>
 <span class="co">#&gt;      XGBoost</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt;  1.784201 seconds</span>
+<span class="co">#&gt;  1.548598 seconds</span>
 <span class="co">#&gt;  Concatenating predictions</span>
 <span class="co">#&gt;  Writing to disk</span>
 <span class="co">#&gt; Performing dimensionality reduction</span>
-<span class="co">#&gt; 18:07:30 UMAP embedding parameters a = 1.262 b = 1.003</span>
-<span class="co">#&gt; 18:07:30 Read 5000 rows and found 17 numeric columns</span>
-<span class="co">#&gt; 18:07:30 Using Annoy for neighbor search, n_neighbors = 15</span>
-<span class="co">#&gt; 18:07:31 Building Annoy index with metric = euclidean, n_trees = 50</span>
+<span class="co">#&gt; 19:20:52 UMAP embedding parameters a = 1.262 b = 1.003</span>
+<span class="co">#&gt; 19:20:52 Read 5000 rows and found 17 numeric columns</span>
+<span class="co">#&gt; 19:20:52 Using Annoy for neighbor search, n_neighbors = 15</span>
+<span class="co">#&gt; 19:20:53 Building Annoy index with metric = euclidean, n_trees = 50</span>
 <span class="co">#&gt; 0%   10   20   30   40   50   60   70   80   90   100%</span>
 <span class="co">#&gt; [----|----|----|----|----|----|----|----|----|----|</span>
 <span class="co">#&gt; **************************************************|</span>
-<span class="co">#&gt; 18:07:31 Writing NN index file to temp file /tmp/Rtmp5WBQl7/file5bea362995a</span>
-<span class="co">#&gt; 18:07:31 Searching Annoy index using 1 thread, search_k = 1500</span>
-<span class="co">#&gt; 18:07:32 Annoy recall = 100%</span>
-<span class="co">#&gt; 18:07:32 Commencing smooth kNN distance calibration using 1 thread</span>
-<span class="co">#&gt; 18:07:33 Initializing from normalized Laplacian + noise</span>
-<span class="co">#&gt; 18:07:33 Commencing optimization for 1000 epochs, with 101526 positive edges using 1 thread</span>
-<span class="co">#&gt; 18:07:43 Optimization finished</span>
+<span class="co">#&gt; 19:20:53 Writing NN index file to temp file /tmp/RtmpYu5BZp/file4129268c5214</span>
+<span class="co">#&gt; 19:20:53 Searching Annoy index using 1 thread, search_k = 1500</span>
+<span class="co">#&gt; 19:20:54 Annoy recall = 100%</span>
+<span class="co">#&gt; 19:20:54 Commencing smooth kNN distance calibration using 1 thread</span>
+<span class="co">#&gt; 19:20:55 Initializing from normalized Laplacian + noise</span>
+<span class="co">#&gt; 19:20:55 Commencing optimization for 1000 epochs, with 101884 positive edges using 1 thread</span>
+<span class="co">#&gt; 19:21:04 Optimization finished</span>
 <span class="co">#&gt; Exporting results</span>
 <span class="co">#&gt;  Transforming predictions back to a linear scale</span>
 <span class="co">#&gt;  Exporting FCS files (1 per well)</span>
@@ -395,13 +395,13 @@ fcs_bgc &lt;-<span class="st"> </span><span class="kw">file.path</span>(path_to_
 <span class="co">#&gt; [6] &quot;Plate3_Specimen_001_C11_C11_035_target_SSEA-3.fcs&quot;</span></code></pre></div>
 <p>Finally, the pipeline produces two PDF files, with a UMAP embedding of the backbone data color-coded by the imputed data. This is a very informative output and a good way to start analyzing your data. These files are present in the <code>path_to_output</code> directory. The example dataset is very small but feel free to look at the result for illustration purposes. This PDF is available at</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">file.path</span>(path_to_output, <span class="st">&quot;umap_plot_annotated.pdf&quot;</span>) ## Raw plot
-<span class="co">#&gt; [1] &quot;/tmp/Rtmp5WBQl7/infinity_flow_example/output/umap_plot_annotated.pdf&quot;</span>
+<span class="co">#&gt; [1] &quot;/tmp/RtmpYu5BZp/infinity_flow_example/output/umap_plot_annotated.pdf&quot;</span>
 <span class="kw">file.path</span>(path_to_output, <span class="st">&quot;umap_plot_annotated_backgroundcorrected.pdf&quot;</span>) ## Background-corrected plot
-<span class="co">#&gt; [1] &quot;/tmp/Rtmp5WBQl7/infinity_flow_example/output/umap_plot_annotated_backgroundcorrected.pdf&quot;</span></code></pre></div>
+<span class="co">#&gt; [1] &quot;/tmp/RtmpYu5BZp/infinity_flow_example/output/umap_plot_annotated_backgroundcorrected.pdf&quot;</span></code></pre></div>
 </div>
 <div id="conclusion" class="section level1">
 <h1>Conclusion</h1>
-<p>Thank you for following this vignette, I hope you made it through the end without too much headache and that it was informative. General questions about proper usage of the package are best asked on the (Bioconductor support site to maximize visibility for future users. If you encounter bugs, feel free to raise an issue on infinityFlow's <a href="https://github.com/ebecht/infinityFlow/issues">github</a>.</p>
+<p>Thank you for following this vignette, I hope you made it through the end without too much headache and that it was informative. General questions about proper usage of the package are best asked on the <a href="https://support.bioconductor.org/">Bioconductor support site</a> to maximize visibility for future users. If you encounter bugs, feel free to raise an issue on infinityFlow's <a href="https://github.com/ebecht/infinityFlow/issues">github</a>.</p>
 </div>
 <div id="information-about-the-r-session-when-this-vignette-was-built" class="section level1">
 <h1>Information about the R session when this vignette was built</h1>
@@ -431,7 +431,7 @@ fcs_bgc &lt;-<span class="st"> </span><span class="kw">file.path</span>(path_to_
 <span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; other attached packages:</span>
-<span class="co">#&gt; [1] infinityFlow_0.99.5 flowCore_2.0.1     </span>
+<span class="co">#&gt; [1] infinityFlow_0.99.6 flowCore_2.0.1     </span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt; loaded via a namespace (and not attached):</span>
 <span class="co">#&gt;  [1] Rcpp_1.0.5          raster_3.3-7        knitr_1.29         </span>

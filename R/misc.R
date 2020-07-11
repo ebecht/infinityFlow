@@ -293,14 +293,17 @@ minmax_scale <- function(matrix,min=1,max=1000,na.rm=TRUE){
 #' @docType data
 #' @format a flowSet containing 10 flowFrames (thus corresponding to 10 FCS files)
 #' @source \url{https://flowrepository.org/id/FR-FCM-Z2LP}
+#' @usage data(steady_state_lung)
 "steady_state_lung"
 
 #' Target and isotypes annotation for the data object infinityFlow::steady_state_lnug
 #' @docType data
-#' @format a data.frame specifying the Infinity antibody targets and isotypes for each flowFrame of the steady_state_lung flowSet 
+#' @format a data.frame specifying the Infinity antibody targets and isotypes for each flowFrame of the steady_state_lung flowSet
+#' @usage data(steady_state_lung_annotation)
 "steady_state_lung_annotation"
 
 #' Backbone and Infinity antibodies specification for the data object infinityFlow::steady_state_lnug
 #' @docType data
-#' @format a data.frame specifying the Infinity antibody targets and isotypes for each flowFrame of the steady_state_lung flowSet 
+#' @format a data.frame specifying the Infinity antibody targets and isotypes for each flowFrame of the steady_state_lung flowSet
+#' @usage data(steady_state_lung_backbone_specification) 
 "steady_state_lung_backbone_specification"

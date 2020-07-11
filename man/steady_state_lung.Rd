@@ -11,7 +11,7 @@ a flowSet containing 10 flowFrames (thus corresponding to 10 FCS files)
 \url{https://flowrepository.org/id/FR-FCM-Z2LP}
 }
 \usage{
-steady_state_lung
+data(steady_state_lung)
 }
 \description{
 Subset of a massively parallel cytometry experiment of mouse lung single cells

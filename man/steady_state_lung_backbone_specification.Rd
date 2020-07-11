@@ -8,7 +8,7 @@
 a data.frame specifying the Infinity antibody targets and isotypes for each flowFrame of the steady_state_lung flowSet
 }
 \usage{
-steady_state_lung_backbone_specification
+data(steady_state_lung_backbone_specification)
 }
 \description{
 Backbone and Infinity antibodies specification for the data object infinityFlow::steady_state_lnug
