@@ -1,0 +1,282 @@
+---
+title: "Training non default regression models"
+author: "Etienne Becht"
+date: "June 2020"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Training non default regression models}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+# Introduction
+
+This vignette explains how to specify non-default machine learning frameworks and their hyperparameters when applying Infinity Flow. We will assume here that the basic usage of Infinity Flow has already been read, if you are not familiar with this material I suggest you first look at the [basic usage vignette](basic_usage.html)
+
+This vignette will cover:
+
+1. Loading the example data
+1. Note on package design
+1. The `regression_functions` argument
+1. The `extra_args_regression_params` argument
+1. Neural networks
+
+# Loading the example data
+Here is a single R code chunk that recapitulates all of the data preparation covered in the [basic usage vignette](basic_usage.html).
+
+```{r, packages_installation, eval = FALSE}
+if(!require(devtools)){
+	install.packages("devtools")
+}
+if(!require(infinityFlow)){
+	library(devtools)
+	install_github("ebecht/infinityFlow")
+}
+```
+```{r, preparation}
+library(infinityFlow)
+
+data(steady_state_lung)
+data(steady_state_lung_annotation)
+data(steady_state_lung_backbone_specification)
+
+dir <- file.path(tempdir(), "infinity_flow_example")
+input_dir <- file.path(dir, "fcs")
+write.flowSet(steady_state_lung, outdir = input_dir)
+
+write.csv(steady_state_lung_backbone_specification, file = file.path(dir, "backbone_selection_file.csv"), row.names = FALSE)
+
+path_to_fcs <- file.path(dir, "fcs")
+path_to_output <- file.path(dir, "output")
+path_to_intermediary_results <- file.path(dir, "tmp")
+backbone_selection_file <- file.path(dir, "backbone_selection_file.csv")
+
+targets <- steady_state_lung_annotation$Infinity_target
+names(targets) <- rownames(steady_state_lung_annotation)
+isotypes <- steady_state_lung_annotation$Infinity_isotype
+names(isotypes) <- rownames(steady_state_lung_annotation)
+
+input_events_downsampling <- 1000
+prediction_events_downsampling <- 500
+cores = 1L
+```
+
+# Note on package design
+
+The `infinity_flow()` function which encapsulates the complete Infinity Flow computational pipeline uses two arguments to respectively select regression models and their hyperparameters. These two arguments are both lists, and should have the same length. The idea is that the first list, `regression_functions` will be a list of model templates (XGBoost, Neural Networks, SVMs...) to train, while the second will be used to specify their hyperparameters. The list of templates is then fit to the data using parallel computing with socketing (using the `parallel` package through the `pbapply` package), which is more memory efficient.
+
+# The `regression_functions` argument
+
+This argument is a list of functions which specifies how many models to train per well and which ones. Each type of machine learning model is supported through a wrapper in the *infinityFlow* package, and has a name of the form `fitter_*`. See below for the complete list:
+
+```{r, fitter_functions}
+print(grep("fitter_", ls("package:infinityFlow"), value = TRUE))
+```
+
+fitter_ function | Backend	    | Model type
+---------------- | ---------------- | -----------------------
+fitter_xgboost	 | XGBoost 	    | Gradient boosted trees			
+fitter_nn	 | Tensorflow/Keras | Neural networks
+fitter_svm 	 | e1071 	    | Support vector machines
+fitter_glmnet	 | glmnet	    | Generalized linear and polynomial models
+fitter_lm	 | stats	    | Linear and polynomial models
+
+These functions rely on optional package dependencies (so that you do not need to install e.g. Keras if you are not planning to use it). We need to make sure that these dependencies are however met:
+
+```{r, dependencies}
+       optional_dependencies <- c("glmnetUtils", "e1071")
+       unmet_dependencies <- setdiff(optional_dependencies, rownames(installed.packages()))
+       if(length(unmet_dependencies) > 0){
+           install.packages(unmet_dependencies)
+       }
+       for(pkg in optional_dependencies){
+       	   library(pkg, character.only = TRUE)
+       }
+```
+
+In this vignette we will train all of these models. Note that if you do it on your own data, it make take quite a bit of memory (remember that the output expression matrix will be a numeric matrix of size `(prediction_events_downsampling x number of wells) rows x (number of wells x number of models)`.
+
+To train multiple models we create a list of these fitter_* functions and assign this to the `regression_functions` argument that will be fed to the `infinity_flow` function. The names of this list will be used to name your models.
+```{r, regression_functions}
+regression_functions <- list(
+    XGBoost = fitter_xgboost, # XGBoost
+    SVM = fitter_svm, # SVM
+    LASSO2 = fitter_glmnet, # L1-penalized 2nd degree polynomial model
+    LM = fitter_linear # Linear model
+)
+```
+
+# The `extra_args_regression_params` argument
+
+This argument is a list of list (so of the form `list(list(...), list(...), etc.)`) of length `length(regression_functions)`. Each element of the extra_args_regression_params object is thus a list. This lower-level list will be used to pass named arguments to the machine learning fitting function. The list of `extra_args_regression_params` is matched with the list of machine learning models `regression_functions` using the order of the elements in these two lists (e.g. the first regression model is matched with the first element of the list of arguments, then the seconds elements are matched together, etc...).
+
+```{r, extra_args_regression_params}
+backbone_size <- table(read.csv(backbone_selection_file)[,"type"])["backbone"]
+extra_args_regression_params <- list(
+     ## Passed to the first element of `regression_functions`, e.g. XGBoost. See ?xgboost for which parameters can be passed through this list
+    list(nrounds = 500, eta = 0.05),
+
+    # ## Passed to the second element of `regression_functions`, e.g. neural networks through keras::fit. See https://keras.rstudio.com/articles/tutorial_basic_regression.html
+    # list(
+    #         object = { ## Specifies the network's architecture, loss function and optimization method
+    #             model = keras_model_sequential()
+    #             model %>%
+    #                 layer_dense(units = backbone_size, activation = "relu", input_shape = backbone_size) %>%
+    #                 layer_dense(units = backbone_size, activation = "relu", input_shape = backbone_size) %>%
+    #                 layer_dense(units = 1, activation = "linear")
+    #             model %>%
+    #                 compile(loss = "mean_squared_error", optimizer = optimizer_sgd(lr = 0.005))
+    #             serialize_model(model)
+    #         },
+    #         epochs = 1000, ## Number of maximum training epochs. The training is however stopped early if the loss on the validation set does not improve for 20 epochs. This early stopping is hardcoded in fitter_nn.
+    #         validation_split = 0.2, ## Fraction of the training data used to monitor validation loss
+    #         verbose = 0,
+    #         batch_size = 128 ## Size of the minibatches for training.
+    # ),
+
+    # Passed to the third element, SVMs. See help(svm, "e1071") for possible arguments
+    list(type = "nu-regression", cost = 8, nu=0.5, kernel="radial"),
+
+    # Passed to the fourth element, fitter_glmnet. This should contain a mandatory argument `degree` which specifies the degree of the polynomial model (1 for linear, 2 for quadratic etc...). Here we use degree = 2 corresponding to our LASSO2 model Other arguments are passed to getS3method("cv.glmnet", "formula"),
+    list(alpha = 1, nfolds=10, degree = 2),
+
+    # Passed to the fourth element, fitter_linear. This only accepts a degree argument specifying the degree of the polynomial model. Here we use degree = 1 corresponding to a linear model.
+    list(degree = 1)
+)
+```
+
+We can now run the pipeline with these custom arguments to train all the models.
+
+```{r, pipeline execution, eval = TRUE}
+if(length(regression_functions) != length(extra_args_regression_params)){
+    stop("Number of models and number of lists of hyperparameters mismatch")
+}
+imputed_data <- infinity_flow(
+	regression_functions = regression_functions,
+	extra_args_regression_params = extra_args_regression_params,
+	path_to_fcs = path_to_fcs,
+	path_to_output = path_to_output,
+	path_to_intermediary_results = path_to_intermediary_results,
+	backbone_selection_file = backbone_selection_file,
+	annotation = targets,
+	isotype = isotypes,
+	input_events_downsampling = input_events_downsampling,
+	prediction_events_downsampling = prediction_events_downsampling,
+	verbose = TRUE,
+	cores = cores
+)
+```
+
+Our model names are appended to the predicted markers in the output. For more discussion about the outputs (including output files written to disk and plots), see the [basic usage vignette](basic_usage.html)
+
+```{r, output}
+   print(imputed_data$bgc[1:2, ])
+```
+
+# Neural networks
+
+Neural networks won't build in knitr for me but here is an example of the syntax if you want to use them.
+
+Note: there is an issue with serialization of the neural networks and socketing since I updated to R-4.0.1. If you want to use neural networks, please make sure to set
+```{r, cores}
+cores = 1L
+```
+
+```{r, eval = FALSE}
+optional_dependencies <- c("keras", "tensorflow")
+unmet_dependencies <- setdiff(optional_dependencies, rownames(installed.packages()))
+if(length(unmet_dependencies) > 0){
+     install.packages(unmet_dependencies)
+}
+for(pkg in optional_dependencies){
+    library(pkg, character.only = TRUE)
+}
+
+invisible(eval(try(keras_model_sequential()))) ## avoids conflicts with flowCore...
+
+if(!is_keras_available()){
+     install_keras() ## Instal keras unsing the R interface - can take a while
+}
+
+if (!requireNamespace("BiocManager", quietly = TRUE)){
+    install.packages("BiocManager")
+}
+BiocManager::install("infinityFlow")
+
+library(infinityFlow)
+
+data(steady_state_lung)
+data(steady_state_lung_annotation)
+data(steady_state_lung_backbone_specification)
+
+dir <- file.path(tempdir(), "infinity_flow_example")
+input_dir <- file.path(dir, "fcs")
+write.flowSet(steady_state_lung, outdir = input_dir)
+
+write.csv(steady_state_lung_backbone_specification, file = file.path(dir, "backbone_selection_file.csv"), row.names = FALSE)
+
+path_to_fcs <- file.path(dir, "fcs")
+path_to_output <- file.path(dir, "output")
+path_to_intermediary_results <- file.path(dir, "tmp")
+backbone_selection_file <- file.path(dir, "backbone_selection_file.csv")
+
+targets <- steady_state_lung_annotation$Infinity_target
+names(targets) <- rownames(steady_state_lung_annotation)
+isotypes <- steady_state_lung_annotation$Infinity_isotype
+names(isotypes) <- rownames(steady_state_lung_annotation)
+
+input_events_downsampling <- 1000
+prediction_events_downsampling <- 500
+
+## Passed to fitter_nn, e.g. neural networks through keras::fit. See https://keras.rstudio.com/articles/tutorial_basic_regression.html
+regression_functions <- list(NN = fitter_nn)
+
+backbone_size <- table(read.csv(backbone_selection_file)[,"type"])["backbone"]
+extra_args_regression_params <- list(
+        list(
+		object = { ## Specifies the network's architecture, loss function and optimization method
+		model = keras_model_sequential()
+		model %>%
+		layer_dense(units = backbone_size, activation = "relu", input_shape = backbone_size) %>% 
+		layer_dense(units = backbone_size, activation = "relu", input_shape = backbone_size) %>%
+		layer_dense(units = 1, activation = "linear")
+		model %>%
+		compile(loss = "mean_squared_error", optimizer = optimizer_sgd(lr = 0.005))
+		serialize_model(model)
+		},
+		epochs = 1000, ## Number of maximum training epochs. The training is however stopped early if the loss on the validation set does not improve for 20 epochs. This early stopping is hardcoded in fitter_nn.
+		validation_split = 0.2, ## Fraction of the training data used to monitor validation loss
+		verbose = 0,
+		batch_size = 128 ## Size of the minibatches for training.
+	)
+)
+
+imputed_data <- infinity_flow(
+	regression_functions = regression_functions,
+	extra_args_regression_params = extra_args_regression_params,
+	path_to_fcs = path_to_fcs,
+	path_to_output = path_to_output,
+	path_to_intermediary_results = path_to_intermediary_results,
+	backbone_selection_file = backbone_selection_file,
+	annotation = targets,
+	isotype = isotypes,
+	input_events_downsampling = input_events_downsampling,
+	prediction_events_downsampling = prediction_events_downsampling,
+	verbose = TRUE,
+	cores = 1L
+)
+```
+# Conclusion
+
+Thank you for following this vignette, I hope you made it through the end without too much headache and that it was informative. General questions about proper usage of the package are best asked on the [Bioconductor support site](https://support.bioconductor.org/) to maximize visibility for future users. If you encounter bugs, feel free to raise an issue on infinityFlow's [github](https://github.com/ebecht/infinityFlow/issues).
+
+# Information about the R session when this vignette was built
+```{r}
+sessionInfo()
+```
