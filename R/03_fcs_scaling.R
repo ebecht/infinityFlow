@@ -7,7 +7,7 @@
 #' @param events.code vector of length nrow(xp) specifying from which well each event originates
 #' @param verbose Verbosity
 #' @noRd
-standardize_backbone_data_across_wells=function(
+standardize_backbone_data_across_wells <- function(
                                                 yvar,
                                                 paths,
                                                 scale_function=function(x){scale(x,center=TRUE,scale=TRUE)},
@@ -21,13 +21,13 @@ standardize_backbone_data_across_wells=function(
         message("\tScaling expression matrices")
     }
     
-    xp=split(as.data.frame(xp),events.code)
-    xp=lapply(xp,as.matrix)
-    xp=lapply(xp,function(x){
-        x[,chans]=scale_function(x[,chans])
+    xp <- split(as.data.frame(xp),events.code)
+    xp <- lapply(xp,as.matrix)
+    xp <- lapply(xp,function(x){
+        x[,chans] <- scale_function(x[,chans])
         x
     })
-    xp=do.call(rbind,xp)
+    xp <- do.call(rbind,xp)
 
     if(verbose){
         message("\tWriting to disk")

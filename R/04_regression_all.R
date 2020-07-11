@@ -8,14 +8,14 @@ utils::globalVariables(c("yvar", "chans"))
 #' @return A list with two elements: predictions and a fitted model
 #' @examples
 #' fitter_svm()
-fitter_svm=function(x = NULL, params = NULL){
+fitter_svm <- function(x = NULL, params = NULL){
     if(!requireNamespace("e1071", quietly = TRUE)){
         stop("Please run install.packages('e1071')")
     }
     if(!is.null(x) & !is.null(params)){
-        w=x[,"train_set"]==1
-        model=do.call(function(...){e1071::svm(...,x=x[w,chans],y=x[w,yvar])},params)
-        pred=predict(model,x[,chans])
+        w <- x[,"train_set"]==1
+        model <- do.call(function(...){e1071::svm(...,x=x[w,chans],y=x[w,yvar])},params)
+        pred <- predict(model,x[,chans])
         rm(list=setdiff(ls(),c("pred","model")))
         return(list(pred=pred,model=model))
     }
@@ -29,16 +29,16 @@ fitter_svm=function(x = NULL, params = NULL){
 #' @return A list with two elements: predictions and a fitted model
 #' @examples
 #' fitter_xgboost()
-fitter_xgboost=function(x = NULL, params = NULL){
+fitter_xgboost <- function(x = NULL, params = NULL){
     if(!requireNamespace("xgboost", quietly = TRUE)){
         stop("Please run install.packages(\"xgboost\")")
     }
 
     if(!is.null(x) & !is.null(params)){
-        w=x[,"train_set"]==1
-        args = c(list(data = x[w, chans], label = x[w, yvar], nthread = 1L, verbose = 0), params)
-        model = do.call(xgboost::xgboost, args)
-        pred=predict(model, x[, chans])
+        w <- x[,"train_set"]==1
+        args <- c(list(data = x[w, chans], label = x[w, yvar], nthread = 1L, verbose = 0), params)
+        model <- do.call(xgboost::xgboost, args)
+        pred <- predict(model, x[, chans])
         rm(list=setdiff(ls(),c("pred","model")))
         return(list(pred=pred,model=model))
     }
@@ -52,12 +52,12 @@ fitter_xgboost=function(x = NULL, params = NULL){
 #' @return A list with two elements: predictions and a fitted model
 #' @examples
 #' fitter_linear()
-fitter_linear=function(x = NULL, params = NULL){
+fitter_linear <- function(x = NULL, params = NULL){
     if(!is.null(x) & !is.null(params)){
-        w=x[,"train_set"]==1
-        fmla=paste0(make.names(yvar),"~",polynomial_formula(variables=chans,degree=params$degree))
-        model=lm(formula=fmla,data=as.data.frame(x[w,c(chans,yvar)]))
-        pred=predict(model,as.data.frame(x[,chans]))
+        w <- x[,"train_set"]==1
+        fmla <- paste0(make.names(yvar),"~",polynomial_formula(variables=chans,degree=params$degree))
+        model <- lm(formula=fmla,data=as.data.frame(x[w,c(chans,yvar)]))
+        pred <- predict(model,as.data.frame(x[,chans]))
         rm(list=setdiff(ls(),c("pred","model")))
         model$model=NULL ## Trim down for slimmer objects
         model$qr$qr=NULL ## Trim down for slimmer objects
@@ -74,16 +74,16 @@ fitter_linear=function(x = NULL, params = NULL){
 #' @return A list with two elements: predictions and a fitted model
 #' @examples
 #' fitter_glmnet()
-fitter_glmnet=function(x = NULL, params = NULL){
+fitter_glmnet <- function(x = NULL, params = NULL){
     if(!requireNamespace("glmnetUtils", quietly = TRUE)){
         stop("Please run install.packages(\"glmnetUtils\")")
     }
     if(!is.null(x) & !is.null(params)){
-        w = x[,"train_set"] == 1
-        fmla = paste0(make.names(yvar), "~", polynomial_formula(variables = chans, degree = params$degree))
-        flma = as.formula(fmla)
-        params = params[setdiff(names(params), "degree")]
-        params = c(
+        w <- x[,"train_set"] == 1
+        fmla <- paste0(make.names(yvar), "~", polynomial_formula(variables = chans, degree = params$degree))
+        flma <- as.formula(fmla)
+        params <- params[setdiff(names(params), "degree")]
+        params <- c(
             params,
             list(
                 formula = fmla,
@@ -92,25 +92,25 @@ fitter_glmnet=function(x = NULL, params = NULL){
             )
         )
         
-        fun = getS3method("cv.glmnet", "formula", envir = asNamespace("glmnetUtils"))
-        model = do.call(fun, params)
-        model$call = NULL ## Slimming down object
-        model$glmnet.fit$call = NULL ## Slimming down object
-        attributes(model$terms)[[".Environment"]] = NULL ## Slimming down object
-        pred=predict(model, as.data.frame(x[, chans]), s = model$lambda.min)
+        fun <- getS3method("cv.glmnet", "formula", envir = asNamespace("glmnetUtils"))
+        model <- do.call(fun, params)
+        model$call <- NULL ## Slimming down object
+        model$glmnet.fit$call <- NULL ## Slimming down object
+        attributes(model$terms)[[".Environment"]] <- NULL ## Slimming down object
+        pred <- predict(model, as.data.frame(x[, chans]), s = model$lambda.min)
         
         rm(list = setdiff(ls(), c("pred", "model")))
         return(list(pred = pred, model = model))
     }
 }
 
-polynomial_formula=function(variables,degree){
-    n=length(variables)
-    polys=lapply(
-        1:degree,
+polynomial_formula <- function(variables,degree){
+    n <- length(variables)
+    polys <- lapply(
+        seq_len(degree),
         function(deg){
-            res=apply(gtools::combinations(n,deg,variables,repeats.allowed=TRUE),1,paste,collapse="*")
-            res=paste0("I(",res,")")
+            res <- apply(gtools::combinations(n,deg,variables,repeats.allowed=TRUE),1,paste,collapse="*")
+            res <- paste0("I(",res,")")
         }
     )
     paste(do.call(c,lapply(polys,paste,sep="+")),collapse="+")
@@ -119,13 +119,13 @@ polynomial_formula=function(variables,degree){
 #' Wrapper to predict. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from predict_from_models
 #' @noRd
-predict_wrapper=function(x){
+predict_wrapper <- function(x){
     if(is(x, "lm")){
-        xp = as.data.frame(xp)
+        xp <- as.data.frame(xp)
     }
     if(is(x, "cv.glmnet")){
         requireNamespace("glmnetUtils")
-        xp = as.data.frame(xp)
+        xp <- as.data.frame(xp)
         return(predict(x,xp,s=x$lambda.min)[,1])
     }
     if(is(x, "raw")){
@@ -134,13 +134,13 @@ predict_wrapper=function(x){
     }
     if(is(x, "xgb.Booster")){
         requireNamespace("xgboost")
-        x = xgboost::xgb.Booster.complete(x)
+        x <- xgboost::xgb.Booster.complete(x)
         xgboost::xgb.parameters(x) <- list(nthread = 1)
     }
     if(is(x, "svm")){
         requireNamespace("e1071")
     }
-    res=predict(x, xp)
+    res <- predict(x, xp)
 }
 
 #' Wrapper to Neural Network training. Defined separetely to avoid passing too many objects in parLapplyLB
@@ -152,21 +152,21 @@ predict_wrapper=function(x){
 #' @return A list with two elements: predictions and a fitted model
 #' @examples
 #' fitter_xgboost()
-fitter_nn=function(x,params){
+fitter_nn <- function(x,params){
     if(!requireNamespace("tensorflow", quietly = TRUE) & !requireNamespace("keras", quietly = TRUE)){
         stop("Please run install.packages(c(\"tensorflow\", \"keras\")) and make sure that install_tensorflow() and install_keras() have been run")
     }
     
     if(!is.null(x) & !is.null(params)){
-        model=keras::unserialize_model(params$object)
-        params=params[setdiff(names(params),"object")]
+        model <- keras::unserialize_model(params$object)
+        params <- params[setdiff(names(params),"object")]
 
-        early_stop=keras::callback_early_stopping(monitor = "val_loss", patience = 20)
-        callbacks=list(early_stop)
+        early_stop <- keras::callback_early_stopping(monitor = "val_loss", patience = 20)
+        callbacks <- list(early_stop)
         
-        w=x[,"train_set"]==1
+        w <- x[,"train_set"]==1
 
-        fit_history=do.call(
+        fit_history <- do.call(
             function(...){
                 keras::fit(
                     ...,
@@ -179,7 +179,7 @@ fitter_nn=function(x,params){
             params
         )
         
-        pred = predict(model, x[, chans])
+        pred <- predict(model, x[, chans])
         rm(list=setdiff(ls(),c("pred","model","fit_history")))
         return(list(pred = pred, model = keras::serialize_model(model), fit_history = fit_history))
     }
@@ -201,7 +201,7 @@ fitter_nn=function(x,params){
 #' @importFrom parallel makeCluster clusterExport clusterEvalQ stopCluster
 #' @importFrom pbapply pblapply
 #' @noRd
-fit_regressions=function(
+fit_regressions <- function(
                          yvar,
                          params,
                          paths,
@@ -220,40 +220,53 @@ fit_regressions=function(
         message("Fitting regression models")
     }
 
-    chans = make.names(chans)
-    yvar = make.names(yvar)
-    colnames(xp)=make.names(colnames(xp))
+    chans <- make.names(chans)
+    yvar <- make.names(yvar)
+    colnames(xp) <- make.names(colnames(xp))
     
     requireNamespace("parallel")
     
-    cl=makeCluster(min(cores,length(unique(events.code))))
+    cl <- makeCluster(min(cores,length(unique(events.code))))
     
     RNGkind("L'Ecuyer-CMRG")
 
     if(.Platform$OS.type == "windows") {
-        mc.reset.stream = function() return(invisible(NULL))
+        mc.reset.stream <- function() return(invisible(NULL))
     } else {
-        mc.reset.stream = parallel::mc.reset.stream
+        mc.reset.stream <- parallel::mc.reset.stream
     }
     
     mc.reset.stream()
 
-    env=environment()
+    env <- environment()
     
     
     if(verbose){
         message("\tRandomly selecting 50% of the subsetted input files to fit models")
     }
-    d.e=split_matrix(xp,events.code)
-    d.e=lapply(
+    d.e <- split_matrix(xp,events.code)
+    d.e <- lapply(
         d.e,
         function(x){
-            w=sample(rep(c(TRUE,FALSE),times=c(floor(nrow(x)/2),nrow(x)-floor(nrow(x)/2))))
-            x=cbind(x,train_set=ifelse(w,1,0))
+            w <- sample(rep(c(TRUE,FALSE),times=c(floor(nrow(x)/2),nrow(x)-floor(nrow(x)/2))))
+            x <- cbind(x,train_set=ifelse(w,1,0))
             x
         }
     )
-    train_set=matrix(ncol=1,dimnames=list(NULL,"train_set"),do.call(c,sapply(d.e,function(x){x[,"train_set"]},simplify=FALSE)))
+    train_set <- matrix(
+        ncol=1,
+        dimnames=list(NULL,"train_set"),
+        do.call(
+            c,
+            lapply(
+                d.e,
+                function(x)
+                {
+                    x[,"train_set"]
+                }
+            )
+        )
+    )
     
     clusterExport(
         cl,
@@ -264,8 +277,8 @@ fit_regressions=function(
     clusterEvalQ(
         cl,
         {
-            chans=make.names(chans)
-            yvar=make.names(yvar)
+            chans <- make.names(chans)
+            yvar <- make.names(yvar)
             ## if(any(sapply(regression_functions, function(x){identical(x, fitter_nn)}))){
             ##     if(requireNamespace("keras", quietly = TRUE) & requireNamespace("tensorflow", quietly = TRUE)){
             ##         if(!is.null(neural_networks_seed)){
@@ -288,27 +301,27 @@ fit_regressions=function(
         message("\tFitting...")
     }
 
-    models=list()
-    timings=numeric()
+    models <- list()
+    timings <- numeric()
     
     for(i in seq_along(regression_functions)){
         cat("\t\t",names(regression_functions)[i],"\n\n",sep="")
-        t0=Sys.time()
-        fun = regression_functions[[i]]
-        environment(fun) = environment() ## Fixing issue with scoping when cores = 1L
-        models[[i]]=pblapply(
+        t0 <- Sys.time()
+        fun <- regression_functions[[i]]
+        environment(fun) <- environment() ## Fixing issue with scoping when cores = 1L
+        models[[i]] <- pblapply(
             X=d.e,
             FUN=fun,
             params=params[[i]],
             cl=cl
         )
-        t1=Sys.time()
-        dt=difftime(t1,t0,units="secs")
+        t1 <- Sys.time()
+        dt <- difftime(t1,t0,units="secs")
         cat("\t",dt," seconds","\n",sep="")
-        timings=c(timings,dt)
+        timings <- c(timings,dt)
     }
 
-    names(models)=names(regression_functions)
+    names(models) <- names(regression_functions)
     stopCluster(cl)
     saveRDS(models,file=file.path(paths["rds"],"regression_models.Rds"))
     saveRDS(train_set,file=file.path(paths["rds"],"train_set.Rds"))
@@ -328,7 +341,7 @@ fit_regressions=function(
 #' @param neural_networks_seed Seed for computational reproducibility when using neural networks. Passed from infinity_flow()
 #' @param verbose Verbosity
 #' @noRd
-predict_from_models=function(
+predict_from_models <- function(
                              paths,
                              prediction_events_downsampling,
                              cores,
@@ -346,42 +359,42 @@ predict_from_models=function(
         message("Imputing missing measurements")
     }
 
-    xp_raw = xp
-    chans = make.names(chans)
-    colnames(xp)=make.names(colnames(xp))
-    xp = xp[, chans]
+    xp_raw <- xp
+    chans <- make.names(chans)
+    colnames(xp) <- make.names(colnames(xp))
+    xp <- xp[, chans]
     
     requireNamespace("parallel")
-    cl=makeCluster(cores)
+    cl <- makeCluster(cores)
     
     if(.Platform$OS.type == "windows") {
-        mc.reset.stream = function() return(invisible(NULL))
+        mc.reset.stream <- function() return(invisible(NULL))
     } else {
-        mc.reset.stream = parallel::mc.reset.stream
+        mc.reset.stream <- parallel::mc.reset.stream
     }
     mc.reset.stream()
     
-    env=environment()
+    env <- environment()
 
     if(verbose){
         message("\tRandomly drawing events to predict from the test set")
     }
 
-    spl=split(train_set[,1],events.code)
-    spl=lapply(
+    spl <- split(train_set[,1],events.code)
+    spl <- lapply(
         spl,
         function(x){
-            res=rep(FALSE,length(x))
-            w=x==0
-            res[w][sample(1:sum(w),min(prediction_events_downsampling,sum(w)))]=TRUE
+            res <- rep(FALSE,length(x))
+            w <- x==0
+            res[w][sample(seq_len(sum(w)),min(prediction_events_downsampling,sum(w)))] <- TRUE
             res
         }
     )
 
-    pred_set=which(do.call(c,spl))
+    pred_set <- which(do.call(c,spl))
     
-    xp=xp[pred_set,]
-    xp_raw = xp_raw[pred_set, ]
+    xp <- xp[pred_set,]
+    xp_raw <- xp_raw[pred_set, ]
     
     clusterExport(
         cl,
@@ -391,8 +404,8 @@ predict_from_models=function(
     invisible(clusterEvalQ(
         cl,
         {
-            colnames(xp)=make.names(colnames(xp))
-            xp=xp[,make.names(chans)]
+            colnames(xp) <- make.names(colnames(xp))
+            xp <- xp[,make.names(chans)]
             ## if(any(sapply(regression_functions, function(x){identical(x, fitter_nn)}))){
             ##     if(requireNamespace("keras", quietly = TRUE) & requireNamespace("tensorflow", quietly = TRUE)){
             ##         if(!is.null(neural_networks_seed)){
@@ -412,20 +425,20 @@ predict_from_models=function(
     ))
     
     for(i in seq_along(models)){
-        models[[i]]=lapply(models[[i]],"[[",2)
+        models[[i]] <- lapply(models[[i]],"[[",2)
     }
 
     if(verbose){
         message("\tImputing...")
     }
-    preds=list()
-    timings=numeric()
-    fun = predict_wrapper
-    environment(fun) = environment() ## Fixing issue with scoping when cores = 1L
+    preds <- list()
+    timings <- numeric()
+    fun <- predict_wrapper
+    environment(fun) <- environment() ## Fixing issue with scoping when cores = 1L
     for(i in seq_along(models)){
         cat("\t\t",names(models)[i],"\n\n",sep="")
-        t0=Sys.time()
-        preds[[i]]=do.call(
+        t0 <- Sys.time()
+        preds[[i]] <- do.call(
             cbind,
             ##parLapplyLB(
             pblapply(
@@ -434,11 +447,11 @@ predict_from_models=function(
                 FUN=fun
             )
         )
-        t1=Sys.time()
-        dt=difftime(t1,t0,units="secs")
+        t1 <- Sys.time()
+        dt <- difftime(t1,t0,units="secs")
         cat("\t",dt," seconds","\n",sep="")
-        timings=c(timings,dt)
-        colnames(preds[[i]])=names(models[[i]])
+        timings <- c(timings,dt)
+        colnames(preds[[i]]) <- names(models[[i]])
     }
     
     stopCluster(cl)
@@ -446,9 +459,9 @@ predict_from_models=function(
     if(verbose){
         message("\tConcatenating predictions")
     }
-    preds=lapply(preds,function(x){cbind(xp_raw,x)})
-    preds=lapply(preds,as.matrix)
-    names(preds)=names(models)
+    preds <- lapply(preds,function(x){cbind(xp_raw,x)})
+    preds <- lapply(preds,as.matrix)
+    names(preds) <- names(models)
 
     if(verbose){
         message("\tWriting to disk")

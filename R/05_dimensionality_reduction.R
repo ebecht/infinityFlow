@@ -6,7 +6,7 @@
 #' @param verbose Verbosity
 #' @noRd
 
-perform_UMAP_dimensionality_reduction=function(
+perform_UMAP_dimensionality_reduction <- function(
                                                paths,
                                                extra_args_UMAP,
                                                chans=readRDS(file.path(paths["rds"],"chans.Rds")),
@@ -18,8 +18,8 @@ perform_UMAP_dimensionality_reduction=function(
         message("Performing dimensionality reduction")
     }
 
-    umap=do.call(uwot::umap,c(list(X=preds[[1]][,chans]),extra_args_UMAP))
-    colnames(umap)=c("UMAP1","UMAP2")
+    umap <- do.call(uwot::umap,c(list(X=preds[[1]][,chans]),extra_args_UMAP))
+    colnames(umap) <- c("UMAP1","UMAP2")
 
     saveRDS(umap,file=file.path(paths["rds"],"umap.Rds"))
     invisible()

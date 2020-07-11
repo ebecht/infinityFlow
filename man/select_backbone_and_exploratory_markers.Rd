@@ -2,7 +2,7 @@
 % Please edit documentation in R/misc.R
 \name{select_backbone_and_exploratory_markers}
 \alias{select_backbone_and_exploratory_markers}
-\title{For each parameter in the FCS files, interactively specify whether it is part of the backbone, the exploratory markers or should be ignored.}
+\title{For each parameter in the FCS files, interactively prompts whether it is part of the Backbone, the Infinity (exploratory) markers or should be ignored.}
 \usage{
 select_backbone_and_exploratory_markers(files)
 }
@@ -13,14 +13,14 @@ select_backbone_and_exploratory_markers(files)
 A data.frame
 }
 \description{
-This This function will load the first of the input FCS files and extract the measured parameters as well as their labels. For each of these, it will ask the user whether it is part of the backbone measurements (and will be used as a predictor variable in regressions), Infinity (exploratory) measurements (usually PE-conjugated or APC-conjugated, used as dependent variable in regressions) or discarded (e.g. for Time, Sample IDs, Event number IDs, ...).
+This function will load the first of the input FCS files and extract the measured parameters as well as their labels. For each of these, it will ask the user whether it is part of the backbone measurements (which will be used as a predictor variable in regressions models), Infinity (exploratory) measurements (usually PE-conjugated or APC-conjugated, used as dependent/target variable in regressions) or discarded (e.g. for parameter such as Time, Sample IDs, Event number IDs, ...).
 }
 \examples{
 data(steady_state_lung)
-dir = tempdir()
-fcs_tmp = file.path(dir, "tmp.fcs")
+dir  <-  tempdir()
+fcs_tmp  <-  file.path(dir, "tmp.fcs")
 library(flowCore)
-write.FCS(steady_state_lung[[1]], file = fcs_tmp)
+write.FCS(steady_state_lung[[1]], file  <-  fcs_tmp)
 if(interactive()){
     select_backbone_and_exploratory_markers(fcs_tmp)
 }

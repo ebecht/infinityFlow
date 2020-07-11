@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 # Introduction
-Thank you for your interest in the ***Infinity Flow*** approach. This vignette describes how to apply the package to your massively parallel cytometry (e.g. *LEGENDScreen* or *Lyoplates kits*) experiment, using the default machine learning toolkit XGBoost. Other machine learning models are covered in a separate vignette.
+Thank you for your interest in the ***Infinity Flow*** approach. This vignette describes how to apply the package to your massively parallel cytometry (e.g. *LEGENDScreen* or *Lyoplates kits*) experiment. Massively parallel cytometry experiments are cytometry experiments where a sample is aliquoted in _n_ subsamples, each stained with a fixed panel of "Backbone" antibodies. Each aliquot is in addition stained with a unique "Infinity" exploratory antibody. The goal of the ***infinityFlow*** package is to use information from the ubiquitous Backbone staining to predict the expression of sparsely-measured Infinity antibodies across the entire dataset. To learn more about this type of experiments and details about the Infinity Flow approach, please consult [Becht et al, 2020](https://www.biorxiv.org/content/10.1101/2020.06.17.152926v1). In this vignette we achieve this by using the XGBoost machine-learning framework implemented in the (xgboost R package)[https://cran.r-project.org/web/packages/xgboost/index.html]. This vignette aims at explaining how to apply a basic ***infinityFlow*** analysis. Advanced usages, including different machine learning models and custom hyperparameters values, are covered in a [dedicated vignette](training_non_default_regression_models.html).
 
 This vignette will cover:
 
@@ -29,13 +29,10 @@ This vignette will cover:
 # Package installation
 You can install the latest version from github using
 ```{r, installation, eval=FALSE}
-if(!require(devtools)){
-	install.packages("devtools")
+if (!requireNamespace("BiocManager", quietly = TRUE)){
+    install.packages("BiocManager")
 }
-if(!require(infinityFlow)){
-	library(devtools)
-	install_github("ebecht/infinityFlow")
-}
+BiocManager::install("infinityFlow")
 ```
 
 # Setting up your input data
@@ -45,10 +42,9 @@ Now that the package is installed, we load the package and attach its example da
 ```{r, load_package, eval = TRUE}
 library(infinityFlow)
 data(steady_state_lung)
-library(flowCore)
 ```
 
-The example data is a subset of a massively parallel cytometry experiment of the mouse lung at steady state. The example data contains 10 FCS files, each with a distinct PE-conjugated Infinity antibody. To mimick real world-conditions, we will write this flowSet to disk as a set of 10 distinct FCS files. In this vignette we will use a temporary directory, but you can use the directory of your choice.
+The example data is a subset of a massively parallel cytometry experiment of the mouse lung at steady state. The example data contains 10 FCS files. To mimick real world-conditions, we will write this set of FCS files to disk. In this vignette we will use a temporary directory, but you can use the directory of your choice.
 
 ```{r, load_example, eval=TRUE}
 dir <- file.path(tempdir(), "infinity_flow_example")
@@ -258,7 +254,12 @@ knitr::include_graphics(file.path(path_to_output, "umap_plot_annotated.pdf"))
 
 # Conclusion
 
-Thank you for following this vignette, I hope you made it through the end without too much headache and that it was informative. Feel free to raise an issue on infinityFlow's [github](https://github.com/ebecht/infinityFlow/issues) if you run into unsolvable issues.
+Thank you for following this vignette, I hope you made it through the end without too much headache and that it was informative. General questions about proper usage of the package are best asked on the [Bioconductor support site](https://support.bioconductor.org/) to maximize visibility for future users. If you encounter bugs, feel free to raise an issue on infinityFlow's [github](https://github.com/ebecht/infinityFlow/issues).
+
+# Information about the R session when this vignette was built
+```{r}
+sessionInfo()
+```
 
 ```{r, debugging, eval = FALSE, echo = FALSE}
 files = list.files(dir, recursive = TRUE)

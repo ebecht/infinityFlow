@@ -11,7 +11,7 @@
 #' @importFrom stats quantile
 #' @importFrom flowCore logicleTransform inverseLogicleTransform
 #' @noRd
-logicle_transform_input=function(
+logicle_transform_input <- function(
                                  yvar,
                                  paths,
                                  xp=readRDS(file.path(paths["rds"],"xp.Rds")),
@@ -29,41 +29,41 @@ logicle_transform_input=function(
         message("\tBackbone data")
     }
     
-    transforms_chan=setNames(sapply(
-        chans,
-        function(x){
-            data=xp[,x]
-            t=max(data)
-            m=4.5
-            q=0.05
-            r=.Machine$double.eps + quantile(data, q)
-            w=max((m-log10(t/abs(r)))/2,0.1)
-            w=min(w,m/2)
-            a=0
-            logicleTransform(w=w,t=t,m=m,a=a) ##Just use summary() to retrive the parameters
-        },
-        simplify=FALSE
-    ),chans)
+    transforms_chan <- setNames(
+        lapply(
+            chans,
+            function(x){
+                data <- xp[,x]
+                t <- max(data)
+                m <- 4.5
+                q <- 0.05
+                r <- .Machine$double.eps + quantile(data, q)
+                w <- max((m-log10(t/abs(r)))/2,0.1)
+                w <- min(w,m/2)
+                a <- 0
+                logicleTransform(w=w,t=t,m=m,a=a) ##Just use summary() to retrive the parameters
+            }
+        ),
+        chans
+    )
 
     if(verbose){
         message("\tExploratory data")
     }
-    transforms_pe=sapply(
-        split(xp[,yvar],events.code),
+    transforms_pe <- lapply(
+        split(xp[,yvar], events.code),
         function(x){
-            data=x
-            t=max(data)
-            m=4.5
-            q=0.05
-            r=.Machine$double.eps + quantile(data, q)
-            w=max((m-log10(t/abs(r)))/2,0.1)
-            w=min(w,m/2)
-            a=0
+            data <- x
+            t <- max(data)
+            m <- 4.5
+            q <- 0.05
+            r <- .Machine$double.eps + quantile(data, q)
+            w <- max((m-log10(t/abs(r)))/2,0.1)
+            w <- min(w,m/2)
+            a <- 0
             logicleTransform(w=w,t=t,m=m,a=a)
-        },
-        simplify=FALSE
+        }
     )
-
     
     if(verbose){
         message("\tWriting to disk")
@@ -79,16 +79,16 @@ logicle_transform_input=function(
     }
     
     for(chan in chans){
-        xp[,chan]=transforms_chan[[chan]](xp[,chan])
+        xp[,chan] <- transforms_chan[[chan]](xp[,chan])
     }
 
-    d.e=split(as.data.frame(xp),events.code)
-    d.e=lapply(d.e,as.matrix)
+    d.e <- split(as.data.frame(xp),events.code)
+    d.e <- lapply(d.e,as.matrix)
     for(chan in unique(events.code)){
-        d.e[[chan]][,yvar]=transforms_pe[[chan]](d.e[[chan]][,yvar])
+        d.e[[chan]][,yvar] <- transforms_pe[[chan]](d.e[[chan]][,yvar])
     }
 
-    xp=do.call(rbind,d.e)
+    xp <- do.call(rbind,d.e)
 
     if(verbose){
         message("\tWriting to disk")

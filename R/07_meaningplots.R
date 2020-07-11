@@ -13,7 +13,7 @@
 #' @importFrom stats quantile
 #' @importFrom matlab jet.colors
 #' @noRd
-plot_results=function(
+plot_results <- function(
                       paths,
                       chop_quantiles=0.005,
                       chans=readRDS(file.path(paths["rds"],"chans.Rds")),
@@ -30,27 +30,27 @@ plot_results=function(
         message("Plotting")
     }
         
-    a=setNames(as.character(a[,"target",]),a[,"file"])
-    a[is.na(a)]=paste0("Autofluorescence",1:sum(is.na(a)))
+    a <- setNames(as.character(a[,"target",]),a[,"file"])
+    a[is.na(a)] <- paste0("Autofluorescence",seq_len(sum(is.na(a))))
     
     if(verbose){
         message("\tChopping off the top and bottom ",chop_quantiles," quantiles")
     }
     for(col in prediction_colnames){
-        q=quantile(preds[,col],c(chop_quantiles,1-chop_quantiles))
-        preds[,col][preds[,col]<=q[1]]=q[1]
-        preds[,col][preds[,col]>=q[2]]=q[2]
-        preds[,col]=preds[,col]
+        q <- quantile(preds[,col],c(chop_quantiles,1-chop_quantiles))
+        preds[,col][preds[,col]<=q[1]] <- q[1]
+        preds[,col][preds[,col]>=q[2]] <- q[2]
+        preds[,col] <- preds[,col]
     }
 
     if(verbose){
         message("\tShuffling the order of cells (rows)")
     }
-    scrbl=sample(1:nrow(preds))
-    preds=preds[scrbl,]
+    scrbl <- sample(seq_len(nrow(preds)))
+    preds <- preds[scrbl,]
     
-    colnames(preds)=gsub("/","-",colnames(preds))
-    channels.code=setNames(colnames(preds),colnames(preds))
+    colnames(preds) <- gsub("/","-",colnames(preds))
+    channels.code <- setNames(colnames(preds),colnames(preds))
 
     if(verbose){
         message("\tProducing plot")

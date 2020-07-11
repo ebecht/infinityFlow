@@ -40,7 +40,6 @@ if(!require(infinityFlow)){
 }
 ```
 ```{r, preparation}
-library(flowCore)
 library(infinityFlow)
 
 data(steady_state_lung)
@@ -70,7 +69,7 @@ cores = 1L
 
 # Note on package design
 
-The     `infinity_flow()` function which encapsulates the complete Infinity Flow computational pipeline uses two arguments to respectively select regression models and their hyperparameters. These two arguments are both lists, and should have the same length. The idea is that the first list, `regression_functions` will be a list of model templates (XGBoost, Neural Networks, SVMs...) to train, while the second will be used to specify their hyperparameters. The list of templates is then fit to the data using parallel computing with socketing (using the `parallel` package through the `pbapply` package), which is more memory efficient.
+The `infinity_flow()` function which encapsulates the complete Infinity Flow computational pipeline uses two arguments to respectively select regression models and their hyperparameters. These two arguments are both lists, and should have the same length. The idea is that the first list, `regression_functions` will be a list of model templates (XGBoost, Neural Networks, SVMs...) to train, while the second will be used to specify their hyperparameters. The list of templates is then fit to the data using parallel computing with socketing (using the `parallel` package through the `pbapply` package), which is more memory efficient.
 
 # The `regression_functions` argument
 
@@ -212,7 +211,6 @@ if(!require(infinityFlow)){
 	library(devtools)
 	install_github("ebecht/infinityFlow")
 }
-library(flowCore)
 library(infinityFlow)
 
 data(steady_state_lung)
@@ -275,4 +273,12 @@ imputed_data <- infinity_flow(
 	verbose = TRUE,
 	cores = 1L
 )
+```
+# Conclusion
+
+Thank you for following this vignette, I hope you made it through the end without too much headache and that it was informative. General questions about proper usage of the package are best asked on the [Bioconductor support site](https://support.bioconductor.org/) to maximize visibility for future users. If you encounter bugs, feel free to raise an issue on infinityFlow's [github](https://github.com/ebecht/infinityFlow/issues).
+
+# Information about the R session when this vignette was built
+```{r}
+sessionInfo()
 ```

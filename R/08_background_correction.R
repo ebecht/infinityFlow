@@ -1,7 +1,7 @@
 #' Background-correct and export results
 #' @param paths Character vector of paths to store intput, intermediary results, outputs...
-#' @param FCS_export if "none", no FCS export. if "concatenated", export one FCS file with all the data. if "split", export the data in the result folder under the subfolder FCS, with each file corresponding to a (subsampled) input file.
-#' @param CSV_export Boolean, whether to export results to CSV
+#' @param FCS_export if "none", no FCS export. If "concatenated", export one FCS file with all the data. if "split", export the data in the result folder under the subfolder FCS, with each file corresponding to a (subsampled) input file. If "csv", export concatenated background-corrected data to CSV.
+#' @param CSV_export Deprecated
 #' @param chans vector of backbone channels' names
 #' @param transforms_chan named list of logicle-transformations for backbone channels
 #' @param transforms_pe named list of logicle-transformations for Infinity channels
@@ -20,7 +20,7 @@
 #' @importFrom flowCore write.FCS
 #' @importFrom flowCore flowFrame
 #' @noRd
-correct_background=function(
+correct_background <- function(
                             paths,
                             FCS_export,
                             CSV_export,
@@ -42,13 +42,13 @@ correct_background=function(
         message("Background correcting")
     }
 
-    a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
-    rownames(a)=a[,"file"]
-    a=a[intersect(rownames(a),colnames(preds[[1]])),]
+    a <- read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
+    rownames(a) <- a[,"file"]
+    a <- a[intersect(rownames(a),colnames(preds[[1]])),]
     
-    preds_raw=preds
+    preds_raw <- preds
     
-    preds_rawbgc=lapply(
+    preds_rawbgc <- lapply(
         preds_raw,
         function(x){
             x[,a$file]
@@ -57,14 +57,14 @@ correct_background=function(
     
     for(i in seq_along(preds_rawbgc)){
         for(file in colnames(preds_rawbgc[[i]])){
-            iso=a[file,"isotype"][1]
-            x=preds_raw[[i]][,iso]
-            y=preds_raw[[i]][,file]
-            lm=lm(y~x)$coefficients
-            intercept=lm[1]
-            slope=lm[2]
-            orthogonal_residuals=(-slope*x+y-intercept)/sqrt(slope^2+1)
-            preds_rawbgc[[i]][,file]=orthogonal_residuals
+            iso <- a[file,"isotype"][1]
+            x <- preds_raw[[i]][,iso]
+            y <- preds_raw[[i]][,file]
+            lm <- lm(y~x)$coefficients
+            intercept <- lm[1]
+            slope <- lm[2]
+            orthogonal_residuals <- (-slope*x+y-intercept)/sqrt(slope^2+1)
+            preds_rawbgc[[i]][,file] <- orthogonal_residuals
         }
     }
 
@@ -78,7 +78,7 @@ correct_background=function(
         message("\tTransforming background-corrected predictions. (Use logarithm to visualize)")
     }
     ## Preparing data for display using log transform
-    preds_rawbgc_linear=lapply(
+    preds_rawbgc_linear <- lapply(
         preds_rawbgc,function(x){
             apply(x,2,function(x){
                 10^(x-min(x))
@@ -89,51 +89,51 @@ correct_background=function(
     ## Adding uncorrected data (isotypes and autofluorescence)
     ## I don't think this does anything anymore
     for(i in seq_along(preds_rawbgc_linear)){
-        preds_rawbgc_linear[[i]]=cbind(
+        preds_rawbgc_linear[[i]] <- cbind(
             preds_rawbgc_linear[[i]],
             preds_raw[[i]][,setdiff(colnames(preds[[i]]),c(colnames(preds_rawbgc_linear[[i]]),chans)),drop=FALSE]
         )
-        preds_rawbgc[[i]]=cbind(
+        preds_rawbgc[[i]] <- cbind(
             preds_rawbgc[[i]],
             preds_raw[[i]][,setdiff(colnames(preds[[i]]),c(colnames(preds_rawbgc[[i]]),chans)),drop=FALSE]
         )
     }
     
-    preds_rawbgc_linear=lapply(
+    preds_rawbgc_linear <- lapply(
         preds_rawbgc_linear,
         function(x){
             x[,rownames(a)]
         }
     )
-    preds_rawbgc=lapply(
+    preds_rawbgc <- lapply(
         preds_rawbgc,
         function(x){
             x[,rownames(a)]
         }
     )
     for(x in names(preds_rawbgc_linear)){
-        colnames(preds_rawbgc_linear[[x]])=paste0(a[colnames(preds_rawbgc_linear[[x]]),"target"],".",x,"_bgc")
-        colnames(preds_rawbgc[[x]])=paste0(a[colnames(preds_rawbgc[[x]]),"target"],".",x,"_bgc")
-        preds_rawbgc_linear[[x]]=preds_rawbgc_linear[[x]][,order(colnames(preds_rawbgc_linear[[x]]))]
-        preds_rawbgc[[x]]=preds_rawbgc[[x]][,order(colnames(preds_rawbgc[[x]]))]
+        colnames(preds_rawbgc_linear[[x]]) <- paste0(a[colnames(preds_rawbgc_linear[[x]]),"target"],".",x,"_bgc")
+        colnames(preds_rawbgc[[x]]) <- paste0(a[colnames(preds_rawbgc[[x]]),"target"],".",x,"_bgc")
+        preds_rawbgc_linear[[x]] <- preds_rawbgc_linear[[x]][,order(colnames(preds_rawbgc_linear[[x]]))]
+        preds_rawbgc[[x]] <- preds_rawbgc[[x]][,order(colnames(preds_rawbgc[[x]]))]
     }
 
-    preds_rawbgc_linear=do.call(cbind,preds_rawbgc_linear)
-    preds_rawbgc=do.call(cbind,preds_rawbgc)
+    preds_rawbgc_linear <- do.call(cbind,preds_rawbgc_linear)
+    preds_rawbgc <- do.call(cbind,preds_rawbgc)
 
-    preds_rawbgc=preds_rawbgc[,sort(colnames(preds_rawbgc))]
-    preds_rawbgc_linear=preds_rawbgc_linear[,sort(colnames(preds_rawbgc_linear))]
+    preds_rawbgc <- preds_rawbgc[,sort(colnames(preds_rawbgc))]
+    preds_rawbgc_linear <- preds_rawbgc_linear[,sort(colnames(preds_rawbgc_linear))]
     
-    preds_rawbgc_linear=cbind(xp[sampling,],preds_rawbgc_linear,minmax_scale(umap))
-    preds_rawbgc=cbind(xp_scaled[sampling,],preds_rawbgc,minmax_scale(umap))
+    preds_rawbgc_linear <- cbind(xp[sampling,],preds_rawbgc_linear,minmax_scale(umap))
+    preds_rawbgc <- cbind(xp_scaled[sampling,],preds_rawbgc,minmax_scale(umap))
     
-    unique_pes=unique(events.code)
-    PE_id=sapply(events.code[sampling],match,table=unique_pes)
+    unique_pes <- unique(events.code)
+    PE_id <- vapply(events.code[sampling],match,table=unique_pes, FUN.VALUE = 1L)
 
-    preds_rawbgc_linear=cbind(preds_rawbgc_linear,PE_id=PE_id)
-    preds_rawbgc=cbind(preds_rawbgc,PE_id=PE_id)
+    preds_rawbgc_linear <- cbind(preds_rawbgc_linear,PE_id=PE_id)
+    preds_rawbgc <- cbind(preds_rawbgc,PE_id=PE_id)
 
-    if(CSV_export){
+    if("csv" %in% FCS_export){
         if(verbose){
             message("\t","Exporting as CSV")
         }
@@ -141,16 +141,16 @@ correct_background=function(
         write.csv(as.data.frame(preds_rawbgc_linear),row.names=FALSE,file=file.path(paths["output"],"predicted_data_background_corrected.csv"))
     }
 
-    if(any(FCS_export=="split")){
+    if("split" %in% FCS_export){
         if(verbose){
             message("\t","Exporting FCS files (1 per well)")
         }
         dir.create(file.path(paths["output"],"FCS_background_corrected/","split"),recursive=TRUE,showWarnings=FALSE)
-        FCS_list=split_matrix(preds_rawbgc_linear,events.code[sampling])
-        FCS_list=lapply(FCS_list,function(x){
-            x=flowFrame(x)
-            x@parameters$desc=as.character(x@parameters$desc)
-            x@parameters$name=as.character(x@parameters$name)
+        FCS_list <- split_matrix(preds_rawbgc_linear,events.code[sampling])
+        FCS_list <- lapply(FCS_list,function(x){
+            x <- flowFrame(x)
+            x@parameters$desc <- as.character(x@parameters$desc)
+            x@parameters$name <- as.character(x@parameters$name)
             generate_description(x)
         })
         lapply(
@@ -161,14 +161,14 @@ correct_background=function(
         )   
     }
 
-    if(any(FCS_export=="concatenated")){
+    if("concatenated" %in% FCS_export){
         if(verbose){
             message("\t","Exporting concatenated FCS file")
         }
-        FCS=flowFrame(preds_rawbgc_linear)
-        FCS@parameters$desc=as.character(FCS@parameters$desc)
-        FCS@parameters$name=as.character(FCS@parameters$name)
-        FCS=generate_description(FCS)
+        FCS <- flowFrame(preds_rawbgc_linear)
+        FCS@parameters$desc <- as.character(FCS@parameters$desc)
+        FCS@parameters$name <- as.character(FCS@parameters$name)
+        FCS <- generate_description(FCS)
         dir.create(file.path(paths["output"],"FCS_background_corrected/","concatenated"),recursive=TRUE,showWarnings=FALSE)
         invisible(write.FCS(FCS,filename=file.path(paths["output"],"FCS_background_corrected","concatenated","concatenated_results_background_corrected.fcs")))
     }

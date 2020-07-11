@@ -49,7 +49,7 @@ infinity_flow(
 
 \item{cores}{Number of cores to use for parallel computing. Defaults to 1 (no parallel computing)}
 
-\item{your_random_seed}{Deprecated; Was used to set a seed for computationally reproducible results. Defaults to 123.}
+\item{your_random_seed}{Deprecated: was used to set a seed for computationally reproducible results but is not allowed by Bioconductor. Please set a random seed yourself using set.seed(somenumber) if you desire computionally-reproducible results.}
 
 \item{verbose}{Whether to print information about progress}
 
@@ -61,9 +61,9 @@ infinity_flow(
 
 \item{extra_args_UMAP}{list of named arguments to pass to uwot:umap. Defaults to list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L)}
 
-\item{extra_args_export}{Whether raw imputed data should be exported as a single concatenated FCS file, one FCS-file per well, no FCS file, and whether to export the raw imputed data to CSV. This should be a named list, passed to infinityFlow:::export_data. See ?export_data for help}
+\item{extra_args_export}{Whether raw imputed data should be exported. Possible values are list(FCS_export = "split") to export one FCS file per input well, list(FCS_export = "concatenated") to export a single concatenated FCS file containing all the dataset, list(FCS_export = "csv") for a single CSV file containing all the dataset. You can export multiple modalities by using for instance extra_args_export = list(FCS_export = c("split", "concatenated", "csv"))}
 
-\item{extra_args_correct_background}{Whether background-corrected imputed data should be exported as a single concatenated FCS file, one FCS-file per well, no FCS file, and whether to export the background-corrected imputed data to CSV. This should be a named list, passed to infinityFlow:::export_data. See ?correct_background for help}
+\item{extra_args_correct_background}{Whether background-corrected imputed data should be exported. Possible values are list(FCS_export = "split") to export one FCS file per input well, list(FCS_export = "concatenated") to export a single concatenated FCS file containing all the dataset, list(FCS_export = "csv") for a single CSV file containing all the dataset. You can export multiple modalities by using for instance extra_args_export = list(FCS_export = c("split", "concatenated", "csv"))}
 
 \item{extra_args_plotting}{list of named arguments to pass to plot_results. Defaults to list(chop_quantiles=0.005) which removes the top 0.05\% and bottom 0.05\% of the scale for each marker when mapping color palettes to intensities.}
 
