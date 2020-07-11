@@ -73,7 +73,7 @@ The `infinity_flow()` function which encapsulates the complete Infinity Flow com
 
 # The `regression_functions` argument
 
-This argument is a list of functions which specifies how many models to train per well and which ones. Each type of machine learning model is supported through a wrapper in the ***infinityFlow*** package, and has a name of the form `fitter_*`. See below for the complete list:
+This argument is a list of functions which specifies how many models to train per well and which ones. Each type of machine learning model is supported through a wrapper in the *infinityFlow* package, and has a name of the form `fitter_*`. See below for the complete list:
 
 ```{r, fitter_functions}
 print(grep("fitter_", ls("package:infinityFlow"), value = TRUE))
@@ -204,13 +204,11 @@ if(!is_keras_available()){
      install_keras() ## Instal keras unsing the R interface - can take a while
 }
 
-if(!require(devtools)){
-	install.packages("devtools")
+if (!requireNamespace("BiocManager", quietly = TRUE)){
+    install.packages("BiocManager")
 }
-if(!require(infinityFlow)){
-	library(devtools)
-	install_github("ebecht/infinityFlow")
-}
+BiocManager::install("infinityFlow")
+
 library(infinityFlow)
 
 data(steady_state_lung)
