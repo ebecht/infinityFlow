@@ -8,7 +8,7 @@ You can learn more about the Infinity Flow approach using the following sources.
 1. The peer-reviewed article - [pending]
 1. [An imaged digest of the paper](https://twitter.com/EtienneBecht/status/1274039148781826049)
 
-The package is available from [Bioconductor](https://bioconductor.org/packages/devel/bioc/html/infinityFlow.html). Alternatively, you can install it from github:
+The package is available from [Bioconductor](https://bioconductor.org/packages/infinityFlow/). Alternatively, you can install it from github:
 
 ```
 if(!require(devtools)){
