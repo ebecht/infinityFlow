@@ -20,7 +20,7 @@ if(!require(infinityFlow)){
 }
 ```
 
-After installing the package, you can learn about how to use it by running the following command in an R session
+To use the package, you can follow the [vignette](https://bioconductor.org/packages/devel/bioc/vignettes/infinityFlow/inst/doc/basic_usage.html). Alternatively, you can run the following command in an R session after installing the package:
 
 ```
 browseVignettes("infinityFlow")
