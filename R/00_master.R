@@ -184,6 +184,21 @@ initialize <- function(
                     regression_functions=regression_functions
                     ){
     
+    
+    if(path_to_intermediary_results==tempdir()){
+        tmpdir = path_to_intermediary_results
+        if(dir.exists(tmpdir)){
+            i = 1
+            while(dir.exists(file.path(tmpdir, i))){
+                i = i + 1
+            }
+            path_to_intermediary_results = file.path(tmpdir, i)
+        }
+        if(verbose){
+            message("Using ", tmpdir, " temporary directory to store intermediary results as no non-temporary directory has been specified")
+        }
+    }
+
     ## The paths below have to point to directories. If they do not exist the script will create them to store outputs
     path_to_subsetted_fcs <- file.path(path_to_intermediary_results,"subsetted_fcs") ## Subsetted here means for instance "gated on live singlets CD45+"
     path_to_rds <- file.path(path_to_intermediary_results,"rds")
@@ -199,15 +214,13 @@ initialize <- function(
         output=path_to_output
     )
     paths <- vapply(paths, path.expand, "path")
-    
-    if(path_to_intermediary_results==tempdir()){
-        if(verbose){
-            message("Using ",tempdir()," temporary directory to store intermediary results as no non-temporary directory has been specified")
-        }
-        vapply(paths[c("subset","rds")],dir.create,showWarnings=FALSE,recursive=TRUE, FUN.VALUE = TRUE)
-    }
+
     if(!all(dir.exists(paths[-match("annotation",names(paths))]))){
-        message(paste(paths[-match("annotation",names(paths))][!dir.exists(paths[-match("annotation",names(paths))])],collapse=" and "),": directories not found, creating directory(ies)")
+        message(
+            paste(
+                paths[-match("annotation",names(paths))][!dir.exists(paths[-match("annotation",names(paths))])], collapse = " and "),
+            ": directories not found, creating directory(ies)"
+        )
         vapply(paths[-match("annotation",names(paths))][!dir.exists(paths[-match("annotation",names(paths))])],dir.create,recursive=TRUE,showWarnings=FALSE, FUN.VALUE = TRUE)
     }
 
