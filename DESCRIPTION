@@ -1,6 +1,6 @@
 Package: infinityFlow
 Title: Augmenting Massively Parallel Cytometry Experiments Using Multivariate Non-Linear Regressions
-Version: 1.2.0
+Version: 1.3.0
 Authors@R: c(
                person("Etienne","Becht",middle=NULL,email="etienne.becht@protonmail.com",role=c("cre","aut"))
 	   )
