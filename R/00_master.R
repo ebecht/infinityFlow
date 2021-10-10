@@ -69,7 +69,10 @@ infinity_flow <- function(
     if(length(extra_args_regression_params) != length(regression_functions)){
         stop("extra_args_regression_params and regression_functions should be lists of the same lengths")
     }
-        
+
+    if(any(!isotype %in% annotation)){
+        stop("The following values from the isotype argument are not matching any of the values from the annotation argument: ", paste0(isotype[!isotype %in% annotation], collapse = ", "))
+    }
     ##/!\ Potentially add a check here to make sure parameters are consistent with FCS files
 
     settings <- initialize(

@@ -171,7 +171,7 @@ head(list.files(path_to_fcs, pattern = ".fcs"))
 Output directory. It will be created if it doesn't already exist
 ```{r, output path argument}
 path_to_output <- file.path(dir, "output")
-````
+```
 
 Backbone selection file:
 ```{r, backbone selection file path argument}
