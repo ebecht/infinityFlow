@@ -93,7 +93,7 @@ color_biplot_by_channels <- function(
         data_range <- range(matrix[,regular_channels],na.rm=TRUE)
         data_range <- matrix(rep(data_range,length(regular_channels)),ncol=length(regular_channels),nrow=2,byrow=FALSE,dimnames=list(c("min","max"),regular_channels))
     } else {
-        data_range <- apply(matrix[,regular_channels],na.rm=TRUE,2,range,na.rm=TRUE)
+        data_range <- apply(matrix[,regular_channels],2,range,na.rm=TRUE)
         rownames(data_range) <- c("min","max")
     }
 
