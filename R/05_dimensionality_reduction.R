@@ -10,17 +10,37 @@ perform_UMAP_dimensionality_reduction <- function(
                                                paths,
                                                extra_args_UMAP,
                                                chans=readRDS(file.path(paths["rds"],"chans.Rds")),
-                                               preds=readRDS(file.path(paths["rds"],"predictions.Rds")),
-                                               verbose=TRUE
+                                               verbose=TRUE,
+                                               annot=read.table(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
                                                )
 {
     if(verbose){
         message("Performing dimensionality reduction")
     }
-
-    umap <- do.call(uwot::umap,c(list(X=preds[[1]][,chans]),extra_args_UMAP))
+    xp_backbone <- list()
+    for(i in seq_len(nrow(annot))){
+        index <- list(
+                which(h5read(file = paths["h5"], name = paste0("sampling/predictions/", i)) == 1L),
+                NULL
+            )
+        xp_backbone[[i]] <- h5read(
+            file = paths["h5"],
+            name = paste0("/input/expression_transformed_scaled/", i),
+            index = index
+        )
+        colnames(xp_backbone[[i]]) <- h5readAttributes(file = paths["h5"], name = paste0("/input/expression/", i))$colnames
+    }
+    ns <- lapply(xp_backbone, nrow)
+    xp_backbone <- do.call(rbind, xp_backbone)
+    
+    umap <- do.call(uwot::umap,c(list(X=xp_backbone[,chans]),extra_args_UMAP))
     colnames(umap) <- c("UMAP1","UMAP2")
-
     saveRDS(umap,file=file.path(paths["rds"],"umap.Rds"))
+
+    umap <- split_matrix(umap, rep(seq_along(ns), ns))
+    for(i in seq_along(umap)){
+        h5write(umap[[i]], file = paths["h5"], name = paste0("/umap/backbone/", i))
+    }
+    
     invisible()
 }

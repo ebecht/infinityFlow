@@ -17,55 +17,36 @@ plot_results <- function(
                       paths,
                       chop_quantiles=0.005,
                       chans=readRDS(file.path(paths["rds"],"chans.Rds")),
-                      events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
-                      preds=readRDS(file.path(paths["rds"],"predictions_cbound.Rds")),
-                      sampling=readRDS(file.path(paths["rds"],"sampling_preds.Rds")),
-                      prediction_colnames=readRDS(file.path(paths["rds"],"prediction_colnames.Rds")),
-                      a=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE),
+                      annot=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE),
                       verbose=TRUE,
                       file_name=file.path(paths["output"],"umap_plot_annotated.pdf"),
-                      global_palette=FALSE
+                      transforms=readRDS(file.path(paths["rds"], "transforms.Rds")),
+                      yvar,                      
+                      umap_group = "/umap/backbone/",
+                      backbone_data_group = "/input/expression_transformed/",
+                      predictions_group = "/predictions/raw/"
                       ){
     if(verbose){
         message("Plotting")
     }
-        
-    a <- setNames(as.character(a[,"target",]),a[,"file"])
-    a[is.na(a)] <- paste0("Autofluorescence",seq_len(sum(is.na(a))))
-    
-    if(verbose){
-        message("\tChopping off the top and bottom ",chop_quantiles," quantiles")
-    }
-    for(col in prediction_colnames){
-        q <- quantile(preds[,col],c(chop_quantiles,1-chop_quantiles))
-        preds[,col][preds[,col]<=q[1]] <- q[1]
-        preds[,col][preds[,col]>=q[2]] <- q[2]
-        preds[,col] <- preds[,col]
-    }
 
-    if(verbose){
-        message("\tShuffling the order of cells (rows)")
-    }
-    scrbl <- sample(seq_len(nrow(preds)))
-    preds <- preds[scrbl,]
-    
-    colnames(preds) <- gsub("/","-",colnames(preds))
-    channels.code <- setNames(colnames(preds),colnames(preds))
+    n <- sum(h5read(paths["h5"], name = "/dimensions/", index = list(NULL, 2)))
 
-    if(verbose){
-        message("\tProducing plot")
-    }
     color_biplot_by_channels(
-        preds,
-        x_axis="UMAP1",
-        y_axis="UMAP2",
-        global_across_channels=global_palette,
+        paths["h5"],
+        annot=annot,
         file_name=file_name,
         palette=jet.colors(100),
         pch=16,
-        cex=min(1,1.1-0.15*log10(nrow(preds))),
+        cex= max(1 - 0.1*(log10(n)), 0.1),
         resolution=72,
         raster.height=360*4,
-        raster.width=360*4
+        raster.width=360*4,
+        data_transformation_reverse=transforms[[yvar]]$backward,
+        chop_quantiles = chop_quantiles,
+        chans=chans,
+        umap_group = umap_group,
+        backbone_data_group = backbone_data_group,
+        predictions_group = predictions_group
     )
 }

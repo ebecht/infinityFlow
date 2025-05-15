@@ -7,14 +7,16 @@
 #' @param verbose Verbosity
 #' @noRd
 #' @importFrom flowCore read.FCS
+#' @importFrom flowCore read.FCSheader
 #' @importFrom Biobase pData exprs
+#' @importFrom rhdf5 h5writeAttribute
 subsample_data <- function(
-                        input_events_downsampling,
-                        paths,
-                        extra_args_read_FCS,
-                        name_of_PE_parameter,
-                        verbose=TRUE
-                        ){
+                           input_events_downsampling,
+                           paths,
+                           extra_args_read_FCS,
+                           name_of_PE_parameter,
+                           verbose=TRUE
+                           ){
     ## Subsampling
     if(verbose){
         message("Parsing and subsampling input data")
@@ -32,31 +34,31 @@ subsample_data <- function(
             }
         )
     )
-
-    ## convert to .Rds
+    
+    ## convert to .h5
+    
     if(verbose){
-        message("\tConcatenating expression matrices")
+        message("\tSaving expression matrices to disk")
     }
     files <- list.files(paths["subset"],full.names=TRUE,recursive=FALSE,include.dirs=FALSE,pattern=".fcs")
-    ns <- setNames(integer(length(files)),files)
-    xp <- lapply(
-        files,
-        function(file){
-            xp <- do.call(read.FCS,c(list(filename=file),extra_args_read_FCS))
-            annot <- pData(xp@parameters)
-            ## ns[file]<<-nrow(xp)
-            xp <- exprs(xp)
-            targets <- annot$desc
-            targets[is.na(targets)] <- annot$name[is.na(targets)]
-            colnames(xp)[colnames(xp)!=name_of_PE_parameter] <- targets[colnames(xp)!=name_of_PE_parameter]
-            colnames(xp)[colnames(xp)==name_of_PE_parameter] <- name_of_PE_parameter
-            xp
-        }
-    )
-    names(xp) <- files
-    ns <- vapply(xp, nrow, 1L)
-    xp <- do.call(rbind,xp)
+    ns = integer(length(files))
+    
+    for(i in seq_along(files)){
+        file = files[i]
+        xp <- do.call(read.FCS,c(list(filename=file),extra_args_read_FCS))
+        annot <- pData(xp@parameters)
+        xp <- exprs(xp)
+        targets <- annot$desc
+        targets[is.na(targets)] <- annot$name[is.na(targets)]
+        colnames(xp)[colnames(xp)!=name_of_PE_parameter] <- targets[colnames(xp)!=name_of_PE_parameter]
+        colnames(xp)[colnames(xp)==name_of_PE_parameter] <- name_of_PE_parameter
+        
+        h5write(obj = xp, file = paths["h5"], name = paste0("input/expression/", i))
+        h5writeAttribute(attr = colnames(xp), h5obj = paths["h5"], name = "colnames", h5loc = paste0("input/expression/", i))
 
+        ns[i] = nrow(xp)
+    }
+    
     ## Map which events originate from which file.
     if(verbose){
         message("\tWriting to disk")
@@ -65,11 +67,11 @@ subsample_data <- function(
         lapply(
             names(ns),
             function(x){
-                rep(tail(strsplit(x,"/")[[1]],1),ns[x])
+                rep(tail(strsplit(x,"/")[[1]],1), ns[x])
             }
         )
     )
-    saveRDS(xp,file=file.path(paths["rds"],"xp.Rds"))
+
     saveRDS(events.code,file=file.path(paths["rds"],"pe.Rds"))
     invisible()
 }

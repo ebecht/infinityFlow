@@ -26,7 +26,8 @@ Imports: stats,
 	generics,
 	parallel,
 	methods,
-	xgboost
+	xgboost,
+	rhdf5
 Suggests: knitr,
 	rmarkdown,
 	keras,
@@ -34,5 +35,5 @@ Suggests: knitr,
 	glmnetUtils,
 	e1071
 VignetteBuilder: knitr
-RoxygenNote: 7.3.0
+RoxygenNote: 7.3.2
 biocViews: Software, FlowCytometry, CellBasedAssays, SingleCell, Proteomics

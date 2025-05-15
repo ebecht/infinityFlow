@@ -39,7 +39,7 @@ generate_description<-function(ff){
     res
 }
 
-#' Colors points of a biplot (2d-tSNE, 2d-PCA...) by the intensity of channels for each flowframe in the flowset
+#' Colors points of a biplot (2d-tSNE, 2d-PCA...) by the intensity of channels for each backbone and exploratory marker
 #'
 #' @param matrix A matrix
 #' @param x_axis A column name of matrix used in biplots as the x axis
@@ -74,116 +74,120 @@ generate_description<-function(ff){
 #' @noRd
 
 color_biplot_by_channels <- function(
-                                     matrix,
-                                     x_axis,
-                                     y_axis,
-                                     global_across_channels=TRUE,
+                                     h5file,
+                                     umap_group = "/umap/backbone/",
+                                     backbone_data_group = "/input/expression_transformed/",
+                                     predictions_group = "/predictions/raw/",
+                                     annot,
                                      palette=c("blue","green","red"),
                                      resolution=72,
                                      data_transformation_reverse=identity,
                                      file_name="biplot.pdf",
                                      raster.height=480,
                                      raster.width=480,
+                                     chop_quantiles,
+                                     chans,
                                      ... #pass to plot for e.g. tSNE biplot
-                                     )
-{
-    regular_channels <- setdiff(colnames(matrix),c(x_axis,y_axis))
-
-    if(global_across_channels){
-        data_range <- range(matrix[,regular_channels],na.rm=TRUE)
-        data_range <- matrix(rep(data_range,length(regular_channels)),ncol=length(regular_channels),nrow=2,byrow=FALSE,dimnames=list(c("min","max"),regular_channels))
-    } else {
-        data_range <- apply(matrix[,regular_channels],2,range,na.rm=TRUE)
-        rownames(data_range) <- c("min","max")
+                                     ){
+    umap <- list()
+    for(i in seq_len(nrow(annot))){
+        umap[[i]] <- h5read(h5file, name = paste0(umap_group, i))
     }
+    umap <- do.call(rbind, umap)
+    colnames(umap) = paste0("UMAP", c(1,2))
+    spl <- sample(seq_len(nrow(umap)))
+    umap <- umap[spl, ]
 
-    x <- matrix[,x_axis]
-    y <- matrix[,y_axis]
-    xp <- matrix[,regular_channels,drop=FALSE]
+    x <- umap[,1]
+    y <- umap[,2]
+    
+    regular_channels <- h5readAttributes(h5file, paste0(predictions_group, "1"))$colnames
+    regular_channels = c(chans, regular_channels)
+    rasters_list <- list()
 
-    if(any(!(is.na(x)&is.na(y)))){
-        rasters <- lapply(
-            regular_channels,
-            function(pname,xp,data.range,x,y)
-            {
-                color.scale <- unique(colorRampPalette(palette)(1000))
-                n <- length(color.scale)
-
-                breaks <- unique(seq(data.range["min",pname],data.range["max",pname],length.out=n+1))
-                if(length(unique(breaks))>1){
-                    points.colors <- as.character(cut(xp[,pname],breaks=breaks,labels=color.scale))
-                } else {
-                    points.colors <- rep("lightsteelblue",length(xp[,pname]))
-                }
-                mainplot <- paste(tmpDir(),"/mainplot_",pname,".png",sep="")
-                png(mainplot,res=resolution,height=raster.height*resolution/72,width=raster.width*resolution/72)
-                par("bty"="l")
-                plot(
-                    x,
-                    y,
-                    col=points.colors,
-                    xlab=x_axis,
-                    ylab=y_axis,
-                    main=pname,
-                    ...
-                )
-                dev.off()
-
-                colorscale <- paste(tmpDir(),"/colorscale_",pname,".png",sep="")
-                png(colorscale,res=resolution,height=raster.height/2*resolution/72,width=raster.width*resolution/72)
-                plot.new()
-                par("mar"=c(2,1,2,1))
-
-
-                xlims <- par("usr")[c(1, 2)]
-                x_coords <- seq(xlims[1],xlims[2],length.out=n+1)
-                ylims <- par("usr")[c(3, 4)]
-
-                labels <- signif(data_transformation_reverse(breaks),2)
-                labels <- labels[round(seq(1,length(labels),length.out=5))]
-                labels.x_coords <- seq(x_coords[1],x_coords[length(x_coords)],length.out=5)
-
-                rect(border=NA,ybottom=ylims[1],ytop=ylims[2],xleft=x_coords[-length(x_coords)],xright=x_coords[-1],col=color.scale)
-                text(xpd=TRUE,y=ylims[1],pos=1,labels=labels,x=labels.x_coords)
-                text(xpd=TRUE,y=ylims[2],pos=3,labels=paste(pname,"intensity"),x=mean(xlims))
-                dev.off()
-
-                return(list(main.file=mainplot,scale.file=colorscale))
-            },
-            xp=xp,
-            data.range=data_range,
-            x=x,
-            y=y
-        )
-        
-        file <- file_name
-
-        pdf(file)
-        if(global_across_channels){
-            plot.new()
-            grid.raster(readPNG(rasters[[1]]$scale.file,native=TRUE))
-        }
-        lapply(
-            rasters,
-            function(x){
-                par("mar"=c(0,0,0,0))
-                grid.newpage()
-                label <- sub(".png","",sub("mainplot_","",tail(strsplit(x$main.file,"/")[[1]],1),fixed=TRUE),fixed=TRUE)
-                
-                if(!global_across_channels){
-                    grid.raster(readPNG(x$main.file,native=TRUE),y=0.6,height=0.8)
-                    grid.raster(readPNG(x$scale.file,native=TRUE),y=0.1,height=0.2)
-                }
-                if(global_across_channels){
-                    grid.raster(readPNG(x$main.file,native=TRUE))
-                }
-                grid.text(x=unit(1,"npc"),y=unit(1,"npc"),label=label,just=c(1,1),gp=gpar(col="white",cex=0.1))
-                return(NULL)
+    color.scale <- unique(colorRampPalette(palette)(1000))
+    n <- length(color.scale)
+    
+    n_backbone <- length(chans)
+    
+    for(i in seq_len(n_backbone + nrow(annot))){
+        preds <- list()
+        if(i < n_backbone + 1){
+            col_index <- match(chans[i], h5readAttributes(h5file, "/input/expression/1")$colnames)
+            for(j in seq_len(nrow(annot))){
+                w <- which(h5read(h5file, name = paste0("/sampling/predictions/", j)) == 1L)
+                preds[[j]] <- h5read(h5file, name = paste0(backbone_data_group, j), index = list(w, col_index))
             }
+        } else {
+            for(j in seq_len(nrow(annot))){
+                preds[[j]] <- h5read(h5file, name = paste0(predictions_group, j), index = list(NULL, i - n_backbone))
+            }
+        }
+        preds <- do.call(c, preds)
+        preds <- preds[spl]
+
+        q <- quantile(preds,c(chop_quantiles,1-chop_quantiles))
+        preds[preds<=q[1]] <- q[1]
+        preds[preds>=q[2]] <- q[2]
+
+        range <- range(preds)
+        breaks <- unique(seq(range[1],range[2],length.out=n+1))
+
+        if(length(unique(breaks))>1){
+            points.colors <- as.character(cut(preds,breaks=breaks,labels=color.scale))
+        } else {
+            points.colors <- rep("lightsteelblue",length(preds))
+        }
+        mainplot <- paste(tmpDir(),"/mainplot_",i,".png",sep="")
+        png(mainplot,res=resolution,height=raster.height*resolution/72,width=raster.width*resolution/72)
+        par("bty"="l")
+        plot(
+            x,
+            y,
+            col=points.colors,
+            xlab="UMAP1",
+            ylab="UMAP2",
+            main=regular_channels[i],
+            ...
         )
         dev.off()
+
+        colorscale <- paste(tmpDir(),"/colorscale_",i,".png",sep="")
+        png(colorscale,res=resolution,height=raster.height/2*resolution/72,width=raster.width*resolution/72)
+        plot.new()
+        par("mar"=c(2,1,2,1))
+
+        xlims <- par("usr")[c(1, 2)]
+        x_coords <- seq(xlims[1],xlims[2],length.out=n+1)
+        ylims <- par("usr")[c(3, 4)]
+
+        labels <- signif(data_transformation_reverse(breaks),2)
+        labels <- labels[round(seq(1,length(labels),length.out=5))]
+        labels.x_coords <- seq(x_coords[1],x_coords[length(x_coords)],length.out=5)
+
+        rect(border=NA,ybottom=ylims[1],ytop=ylims[2],xleft=x_coords[-length(x_coords)],xright=x_coords[-1],col=color.scale)
+        text(xpd=TRUE,y=ylims[1],pos=1,labels=labels,x=labels.x_coords)
+        text(xpd=TRUE,y=ylims[2],pos=3,labels=paste(annot[i, "target"],"intensity"),x=mean(xlims))
+        dev.off()
+
+        rasters_list <- c(rasters_list, list(list(mainplot = mainplot, colorscale = colorscale)))
     }
-    NULL
+    
+    file <- file_name
+    
+    pdf(file)
+    for(i in seq_along(rasters_list)){
+        par("mar"=c(0,0,0,0))
+        grid.newpage()
+        
+        grid.raster(readPNG(rasters_list[[i]]$mainplot,native=TRUE),y=0.6,height=0.8)
+        grid.raster(readPNG(rasters_list[[i]]$colorscale,native=TRUE),y=0.1,height=0.2)
+        
+        grid.text(x=unit(1,"npc"),y=unit(1,"npc"),label=ifelse(i < n_backbone + 1, chans[i], annot[i - n_backbone, "target"]),just=c(1,1),gp=gpar(col="white",cex=0.1))
+    }
+    dev.off()
+    
+    invisible()
 }
 
 #' @title For each parameter in the FCS files, interactively prompts whether it is part of the Backbone, the Infinity (exploratory) markers or should be ignored.
@@ -226,10 +230,34 @@ select_backbone_and_exploratory_markers <- function(files){
             result[i,"type"] <- choices[user_choice]
         }
 
-        user_choice <- NA
-        print(result)
+        ## user_choice <- NA
+        ## co_factor <- 1000
+        ## result = cbind(result, cofactor = ifelse(!is.na(result$desc), co_factor, NA))
+        ## while(is.na(user_choice)){
+        ##     correct = readline(paste0("Does a co-factor of ", co_factor, " in the asinh transformation of the data suit you? (yes/no)"))
+        ##     choices <- c("yes","no")
+        ##     user_choice <- choices[pmatch(correct,choices)]
+        ##     if(!is.na(user_choice)){
+        ##         if(user_choice == "no"){
+        ##             for(i in which(!is.na(data_channels$desc))){
+        ##                 user_choice <- NA
+        ##                 while(is.na(user_choice)){
+        ##                     x <- data_channels[i,,drop=TRUE]
+        ##                     user_choice <- suppressWarnings(as.numeric(readline(paste0("Enter cofactor value for ", ifelse(!is.na(x["desc"]),x["desc"],x["name"])," (",x["name"],"):"))))
+        ##                     if(is.na(user_choice)){
+        ##                         cat("Incorrect selection, enter a number\n")
+        ##                     }
+                            
+        ##                 }
+        ##                 result[i, "cofactor"] <- user_choice
+        ##             }
+        ##         }
+        ##     }
+        ## }
         
+        user_choice <- NA
         while(is.na(user_choice)){
+            print(result)
             correct <- readline("Is selection correct? (yes/no): ")
             choices <- c("yes","no")
             user_choice <- choices[pmatch(correct,choices)]
@@ -238,10 +266,19 @@ select_backbone_and_exploratory_markers <- function(files){
             } else if(user_choice=="no"){
                 return(select_backbone_and_exploratory_markers(files=files))
             } else if(user_choice=="yes"){
-                if(!any(result$type=="exploratory")){
+                if(sum(result$type=="exploratory")!=1){
                     cat("At least one measurement must be exploratory\n")
                     return(select_backbone_and_exploratory_markers(files=files))
                 }
+
+                result$transformation = "asinh"
+                result$cofactor = 1000
+                w = grepl("^[FS]SC-?[AWH]?", result$name) | tolower(result$name) == "time"
+                result[w, "transformation"] = "linear"
+                result[w, "cofactor"] = 1
+
+                cat("\n Auto-detecting channels for transformation. You can edit identity ('linear') / arcsinh manually\n")
+                print(result)
                 return(result)
             }
         }

@@ -10,90 +10,32 @@
 #' @importFrom utils read.table
 #' @importFrom stats quantile
 #' @importFrom flowCore logicleTransform inverseLogicleTransform
+#' @importFrom rhdf5 h5read
 #' @noRd
 logicle_transform_input <- function(
-                                 yvar,
-                                 paths,
-                                 xp=readRDS(file.path(paths["rds"],"xp.Rds")),
-                                 chans=readRDS(file.path(paths["rds"],"chans.Rds")),
-                                 events.code=readRDS(file.path(paths["rds"],"pe.Rds")),
-                                 annot=read.table(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE),
-                                 verbose=TRUE
-                                 ){
+                                    yvar,
+                                    paths,
+                                    chans=readRDS(file.path(paths["rds"],"chans.Rds")),
+                                    transforms=readRDS(file.path(paths["rds"],"transforms.Rds")),
+                                    annot=read.table(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE),
+                                    verbose=TRUE
+                                    ){
     
-    ## ##################
-    ## Computing parameters for each channel for each project using the code from flowCore's estimateLogicle
-    ## ##################
-    if(verbose){
-        message("Logicle-transforming the data")
-        message("\tBackbone data")
-    }
-    
-    transforms_chan <- setNames(
-        lapply(
-            chans,
-            function(x){
-                data <- xp[,x]
-                t <- max(data)
-                m <- 4.5
-                q <- 0.05
-                r <- .Machine$double.eps + quantile(data, q)
-                w <- max((m-log10(t/abs(r)))/2,0.1)
-                w <- min(w,m/2)
-                a <- 0
-                logicleTransform(w=w,t=t,m=m,a=a) ##Just use summary() to retrive the parameters
-            }
-        ),
-        chans
-    )
-
-    if(verbose){
-        message("\tExploratory data")
-    }
-    transforms_pe <- lapply(
-        split(xp[,yvar], events.code),
-        function(x){
-            data <- x
-            t <- max(data)
-            m <- 4.5
-            q <- 0.05
-            r <- .Machine$double.eps + quantile(data, q)
-            w <- max((m-log10(t/abs(r)))/2,0.1)
-            w <- min(w,m/2)
-            a <- 0
-            logicleTransform(w=w,t=t,m=m,a=a)
-        }
-    )
-    
-    if(verbose){
-        message("\tWriting to disk")
-    }
-    saveRDS(transforms_chan,file=file.path(paths["rds"],"transforms_chan.Rds"))
-    saveRDS(transforms_pe,file=file.path(paths["rds"],"transforms_pe.Rds"))
-
     ## ##################
     ## Exporting transformed expression matrices
     ## ##################
     if(verbose){
         message("\tTransforming expression matrix")
     }
-    
-    for(chan in chans){
-        xp[,chan] <- transforms_chan[[chan]](xp[,chan])
+
+    for(i in seq_len(nrow(annot))){
+        xp = h5read(file = paths["h5"], name = paste0("/input/expression/", i))
+        colnames(xp) = h5readAttributes(file = paths["h5"], name = paste0("/input/expression/", i))$colnames
+        for(chan in c(chans, yvar)){
+            xp[, chan] = transforms[[chan]]$forward(xp[, chan])
+        }
+        h5write(obj = xp, file = paths["h5"], name = paste0("/input/expression_transformed/", i))
     }
 
-    d.e <- split(as.data.frame(xp),events.code)
-    d.e <- lapply(d.e,as.matrix)
-    for(chan in unique(events.code)){
-        d.e[[chan]][,yvar] <- transforms_pe[[chan]](d.e[[chan]][,yvar])
-    }
-
-    xp <- do.call(rbind,d.e)
-
-    if(verbose){
-        message("\tWriting to disk")
-    }
-    
-    saveRDS(xp,file=file.path(paths["rds"],"xp_transformed.Rds"))
     invisible()
 }

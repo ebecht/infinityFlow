@@ -22,41 +22,39 @@
 #' @return Raw and background-corrected imputed expression data for every Infinity antibody
 
 infinity_flow <- function(
-                       ## Input FCS files
-                       path_to_fcs, ## Where the source FCS files are
-                       path_to_output, ## Where the results will be stored
-                       path_to_intermediary_results=tempdir(), ## Storing intermediary results. Default to a temporary directory. Can be a user-specified directory to store intermediary results (to resume interrupted computation)
-                       backbone_selection_file=NULL, ## Define backbone and exploratory channels. If missing will be defined interactively and the selection will be saved in the output folder under the name backbone_selection_file.csv. To define it the first time you should call select_backbone_and_exploratory_markers(read.files(path_to_fcs,recursive=TRUE)) in an interactive R session 
-                       
+                          ## Input FCS files
+                          path_to_fcs, ## Where the source FCS files are
+                          path_to_output, ## Where the results will be stored
+                          path_to_intermediary_results=tempdir(), ## Storing intermediary results. Default to a temporary directory. Can be a user-specified directory to store intermediary results (to resume interrupted computation)
+                          backbone_selection_file=NULL, ## Define backbone and exploratory channels. If missing will be defined interactively and the selection will be saved in the output folder under the name backbone_selection_file.csv. To define it the first time you should call select_backbone_and_exploratory_markers(read.files(path_to_fcs,recursive=TRUE)) in an interactive R session 
+                          
 
-                       ## Annotation
-                       annotation=NULL, ## Named vector with names = files. Use name of input files if missing
-                       isotype=NULL, ## Named vector with names = files and values = which isotype this target maps to
+                          ## Annotation
+                          annotation=NULL, ## Named vector with names = files. Use name of input files if missing
+                          isotype=NULL, ## Named vector with names = files and values = which isotype this target maps to
 
-                       ## Downsampling
-                       input_events_downsampling=Inf, ## Number of cells to downsample to per input FCS file
-                       prediction_events_downsampling=1000, ## Number of events to get predictions for per file
-                       
-                       ## Set-up multicore computing. When in doubt, set it to 1
-                       cores=1L,
-                       
-                       ## Setting a random seed (for reproducibility despite stochasticity). We enforce reproducibility for the predictions even when doing multicore comparisons. 
-                       your_random_seed=123,
-                       verbose=TRUE,
+                          ## Downsampling
+                          input_events_downsampling=Inf, ## Number of cells to downsample to per input FCS file
+                          prediction_events_downsampling=1000, ## Number of events to get predictions for per file
+                          
+                          ## Set-up multicore computing. When in doubt, set it to 1
+                          cores=1L,
+                          
+                          ## Setting a random seed (for reproducibility despite stochasticity). We enforce reproducibility for the predictions even when doing multicore comparisons. 
+                          your_random_seed=123,
+                          verbose=TRUE,
 
-                       extra_args_read_FCS=list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE),
-                       regression_functions=list(
-                           XGBoost=fitter_xgboost
-                       ),
-                       extra_args_regression_params=list(
-                           list(nrounds=500, eta = 0.05)
-                       ),
-                       extra_args_UMAP=list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L,n_threads=cores,n_sgd_threads=cores),
-                       extra_args_export=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
-                       extra_args_correct_background=list(FCS_export=c("split","concatenated","none")[1],CSV_export=FALSE),
-                       extra_args_plotting=list(chop_quantiles=0.005),
-                       neural_networks_seed = NULL ## Set to integer value to enforce computational reproducibility when using neural networks
-                       ){
+                          extra_args_read_FCS=list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE),
+                          regression_functions=list(
+                              XGBoost=fitter_xgboost
+                          ),
+                          extra_args_regression_params=list(nrounds=500, eta = 0.05),
+                          extra_args_UMAP=list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L,n_threads=cores,n_sgd_threads=cores),
+                          extra_args_export=list(FCS_export=c("split","concatenated","csv","none")[1]),
+                          extra_args_correct_background=list(FCS_export=c("split","concatenated","csv","none")[1]),
+                          extra_args_plotting=list(chop_quantiles=0.005),
+                          neural_networks_seed = NULL ## Set to integer value to enforce computational reproducibility when using neural networks
+                          ){
 
     ## Making sure that optional dependencies are installed if used.
     lapply(
@@ -65,11 +63,7 @@ infinity_flow <- function(
             fun(x = NULL, params = NULL)
         }
     )
-
-    if(length(extra_args_regression_params) != length(regression_functions)){
-        stop("extra_args_regression_params and regression_functions should be lists of the same lengths")
-    }
-
+    
     if(any(!isotype %in% annotation)){
         stop("The following values from the isotype argument are not matching any of the values from the annotation argument: ", paste0(isotype[!isotype %in% annotation], collapse = ", "))
     }
@@ -88,7 +82,16 @@ infinity_flow <- function(
     name_of_PE_parameter <- settings$name_of_PE_parameter
     paths <- settings$paths
     regression_functions <- settings$regression_functions
-    
+
+    ## Create H5 dataset
+    create_h5_file(
+        paths=paths,
+        input_events_downsampling=input_events_downsampling,
+        prediction_events_downsampling=prediction_events_downsampling,
+        extra_args_read_FCS=extra_args_read_FCS,
+        verbose=verbose
+    )
+
     ## Subsample FCS files
     M  <-  input_events_downsampling ## Number of cells to downsample to for each file
     ## set.seed(your_random_seed)
@@ -99,7 +102,7 @@ infinity_flow <- function(
         name_of_PE_parameter=name_of_PE_parameter,
         verbose=verbose
     )
-    
+
     ## Automatically scale backbone markers and each PE. ## /!\ This only accomodates a single exploratory measurement
     logicle_transform_input(
         yvar=name_of_PE_parameter,
@@ -113,7 +116,6 @@ infinity_flow <- function(
         paths=paths,
         verbose=verbose
     )
-
     ## Regression models training and predictions
     ## set.seed(your_random_seed+1)
     timings_fit <- fit_regressions(
@@ -122,18 +124,15 @@ infinity_flow <- function(
         paths=paths,
         cores=cores,
         params=extra_args_regression_params,
-        verbose=verbose,
-        neural_networks_seed=neural_networks_seed
-        )
+        verbose=verbose
+    )
 
     ## set.seed(your_random_seed+2)
     timings_pred <- predict_from_models(
         paths=paths,
         prediction_events_downsampling=prediction_events_downsampling,
         cores=cores,
-        verbose=verbose,
-        neural_networks_seed=neural_networks_seed,
-        regression_functions=regression_functions
+        verbose=verbose
     )
     
     ## UMAP dimensionality reduction
@@ -144,31 +143,29 @@ infinity_flow <- function(
     )
     
     ## Export of the data and predicted data
-    res <- do.call(export_data,c(list(paths=paths,verbose=verbose),extra_args_export))
-    
+    res <- do.call(export_data,c(list(paths=paths,verbose=verbose,yvar=name_of_PE_parameter),extra_args_export))
+        
     ## Plotting
-    do.call(plot_results,c(list(paths=paths,verbose=verbose),extra_args_plotting))
+    do.call(plot_results,c(list(paths=paths,verbose=verbose,yvar=name_of_PE_parameter),extra_args_plotting))
 
     ## Background correcting
     res_bgc <- do.call(correct_background,c(list(paths=paths,verbose=verbose),extra_args_correct_background))
 
     ## Plotting background corrected
-
-    ## Plotting
     do.call(
         plot_results,
         c(
             list(
                 paths=paths,
                 verbose=verbose,
-                preds=readRDS(file.path(paths["rds"],"predictions_bgc_cbound.Rds")),
                 file_name=file.path(paths["output"],"umap_plot_annotated_backgroundcorrected.pdf"),
-                prediction_colnames = paste0(readRDS(file.path(paths["rds"],"prediction_colnames.Rds")),"_bgc")
+                predictions_group = "/predictions/background_corrected/",
+                yvar=name_of_PE_parameter
             ),
             extra_args_plotting
         )
     )
-        
+
     timings <- cbind(fit=timings_fit$timings,pred=timings_pred$timings)
     rownames(timings) <- names(regression_functions)
     saveRDS(timings,file.path(paths["rds"],"timings.Rds"))
@@ -177,15 +174,15 @@ infinity_flow <- function(
 }
 
 initialize <- function(
-                    path_to_fcs=path_to_fcs,
-                    path_to_output=path_to_output,
-                    path_to_intermediary_results=path_to_intermediary_results,
-                    backbone_selection_file=backbone_selection_file,
-                    annotation=annotation,
-                    isotype=isotype,
-                    verbose=TRUE,
-                    regression_functions=regression_functions
-                    ){
+                       path_to_fcs=path_to_fcs,
+                       path_to_output=path_to_output,
+                       path_to_intermediary_results=path_to_intermediary_results,
+                       backbone_selection_file=backbone_selection_file,
+                       annotation=annotation,
+                       isotype=isotype,
+                       verbose=TRUE,
+                       regression_functions=regression_functions
+                       ){
     
     
     if(path_to_intermediary_results==tempdir()){
@@ -208,6 +205,8 @@ initialize <- function(
     ## A CSV file to map files to PE targets
     path_to_annotation_file <- file.path(path_to_intermediary_results,"annotation.csv") ## Has to be a comma-separated csv file, with two columns. The first column has to be the name of the FCS files and the second the marker bound to the PE reporter. The first line (column names) have to be "file" and "target". You can leave the unlabelled PEs empty
 
+    path_to_h5 = file.path(paths["rds"], "if.h5")
+    
     paths <- c(
         input=path_to_fcs,
         intermediary=path_to_intermediary_results,
@@ -227,6 +226,8 @@ initialize <- function(
         vapply(paths[-match("annotation",names(paths))][!dir.exists(paths[-match("annotation",names(paths))])],dir.create,recursive=TRUE,showWarnings=FALSE, FUN.VALUE = TRUE)
     }
 
+    paths <- c(paths, h5 = path.expand(path_to_h5))
+    
     if(verbose){
         message("Using directories...")
         lapply(names(paths),function(x){message("\t",x,": ",paths[x])})
@@ -255,7 +256,31 @@ initialize <- function(
     chans <- setNames(chans$desc,chans$name)
     name_of_PE_parameter <- subset(backbone_definition,type=="exploratory")$name
 
-    saveRDS(chans,file=file.path(path_to_rds,"chans.Rds"))
+    transforms = list()
+    for(i in seq(1, nrow(backbone_definition), by = 1)){
+        if(backbone_definition[i, "type" ]!="discard"){
+            if(backbone_definition[i, "type"] == "backbone"){
+                name <- backbone_definition[i, "desc"]
+                if(is.na(name)){
+                    name <- backbone_definition[i, "name"]
+                }
+            }
+            if(backbone_definition[i, "type"] == "exploratory"){
+                name = backbone_definition[i, "name"]
+            }
+            if(backbone_definition[i, "transformation"] == "identity"){
+                transforms[[name]]$forward <- identity
+                transforms[[name]]$backward <- identity
+            } else if(backbone_definition[i, "transformation"] == "asinh"){
+                transforms[[name]]$forward <- eval(bquote(function(x){asinh(x/.(backbone_definition[i, "cofactor"]))}))
+                transforms[[name]]$backward <- eval(bquote(function(x){.(backbone_definition[i, "cofactor"])*sinh(x)}))
+            } else {
+                stop("'transformation' column in the backbone_selection_file should only be one of 'identity' or 'asinh'")
+            }
+        }       
+    }
+    saveRDS(transforms, file=file.path(paths["rds"], "transforms.Rds"))
+    saveRDS(chans,file=file.path(paths["rds"],"chans.Rds"))
 
     if(is.null(names(regression_functions))){
         names(regression_functions) <- paste0("Alg",seq_along(regression_functions))
