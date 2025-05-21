@@ -5,7 +5,6 @@
 #' @param preds matrix of imputed data
 #' @param verbose Verbosity
 #' @noRd
-#' @importFrom RcppHNSW hnsw_knn
 perform_UMAP_dimensionality_reduction <- function(
                                                paths,
                                                extra_args_UMAP,
