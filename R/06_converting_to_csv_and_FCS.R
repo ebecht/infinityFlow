@@ -45,15 +45,21 @@ export_data <- function(
     
     for(i in seq_len(nrow(annot))){
         preds <- h5read(file = paths["h5"], name = paste0("/predictions/raw/", i))
+
+        ## ## Retrieve scaling parameters for target
+        ## scaling_parameters <- h5readAttributes(paths["h5"], name = paste0("input/expression_transformed_scaled/", i))$scaling_parameters
+        ## scaling_parameters <- scaling_parameters[, h5readAttributes(paths["h5"], name = paste0("input/expression/", i))$colnames == yvar]
+
+        ## ## Reverse Z-score for target
+        ## preds <- preds*scaling_parameters[2] + scaling_parameters[1]
+        
+        ## Reverse transformation for target
         preds <- transforms[[yvar]]$backward(preds)
         colnames(preds) <- paste0(annot$target, ".XGBoost")
         h5writeAttribute(attr = colnames(preds), h5obj = paths["h5"], name = "colnames", h5loc = paste0("predictions/raw/", i))
         
-        index <- list(
-                which(h5read(file = paths["h5"], name = paste0("sampling/predictions/", i)) == 1L),
-                NULL
-        )
-        backbone_data <- h5read(file = paths["h5"], name = paste0("/input/expression/", i), index = index)
+        index <- h5read(file = paths["h5"], name = paste0("sampling/predictions/", i)) == 1L
+        backbone_data <- h5read(file = paths["h5"], name = paste0("/input/expression/", i))[index, ]
         colnames(backbone_data) <- h5readAttributes(file = paths["h5"], name = paste0("/input/expression/", i))$colnames
 
         umap_i <- h5read(file = paths["h5"], name = paste0("/umap/backbone/", i))

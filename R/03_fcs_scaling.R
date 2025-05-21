@@ -25,11 +25,18 @@ standardize_backbone_data_across_wells <- function(
     for(i in seq_len(nrow(annot))){
         xp = h5read(file = paths["h5"], name = paste0("/input/expression_transformed/", i))
         colnames(xp) = h5readAttributes(file = paths["h5"], name = paste0("/input/expression/", i))$colnames
-        for(chan in c(chans, yvar)){
-            xp[, chan] = scale_function(xp[, chan])
+        ## scaling_parameters <- matrix(ncol = ncol(xp), nrow = 2, dimnames = list(c("center", "scale"), colnames(xp)))
+        ## scaling_parameters["center", ] = 0
+        ## scaling_parameters["scale", ] = 1
+        for(chan in chans){
+            xp[, chan] <- scale_function(xp[, chan])
+            ## scaling_parameters["center", chan] = attributes(scaled_data)$'scaled:center'
+            ## scaling_parameters["scale", chan] = attributes(scaled_data)$'scaled:scale'
         }
         h5write(obj = xp, file = paths["h5"], name = paste0("/input/expression_transformed_scaled/", i))
+        ## h5writeAttribute(attr = scaling_parameters, name = "scaling_parameters", h5obj = paths["h5"], h5loc = paste0("/input/expression_transformed_scaled/", i))
     }
 
     invisible()
 }
+## h5writeAttribute(attr = colnames(xp), h5obj = paths["h5"], name = "colnames", h5loc = paste0("input/expression/", i))

@@ -18,11 +18,15 @@ create_h5_file <- function(
                            input_events_downsampling,
                            prediction_events_downsampling,
                            extra_args_read_FCS,
-                           verbose=TRUE
+                           verbose=TRUE,
+                           annot=read.table(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE)
                            ){
     message("Creating HDF5 dataset")
     message("\t", paths["h5"])
 
+    if(file.exists(paths["h5"])){
+        file.remove(paths["h5"])
+    }
     h5createFile(paths["h5"])
 
     h5createGroup(paths["h5"], "input")
@@ -30,31 +34,37 @@ create_h5_file <- function(
     h5createGroup(paths["h5"], "input/expression_transformed") ## Transformed downsampled expression
     h5createGroup(paths["h5"], "input/expression_transformed_scaled") ## Transformed and scaled downsampled expression
 
-    files <- list.files(paths["input"],full.names=TRUE,recursive=FALSE,include.dirs=FALSE,pattern=".fcs")
+    files <- file.path(paths["input"], annot$file)##list.files(paths["input"],full.names=TRUE,recursive=FALSE,include.dirs=FALSE,pattern=".fcs")
     ns <- as.integer(sapply(read.FCSheader(files), "[[", "$TOT"))
     ns[ns>input_events_downsampling]=input_events_downsampling
     nchans <- as.integer(read.FCSheader(files[1])[[1]]["$PAR"])
     ns_out <- ns - floor(ns/2)
     ns_out[ns_out > prediction_events_downsampling] <- prediction_events_downsampling
     for(i in seq_along(files)){
-        h5createDataset(
-            paths["h5"],
-            paste0("input/expression/", i),
-            dims = c(ns[i], nchans)
+        suppressMessages(
+            h5createDataset(
+                paths["h5"],
+                paste0("input/expression/", i),
+                dims = c(ns[i], nchans)
+            )
         )
     }
     for(i in seq_along(files)){
-        h5createDataset(
-            paths["h5"],
-            paste0("input/expression_transformed/", i),
-            dims = c(ns[i], nchans)
+        suppressMessages(
+            h5createDataset(
+                paths["h5"],
+                paste0("input/expression_transformed/", i),
+                dims = c(ns[i], nchans)
+            )
         )
     }
     for(i in seq_along(files)){
-        h5createDataset(
-            paths["h5"],
-            paste0("input/expression_transformed_scaled/", i),
-            dims = c(ns[i], nchans)
+        suppressMessages(
+            h5createDataset(
+                paths["h5"],
+                paste0("input/expression_transformed_scaled/", i),
+                dims = c(ns[i], nchans)
+            )
         )
     }
 
@@ -66,19 +76,23 @@ create_h5_file <- function(
     h5createGroup(paths["h5"], "sampling/fitting/")
     h5createGroup(paths["h5"], "sampling/predictions/")
     for(i in seq_along(files)){
-        h5createDataset(
-            paths["h5"],
-            paste0("sampling/fitting/", i),
-            dims = ns[i],
-            storage.mode = "integer",
-            H5type = "H5T_STD_I8LE"
+        suppressMessages(
+            h5createDataset(
+                paths["h5"],
+                paste0("sampling/fitting/", i),
+                dims = ns[i],
+                storage.mode = "integer",
+                H5type = "H5T_STD_I8LE"
+            )
         )
-        h5createDataset(
-            paths["h5"],
-            paste0("sampling/predictions/", i),
-            dims = ns[i],
-            storage.mode = "integer",
-            H5type = "H5T_STD_I8LE"
+        suppressMessages(
+            h5createDataset(
+                paths["h5"],
+                paste0("sampling/predictions/", i),
+                dims = ns[i],
+                storage.mode = "integer",
+                H5type = "H5T_STD_I8LE"
+            )
         )
     }
     
@@ -91,27 +105,34 @@ create_h5_file <- function(
         h5createDataset(
             paths["h5"],
             paste0("predictions/raw/", i),
-            dims = c(ns_out[i], length(files))
+            dims = c(ns_out[i], length(files)),
+            chunk = c(ns_out[i], 1)
         )
         h5createDataset(
             paths["h5"],
             paste0("predictions/background_corrected/", i),
-            dims = c(ns_out[i], length(files))
+            dims = c(ns_out[i], length(files)),
+            chunk = c(ns_out[i], 1)
         )
-        h5createDataset(
-            paths["h5"],
-            paste0("predictions/intra_well/", i),
-            dims = ns[i]
+        suppressMessages(
+            h5createDataset(
+                paths["h5"],
+                paste0("predictions/intra_well/", i),
+                dims = ns[i]
+            )
         )
     }
 
     h5createGroup(paths["h5"], "/umap/")
     h5createGroup(paths["h5"], "/umap/backbone/")
     for(i in seq_along(files)){
-        h5createDataset(
-            paths["h5"],
-            paste0("umap/backbone/", i),
-            dims = c(ns_out[i], 2)
+        suppressMessages(
+            h5createDataset(
+                paths["h5"],
+                paste0("umap/backbone/", i),
+                dims = c(ns_out[i], 2),
+                chunk = c(ns_out[i], 2)
+            )
         )
     }
 }

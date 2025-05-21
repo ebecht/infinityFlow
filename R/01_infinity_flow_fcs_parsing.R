@@ -15,6 +15,7 @@ subsample_data <- function(
                            paths,
                            extra_args_read_FCS,
                            name_of_PE_parameter,
+                           annot=read.table(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE),
                            verbose=TRUE
                            ){
     ## Subsampling
@@ -22,7 +23,7 @@ subsample_data <- function(
         message("Parsing and subsampling input data")
         message("\tDownsampling to ",input_events_downsampling," events per input file")
     }
-    files <- list.files(paths["input"],full.names=TRUE,recursive=TRUE,pattern=".fcs")
+    files <- file.path(paths["input"], annot$file) ## list.files(paths["input"],full.names=TRUE,recursive=TRUE,pattern=".fcs")
     invisible(
         lapply(
             files,
@@ -40,7 +41,8 @@ subsample_data <- function(
     if(verbose){
         message("\tSaving expression matrices to disk")
     }
-    files <- list.files(paths["subset"],full.names=TRUE,recursive=FALSE,include.dirs=FALSE,pattern=".fcs")
+    ## files <- list.files(paths["subset"],full.names=TRUE,recursive=FALSE,include.dirs=FALSE,pattern=".fcs")
+    files <- file.path(paths["subset"], annot$file)
     ns = integer(length(files))
     
     for(i in seq_along(files)){

@@ -10,16 +10,13 @@
 #' @param input_events_downsampling How many event should be kept per input FCS file. Default to no downsampling. In any case, half of the events will be used to train regression models and half to test the performance. Predictions will be made only on events from the test set, and downsampled according to prediction_events_downsampling.
 #' @param prediction_events_downsampling How many event should be kept per input FCS file to output prediction for. Default to 1000.
 #' @param cores Number of cores to use for parallel computing. Defaults to 1 (no parallel computing)
-#' @param your_random_seed Deprecated: was used to set a seed for computationally reproducible results but is not allowed by Bioconductor. Please set a random seed yourself using set.seed(somenumber) if you desire computionally-reproducible results.
 #' @param verbose Whether to print information about progress
 #' @param extra_args_plotting list of named arguments to pass to plot_results. Defaults to list(chop_quantiles=0.005) which removes the top 0.05\% and bottom 0.05\% of the scale for each marker when mapping color palettes to intensities.
 #' @param extra_args_read_FCS list of named arguments to pass to flowCore:read.FCS. Defaults to list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE) which in our experience avoided issues with data loading.
 #' @param extra_args_UMAP list of named arguments to pass to uwot:umap. Defaults to list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L)
-#' @param neural_networks_seed Seed for computationally reproducible results when using neural networks (in additional to the other sources of stochasticity - sampling - that are made reproducible by the your_random_seed argument.
 #' @param extra_args_export Whether raw imputed data should be exported. Possible values are list(FCS_export = "split") to export one FCS file per input well, list(FCS_export = "concatenated") to export a single concatenated FCS file containing all the dataset, list(FCS_export = "csv") for a single CSV file containing all the dataset. You can export multiple modalities by using for instance extra_args_export = list(FCS_export = c("split", "concatenated", "csv"))
 #' @param extra_args_correct_background Whether background-corrected imputed data should be exported. Possible values are list(FCS_export = "split") to export one FCS file per input well, list(FCS_export = "concatenated") to export a single concatenated FCS file containing all the dataset, list(FCS_export = "csv") for a single CSV file containing all the dataset. You can export multiple modalities by using for instance extra_args_export = list(FCS_export = c("split", "concatenated", "csv"))
 #' @export
-#' @return Raw and background-corrected imputed expression data for every Infinity antibody
 
 infinity_flow <- function(
                           ## Input FCS files
@@ -41,19 +38,17 @@ infinity_flow <- function(
                           cores=1L,
                           
                           ## Setting a random seed (for reproducibility despite stochasticity). We enforce reproducibility for the predictions even when doing multicore comparisons. 
-                          your_random_seed=123,
                           verbose=TRUE,
 
                           extra_args_read_FCS=list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE),
                           regression_functions=list(
                               XGBoost=fitter_xgboost
                           ),
-                          extra_args_regression_params=list(nrounds=500, eta = 0.05),
+                          extra_args_regression_params=list(nrounds=100, eta = 0.1),
                           extra_args_UMAP=list(n_neighbors=15L,min_dist=0.2,metric="euclidean",verbose=verbose,n_epochs=1000L,n_threads=cores,n_sgd_threads=cores),
                           extra_args_export=list(FCS_export=c("split","concatenated","csv","none")[1]),
                           extra_args_correct_background=list(FCS_export=c("split","concatenated","csv","none")[1]),
-                          extra_args_plotting=list(chop_quantiles=0.005),
-                          neural_networks_seed = NULL ## Set to integer value to enforce computational reproducibility when using neural networks
+                          extra_args_plotting=list(chop_quantiles=0.005)
                           ){
 
     ## Making sure that optional dependencies are installed if used.
@@ -94,7 +89,6 @@ infinity_flow <- function(
 
     ## Subsample FCS files
     M  <-  input_events_downsampling ## Number of cells to downsample to for each file
-    ## set.seed(your_random_seed)
     subsample_data(
         input_events_downsampling=input_events_downsampling,
         paths=paths,
@@ -117,7 +111,6 @@ infinity_flow <- function(
         verbose=verbose
     )
     ## Regression models training and predictions
-    ## set.seed(your_random_seed+1)
     timings_fit <- fit_regressions(
         regression_functions=regression_functions,
         yvar=name_of_PE_parameter,
@@ -127,7 +120,6 @@ infinity_flow <- function(
         verbose=verbose
     )
 
-    ## set.seed(your_random_seed+2)
     timings_pred <- predict_from_models(
         paths=paths,
         prediction_events_downsampling=prediction_events_downsampling,
@@ -146,12 +138,15 @@ infinity_flow <- function(
     res <- do.call(export_data,c(list(paths=paths,verbose=verbose,yvar=name_of_PE_parameter),extra_args_export))
         
     ## Plotting
-    do.call(plot_results,c(list(paths=paths,verbose=verbose,yvar=name_of_PE_parameter),extra_args_plotting))
+    do.call(plot_results,c(list(paths=paths,verbose=verbose,yvar=name_of_PE_parameter,cores=cores),extra_args_plotting))
 
     ## Background correcting
     res_bgc <- do.call(correct_background,c(list(paths=paths,verbose=verbose),extra_args_correct_background))
 
     ## Plotting background corrected
+    transforms_tmp <- readRDS(file.path(paths["rds"], "transforms.Rds")) ## Disabling reverse transformation for background-corrected predictions
+    transforms_tmp[[name_of_PE_parameter]]$backward = identity
+    transforms_tmp[[name_of_PE_parameter]]$forward = identity
     do.call(
         plot_results,
         c(
@@ -160,12 +155,22 @@ infinity_flow <- function(
                 verbose=verbose,
                 file_name=file.path(paths["output"],"umap_plot_annotated_backgroundcorrected.pdf"),
                 predictions_group = "/predictions/background_corrected/",
-                yvar=name_of_PE_parameter
+                yvar=name_of_PE_parameter,
+                transforms=transforms_tmp,
+                cores=cores
             ),
             extra_args_plotting
         )
     )
 
+    ## Generate quality controls for model fits
+    quality_controls(
+        paths = paths,
+        yvar = name_of_PE_parameter,
+        annot=read.csv(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE),
+        verbose=TRUE
+    )
+        
     timings <- cbind(fit=timings_fit$timings,pred=timings_pred$timings)
     rownames(timings) <- names(regression_functions)
     saveRDS(timings,file.path(paths["rds"],"timings.Rds"))
@@ -205,28 +210,26 @@ initialize <- function(
     ## A CSV file to map files to PE targets
     path_to_annotation_file <- file.path(path_to_intermediary_results,"annotation.csv") ## Has to be a comma-separated csv file, with two columns. The first column has to be the name of the FCS files and the second the marker bound to the PE reporter. The first line (column names) have to be "file" and "target". You can leave the unlabelled PEs empty
 
-    path_to_h5 = file.path(paths["rds"], "if.h5")
-    
+    path_to_h5 = file.path(path_to_rds, "if.h5")
     paths <- c(
         input=path_to_fcs,
         intermediary=path_to_intermediary_results,
         subset=path_to_subsetted_fcs,
         rds=path_to_rds,
+        h5=path_to_h5,
         annotation=path_to_annotation_file,
         output=path_to_output
     )
     paths <- vapply(paths, path.expand, "path")
-
-    if(!all(dir.exists(paths[-match("annotation",names(paths))]))){
+    
+    if(!all(dir.exists(paths[-match(c("annotation","h5"), names(paths))]))){
         message(
             paste(
-                paths[-match("annotation",names(paths))][!dir.exists(paths[-match("annotation",names(paths))])], collapse = " and "),
+                paths[-match("annotation",names(paths))][!dir.exists(paths[-match(c("annotation", "h5"),names(paths))])], collapse = " and "),
             ": directories not found, creating directory(ies)"
         )
-        vapply(paths[-match("annotation",names(paths))][!dir.exists(paths[-match("annotation",names(paths))])],dir.create,recursive=TRUE,showWarnings=FALSE, FUN.VALUE = TRUE)
+        vapply(paths[-match(c("annotation", "h5"), names(paths))][!dir.exists(paths[-match(c("annotation", "h5"),names(paths))])],dir.create,recursive=TRUE,showWarnings=FALSE, FUN.VALUE = TRUE)
     }
-
-    paths <- c(paths, h5 = path.expand(path_to_h5))
     
     if(verbose){
         message("Using directories...")
@@ -234,6 +237,10 @@ initialize <- function(
     }
     
     files <- list.files(path_to_fcs,pattern="^.*.(fcs)$",ignore.case=TRUE,recursive=TRUE)
+    files_mismatch = names(annotation)[!names(annotation) %in% basename(list.files(paths["input"]))]
+    if(length(files_mismatch) > 0){
+        stop("The following files were not found in ", path_to_fcs, " :\n", paste0(files_mismatch, collapse = "\n"))
+    }
     if(missing(annotation)){
         annotation <- setNames(files,files)
     }
@@ -277,7 +284,7 @@ initialize <- function(
             } else {
                 stop("'transformation' column in the backbone_selection_file should only be one of 'identity' or 'asinh'")
             }
-        }       
+        }
     }
     saveRDS(transforms, file=file.path(paths["rds"], "transforms.Rds"))
     saveRDS(chans,file=file.path(paths["rds"],"chans.Rds"))

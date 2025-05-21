@@ -24,13 +24,14 @@ plot_results <- function(
                       yvar,                      
                       umap_group = "/umap/backbone/",
                       backbone_data_group = "/input/expression_transformed/",
-                      predictions_group = "/predictions/raw/"
+                      predictions_group = "/predictions/raw/",
+                      cores
                       ){
     if(verbose){
         message("Plotting")
     }
 
-    n <- sum(h5read(paths["h5"], name = "/dimensions/", index = list(NULL, 2)))
+    n <- sum(h5read(paths["h5"], name = "/dimensions/", index = list(NULL, 2))) ## Total number of events with predictions
 
     color_biplot_by_channels(
         paths["h5"],
@@ -42,11 +43,14 @@ plot_results <- function(
         resolution=72,
         raster.height=360*4,
         raster.width=360*4,
-        data_transformation_reverse=transforms[[yvar]]$backward,
+        transforms = transforms,
+        chans = chans,
+        yvar = yvar,
+        ## data_transformation_reverse=transforms[[yvar]]$backward,
         chop_quantiles = chop_quantiles,
-        chans=chans,
         umap_group = umap_group,
         backbone_data_group = backbone_data_group,
-        predictions_group = predictions_group
+        predictions_group = predictions_group,
+        cores=cores
     )
 }

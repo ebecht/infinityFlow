@@ -14,19 +14,17 @@ infinity_flow(
   input_events_downsampling = Inf,
   prediction_events_downsampling = 1000,
   cores = 1L,
-  your_random_seed = 123,
   verbose = TRUE,
   extra_args_read_FCS = list(emptyValue = FALSE, truncate_max_range = FALSE,
     ignore.text.offset = TRUE),
   regression_functions = list(XGBoost = fitter_xgboost),
-  extra_args_regression_params = list(nrounds = 500, eta = 0.05),
+  extra_args_regression_params = list(nrounds = 100, eta = 0.1),
   extra_args_UMAP = list(n_neighbors = 15L, min_dist = 0.2, metric = "euclidean", verbose
     = verbose, n_epochs = 1000L, n_threads = cores, n_sgd_threads = cores),
   extra_args_export = list(FCS_export = c("split", "concatenated", "csv", "none")[1]),
   extra_args_correct_background = list(FCS_export = c("split", "concatenated", "csv",
     "none")[1]),
-  extra_args_plotting = list(chop_quantiles = 0.005),
-  neural_networks_seed = NULL
+  extra_args_plotting = list(chop_quantiles = 0.005)
 )
 }
 \arguments{
@@ -48,8 +46,6 @@ infinity_flow(
 
 \item{cores}{Number of cores to use for parallel computing. Defaults to 1 (no parallel computing)}
 
-\item{your_random_seed}{Deprecated: was used to set a seed for computationally reproducible results but is not allowed by Bioconductor. Please set a random seed yourself using set.seed(somenumber) if you desire computionally-reproducible results.}
-
 \item{verbose}{Whether to print information about progress}
 
 \item{extra_args_read_FCS}{list of named arguments to pass to flowCore:read.FCS. Defaults to list(emptyValue=FALSE,truncate_max_range=FALSE,ignore.text.offset=TRUE) which in our experience avoided issues with data loading.}
@@ -65,11 +61,6 @@ infinity_flow(
 \item{extra_args_correct_background}{Whether background-corrected imputed data should be exported. Possible values are list(FCS_export = "split") to export one FCS file per input well, list(FCS_export = "concatenated") to export a single concatenated FCS file containing all the dataset, list(FCS_export = "csv") for a single CSV file containing all the dataset. You can export multiple modalities by using for instance extra_args_export = list(FCS_export = c("split", "concatenated", "csv"))}
 
 \item{extra_args_plotting}{list of named arguments to pass to plot_results. Defaults to list(chop_quantiles=0.005) which removes the top 0.05\% and bottom 0.05\% of the scale for each marker when mapping color palettes to intensities.}
-
-\item{neural_networks_seed}{Seed for computationally reproducible results when using neural networks (in additional to the other sources of stochasticity - sampling - that are made reproducible by the your_random_seed argument.}
-}
-\value{
-Raw and background-corrected imputed expression data for every Infinity antibody
 }
 \description{
 Wrapper to the Infinity Flow pipeline

@@ -70,6 +70,8 @@ generate_description<-function(ff){
 #' @importFrom grid gpar
 #' @importFrom png readPNG
 #' @importFrom utils tail
+#' @importFrom parallel makeCluster clusterExport clusterEvalQ stopCluster
+#' @importFrom pbapply pblapply
 #' @note Since pdf files are vectorized, they can get really big if a lot of data point are plotted. This function thus used bitmap images that are stored in a temporary directory (tmpDir()) and then import them in a single pdf. If you're interested in using the bitmap images, you can fetch them in tmpDir()
 #' @noRd
 
@@ -81,12 +83,15 @@ color_biplot_by_channels <- function(
                                      annot,
                                      palette=c("blue","green","red"),
                                      resolution=72,
-                                     data_transformation_reverse=identity,
+                                     transforms = transforms,
+                                     chans = chans,
+                                     yvar = yvar,
+                                     ## data_transformation_reverse=transforms[[yvar]]$backward,
                                      file_name="biplot.pdf",
                                      raster.height=480,
                                      raster.width=480,
                                      chop_quantiles,
-                                     chans,
+                                     cores,
                                      ... #pass to plot for e.g. tSNE biplot
                                      ){
     umap <- list()
@@ -105,77 +110,97 @@ color_biplot_by_channels <- function(
     regular_channels = c(chans, regular_channels)
     rasters_list <- list()
 
-    color.scale <- unique(colorRampPalette(palette)(1000))
+    color.scale <- unique(colorRampPalette(palette)(100))
     n <- length(color.scale)
     
     n_backbone <- length(chans)
+
+    tmpdir <- eval(tmpDir())
     
-    for(i in seq_len(n_backbone + nrow(annot))){
-        preds <- list()
-        if(i < n_backbone + 1){
-            col_index <- match(chans[i], h5readAttributes(h5file, "/input/expression/1")$colnames)
-            for(j in seq_len(nrow(annot))){
-                w <- which(h5read(h5file, name = paste0("/sampling/predictions/", j)) == 1L)
-                preds[[j]] <- h5read(h5file, name = paste0(backbone_data_group, j), index = list(w, col_index))
+    cl <- makeCluster(cores)
+    env <- environment()
+    clusterExport(
+        cl,
+        c("n_backbone", "chans", "h5file", "annot", "chop_quantiles", "color.scale", "tmpdir", "resolution", "raster.height", "raster.width", "x", "y", "regular_channels", "transforms")
+      , envir = env
+    )
+    
+    ##for(i in seq_len(n_backbone + nrow(annot))){
+    rasters_list <- pblapply(
+        seq_len(n_backbone + nrow(annot)),
+        cl = cl,
+        function(i){
+            preds <- list()
+            if(i < n_backbone + 1){
+                col_index <- match(chans[i], h5readAttributes(h5file, "/input/expression/1")$colnames)
+                for(j in seq_len(nrow(annot))){
+                    w <- h5read(h5file, name = paste0("/sampling/predictions/", j)) == 1L
+                    preds[[j]] <- h5read(h5file, name = paste0(backbone_data_group, j))[w, col_index]
+                }
+            } else {
+                for(j in seq_len(nrow(annot))){
+                    preds[[j]] <- h5read(h5file, name = paste0(predictions_group, j), index = list(NULL, i - n_backbone))
+                }
             }
-        } else {
-            for(j in seq_len(nrow(annot))){
-                preds[[j]] <- h5read(h5file, name = paste0(predictions_group, j), index = list(NULL, i - n_backbone))
+            preds <- do.call(c, preds)
+            preds <- preds[spl]
+
+            q <- quantile(preds,c(chop_quantiles,1-chop_quantiles))
+            preds[preds<=q[1]] <- q[1]
+            preds[preds>=q[2]] <- q[2]
+
+            range <- range(preds)
+            breaks <- unique(seq(range[1],range[2],length.out=n+1))
+
+            if(length(unique(breaks))>1){
+                points.colors <- as.character(cut(preds,breaks=breaks,labels=color.scale))
+            } else {
+                points.colors <- rep("lightsteelblue",length(preds))
             }
+            mainplot <- paste(tmpdir,"/mainplot_",i,".png",sep="")
+            png(mainplot,res=resolution,height=raster.height*resolution/72,width=raster.width*resolution/72)
+            par("bty"="l")
+            plot(
+                x,
+                y,
+                col=points.colors,
+                xlab="UMAP1",
+                ylab="UMAP2",
+                main=regular_channels[i],
+                ...
+            )
+            dev.off()
+
+            colorscale <- paste(tmpdir,"/colorscale_",i,".png",sep="")
+            png(colorscale,res=resolution,height=raster.height/2*resolution/72,width=raster.width*resolution/72)
+            plot.new()
+            par("mar"=c(2,1,2,1))
+
+            xlims <- par("usr")[c(1, 2)]
+            x_coords <- seq(xlims[1],xlims[2],length.out=n+1)
+            ylims <- par("usr")[c(3, 4)]
+
+            if(i < n_backbone + 1){
+                breaks_native <- transforms[[chans[i]]]$backward(breaks)
+            } else {
+                breaks_native <- transforms[[yvar]]$backward(breaks)
+            }
+            labels <- signif(breaks_native,2)
+            labels <- labels[round(seq(1,length(labels),length.out=5))]
+            labels.x_coords <- seq(x_coords[1],x_coords[length(x_coords)],length.out=5)
+
+            rect(border=NA,ybottom=ylims[1],ytop=ylims[2],xleft=x_coords[-length(x_coords)],xright=x_coords[-1],col=color.scale)
+            text(xpd=TRUE,y=ylims[1],pos=1,labels=labels,x=labels.x_coords)
+            text(xpd=TRUE,y=ylims[2],pos=3,labels=paste(annot[i, "target"],"intensity"),x=mean(xlims))
+            dev.off()
+
+            ## rasters_list <- c(rasters_list, list(list(mainplot = mainplot, colorscale = colorscale)))
+            return(list(mainplot = mainplot, colorscale = colorscale))
         }
-        preds <- do.call(c, preds)
-        preds <- preds[spl]
-
-        q <- quantile(preds,c(chop_quantiles,1-chop_quantiles))
-        preds[preds<=q[1]] <- q[1]
-        preds[preds>=q[2]] <- q[2]
-
-        range <- range(preds)
-        breaks <- unique(seq(range[1],range[2],length.out=n+1))
-
-        if(length(unique(breaks))>1){
-            points.colors <- as.character(cut(preds,breaks=breaks,labels=color.scale))
-        } else {
-            points.colors <- rep("lightsteelblue",length(preds))
-        }
-        mainplot <- paste(tmpDir(),"/mainplot_",i,".png",sep="")
-        png(mainplot,res=resolution,height=raster.height*resolution/72,width=raster.width*resolution/72)
-        par("bty"="l")
-        plot(
-            x,
-            y,
-            col=points.colors,
-            xlab="UMAP1",
-            ylab="UMAP2",
-            main=regular_channels[i],
-            ...
-        )
-        dev.off()
-
-        colorscale <- paste(tmpDir(),"/colorscale_",i,".png",sep="")
-        png(colorscale,res=resolution,height=raster.height/2*resolution/72,width=raster.width*resolution/72)
-        plot.new()
-        par("mar"=c(2,1,2,1))
-
-        xlims <- par("usr")[c(1, 2)]
-        x_coords <- seq(xlims[1],xlims[2],length.out=n+1)
-        ylims <- par("usr")[c(3, 4)]
-
-        labels <- signif(data_transformation_reverse(breaks),2)
-        labels <- labels[round(seq(1,length(labels),length.out=5))]
-        labels.x_coords <- seq(x_coords[1],x_coords[length(x_coords)],length.out=5)
-
-        rect(border=NA,ybottom=ylims[1],ytop=ylims[2],xleft=x_coords[-length(x_coords)],xright=x_coords[-1],col=color.scale)
-        text(xpd=TRUE,y=ylims[1],pos=1,labels=labels,x=labels.x_coords)
-        text(xpd=TRUE,y=ylims[2],pos=3,labels=paste(annot[i, "target"],"intensity"),x=mean(xlims))
-        dev.off()
-
-        rasters_list <- c(rasters_list, list(list(mainplot = mainplot, colorscale = colorscale)))
-    }
+    )
     
-    file <- file_name
-    
-    pdf(file)
+    stopCluster(cl)
+    pdf(file_name)
     for(i in seq_along(rasters_list)){
         par("mar"=c(0,0,0,0))
         grid.newpage()
@@ -322,6 +347,90 @@ minmax_scale <- function(matrix,min=1,max=1000,na.rm=TRUE){
         b <- min-a*min(x, na.rm=na.rm)
         a*x+b
     })
+}
+
+#' Plot a 2D heatmap of frequencies using rectangular bins, mapping log10(counts per bin) to colors
+#' @param x numeric vector for x-axis
+#' @param y numeric vector for y-axis
+#' @param breaks integer(1) number of horizontal and vertical breaks
+#' @param na.rm Should we discard pairs of (x[i], y[i]) if either x[i] or y[i] is NA
+#' @param palette Color palette encoding the 2D log10-density
+#' @param add_white Should bins with no count be plotted in white (default : TRUE)
+#' @param ... passed to image()
+#' @noRd
+freqplot <- function(
+                     x,
+                     y,
+                     breaks=200,
+                     na.rm=TRUE,
+                     palette = rev(c("#A50026","#D73027","#F46D43","#FDAE61","#FEE090","#FFFFBF","#E0F3F8","#ABD9E9","#74ADD1","#4575B4","#313695")),
+                     add_white=TRUE,
+                     ...
+                     ){
+
+    w<-is.na(x)|is.na(y)|is.nan(x)|is.nan(y)|is.infinite(x)|is.infinite(y)
+    if(any(w)){
+        if(na.rm){
+            x<-x[!w]
+            y<-y[!w]
+        } else {
+            stop("NA values found and na.rm is FALSE")
+        }
+    }
+    
+    w.x<-length(unique(x))>1
+    w.y<-length(unique(y))>1
+    
+    if(w.x){
+        breaks.x<-seq(min(x),max(x),length.out=breaks)
+        labels.x<-breaks.x[-length(breaks.x)]
+        X<-cut(x,breaks=breaks.x,labels=labels.x,include.lowest=TRUE)
+    } else {
+        X<-x
+    }
+    if(w.y){
+        breaks.y<-seq(min(y),max(y),length.out=breaks)
+        labels.y<-breaks.y[-length(breaks.y)]
+        Y<-cut(y,breaks=breaks.y,labels=labels.y,include.lowest=TRUE)
+    } else {
+        Y<-y
+    }
+
+    tab<-log10(1+table(X,Y))
+
+    if(length(x)<1|length(y)<1){
+        plot.new()
+        return(tab)
+    }
+    
+    if(w.x&w.y){
+        if(add_white){
+            null_color = "white"
+        } else {
+            null_color = NULL
+        }
+        image(tab,col=c(null_color,colorRampPalette(palette)(100)),x=breaks.x,y=breaks.y,xaxt="n",yaxt="n",xlab="",ylab="",bty="n",...)
+        ticks<-seq(0,1,by=0.25)
+        if(par("xaxt") != "n"){
+            axis(side=1,at=quantile(breaks.x,ticks),labels=signif(quantile(breaks.x,ticks),2),line=0.5)
+        }
+        if(par("yaxt") != "n"){
+            axis(side=2,at=quantile(breaks.y,ticks),labels=signif(quantile(breaks.y,ticks),2),line=0.5)
+        }
+    } else {
+        if(!w.x){
+            X<-runif(length(x))
+        } else {
+            X<-x
+        }
+        if(!w.y){
+            Y<-runif(length(y))
+        } else {
+            Y<-y
+        }
+        freqplot(X,Y,breaks=breaks,na.rm=na.rm,...)
+    }
+    tab
 }
 
 ## Documentation of data objects

@@ -5,7 +5,7 @@
 #' @param preds matrix of imputed data
 #' @param verbose Verbosity
 #' @noRd
-
+#' @importFrom RcppHNSW hnsw_knn
 perform_UMAP_dimensionality_reduction <- function(
                                                paths,
                                                extra_args_UMAP,
@@ -17,20 +17,14 @@ perform_UMAP_dimensionality_reduction <- function(
     if(verbose){
         message("Performing dimensionality reduction")
     }
-    xp_backbone <- list()
+    xp_backbone <- vector("list", nrow(annot))
     for(i in seq_len(nrow(annot))){
-        index <- list(
-                which(h5read(file = paths["h5"], name = paste0("sampling/predictions/", i)) == 1L),
-                NULL
-            )
-        xp_backbone[[i]] <- h5read(
-            file = paths["h5"],
-            name = paste0("/input/expression_transformed_scaled/", i),
-            index = index
-        )
+        index <- h5read(file = paths["h5"], name = paste0("sampling/predictions/", i)) == 1L
+            
+        xp_backbone[[i]] <- h5read(file = paths["h5"],name = paste0("/input/expression_transformed_scaled/", i))[index, ]
         colnames(xp_backbone[[i]]) <- h5readAttributes(file = paths["h5"], name = paste0("/input/expression/", i))$colnames
     }
-    ns <- lapply(xp_backbone, nrow)
+    ns <- vapply(xp_backbone, nrow, integer(1))
     xp_backbone <- do.call(rbind, xp_backbone)
     
     umap <- do.call(uwot::umap,c(list(X=xp_backbone[,chans]),extra_args_UMAP))

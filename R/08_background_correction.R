@@ -25,25 +25,19 @@ correct_background <- function(
     
     for(i in seq_len(nrow(annot))){
         iso <- match(annot[i,"isotype"], annot[, "file"])
-        preds_marker <- list()
-        preds_iso <- list()
+        preds_marker <- vector("list", nrow(annot))
+        preds_iso <- vector("list", nrow(annot))
         ns_out <- rep(0L, nrow(annot))
         for(j in seq_len(nrow(annot))){
-            preds_marker <- c(preds_marker, list(h5read(paths["h5"], name = paste0("/predictions/raw/", j), index = list(NULL, i))))
-            preds_iso <- c(preds_iso, list(h5read(paths["h5"], name = paste0("/predictions/raw/", j), index = list(NULL, iso))))
+            preds_marker[[j]] <- h5read(paths["h5"], name = paste0("/predictions/raw/", j), index = list(NULL, i))
+            preds_iso[[j]] <- h5read(paths["h5"], name = paste0("/predictions/raw/", j), index = list(NULL, iso))
             ns_out[j] <- length(preds_marker[[j]])
         }
         preds_marker <- do.call(c, preds_marker)
         preds_iso <- do.call(c, preds_iso)
         ns_out <- c(1, ns_out)
         ns_out <- cumsum(ns_out)
-        ## x <- preds_raw[[i]][,iso]
-        ## y <- preds_raw[[i]][,file]
         residuals <- lm(preds_marker~preds_iso)$residuals
-        ## intercept <- lm[1]
-        ## slope <- lm[2]
-        ## orthogonal_residuals <- (-slope*preds_iso+preds_marker-intercept)/sqrt(slope^2+1)
-        ## preds_rawbgc[[i]][,file] <- orthogonal_residuals
         for(j in seq_len(nrow(annot))){
             h5write(obj = residuals[seq(ns_out[j], ns_out[j+1]-1)], file = paths["h5"], name = paste0("/predictions/background_corrected/", j), index = list(NULL, i))
             colnames <- h5readAttributes(file = paths["h5"], name = paste0("/predictions/raw/", j))$colnames
@@ -66,15 +60,12 @@ correct_background <- function(
     umap_ranges <- apply(umap, 2, range)
     
     for(i in seq_len(nrow(annot))){
-        preds <- h5read(file = paths["h5"], name = paste0("/predictions/raw/", i))
+        preds <- h5read(file = paths["h5"], name = paste0("/predictions/background_corrected/", i))
         preds <- 10^preds
         colnames(preds) <- h5readAttributes(file = paths["h5"], name = paste0("/predictions/background_corrected/", i))$colnames
                 
-        index <- list(
-                which(h5read(file = paths["h5"], name = paste0("sampling/predictions/", i)) == 1L),
-                NULL
-        )
-        backbone_data <- h5read(file = paths["h5"], name = paste0("/input/expression/", i), index = index)
+        index <- h5read(file = paths["h5"], name = paste0("sampling/predictions/", i)) == 1L
+        backbone_data <- h5read(file = paths["h5"], name = paste0("/input/expression/", i))[index, ]
         colnames(backbone_data) <- h5readAttributes(file = paths["h5"], name = paste0("/input/expression/", i))$colnames
 
         umap_i <- h5read(file = paths["h5"], name = paste0("/umap/backbone/", i))

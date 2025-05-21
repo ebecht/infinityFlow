@@ -32,6 +32,9 @@ fitter_xgboost <- function(x = NULL, params = NULL){
 #' @param regression_functions named list of fitter_* functions, passed from infinity_flow()
 #' @param verbose Verbosity
 #' @noRd
+#' @importFrom xgboost xgb.save.raw
+#' @importFrom xgboost xgb.load.raw
+#' @importFrom xgboost xgb.DMatrix
 fit_regressions <- function(
                             yvar,
                             params,
@@ -56,17 +59,20 @@ fit_regressions <- function(
     models <- list()
     timings <- numeric()
 
+    pb <- txtProgressBar(min = 0, max = nrow(annot), style = 1, width = 50)
     for(i in seq_len(nrow(annot))){
         xp <- h5read(file = paths["h5"], name = paste0("/input/expression_transformed_scaled/", i))
         colnames(xp) <- h5readAttributes(file = paths["h5"], name = paste0("/input/expression/", i))$colnames
         
         w <- sample(rep(c(1L,0L), times = c(floor(nrow(xp)/2), nrow(xp) - floor(nrow(xp)/2))))
         h5write(file = paths["h5"], name = paste0("/sampling/fitting/", i), obj = w)
-        
+
         args <- c(list(data = xp[w == 1L, chans], label = xp[w == 1L, yvar], nthread = cores, verbose = 0), params)
         model <- do.call(xgboost::xgboost, args)
         models[[i]] = model
+        setTxtProgressBar(pb, i)
     }
+    close(pb)
 
     t1 <- Sys.time()
     dt <- difftime(t1,t0,units="secs")
@@ -76,13 +82,16 @@ fit_regressions <- function(
     if(verbose){
         message("\tGenerating intra-well predictions for train and test sets")
     }
+    pb <- txtProgressBar(min = 0, max = nrow(annot), style = 1, width = 50)
     for(i in seq_len(nrow(annot))){
         xp <- h5read(file = paths["h5"], name = paste0("/input/expression_transformed_scaled/", i))
         colnames(xp) <- h5readAttributes(file = paths["h5"], name = paste0("/input/expression/", i))$colnames
         preds <- predict(models[[i]], xp[, chans])
         h5write(file = paths["h5"], name = paste0("/predictions/intra_well/", i), obj = preds)
+        setTxtProgressBar(pb, i)
     }
-
+    close(pb)
+    models <- lapply(models, xgb.save.raw)
     saveRDS(models,file=file.path(paths["rds"],"regression_models.Rds"))
     list(timings=timings)
 }
@@ -99,6 +108,7 @@ fit_regressions <- function(
 #' @param regression_functions named list of fitter_* functions, passed from infinity_flow()
 #' @param neural_networks_seed Seed for computational reproducibility when using neural networks. Passed from infinity_flow()
 #' @param verbose Verbosity
+#' @importFrom xgboost xgb.parameters<-
 #' @noRd
 predict_from_models <- function(
                                 paths,
@@ -129,22 +139,33 @@ predict_from_models <- function(
     if(verbose){
         message("\tImputing...")
     }
-
-    timings <- numeric()
+    models = lapply(models, function(x){xgb.load.raw(x)})
+    models = lapply(
+        models,
+        function(x){
+            xgb.parameters(x)<-list(nthread=cores)
+            x
+        }
+    )
+    pb <- txtProgressBar(min = 0, max = nrow(annot), style = 1, width = 50)
     t0 <- Sys.time()
     for(i in seq_len(nrow(annot))){
-        pred_set <- which(h5read(paths["h5"], paste0("/sampling/predictions/", i)) == 1L)
-        xp <- h5read(paths["h5"], paste0("/input/expression_transformed_scaled/", i), index = list(pred_set, NULL))
+        pred_set <- h5read(paths["h5"], paste0("/sampling/predictions/", i)) == 1L
+        xp <- h5read(paths["h5"], paste0("/input/expression_transformed_scaled/", i))
+        xp <- xp[pred_set, ]
         colnames(xp) <- h5readAttributes(file = paths["h5"], name = paste0("/input/expression/", i))$colnames
+        xp <- xgb.DMatrix(xp[, chans])
         for(j in seq_along(models)){
-            predictions <- predict(object = models[[j]], newdata = xp[, chans], nthread = cores)
+            predictions <- predict(object = models[[j]], newdata = xp)
             h5write(predictions, paths["h5"], name = paste0("/predictions/raw/", i), index = list(NULL, j))
         }
+        setTxtProgressBar(pb, i)
     }
+    close(pb)
     
     t1 <- Sys.time()
     dt <- difftime(t1,t0,units="secs")
     cat("\t",dt," seconds","\n",sep="")
-   
+    
     list(timings=dt)
 }
