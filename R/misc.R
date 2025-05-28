@@ -299,7 +299,7 @@ select_backbone_and_exploratory_markers <- function(files){
                 result$transformation = "asinh"
                 result$cofactor = 1000
                 w = grepl("^[FS]SC-?[AWH]?", result$name) | tolower(result$name) == "time"
-                result[w, "transformation"] = "linear"
+                result[w, "transformation"] = "identity"
                 result[w, "cofactor"] = 1
 
                 cat("\n Auto-detecting channels for transformation. You can edit identity ('linear') / arcsinh manually\n")
