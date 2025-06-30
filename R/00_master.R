@@ -251,7 +251,7 @@ initialize <- function(
     annotation$target <- make.unique(as.character(annotation$target))
     write.csv(annotation,row.names=FALSE,file=paths["annotation"])
     
-    files <- list.files(path_to_fcs,pattern="^.*.(fcs)$",ignore.case=TRUE,recursive=TRUE,full.names=TRUE)
+    files <- list.files(path_to_fcs,pattern="^.*\\.fcs$",ignore.case=TRUE,recursive=TRUE,full.names=TRUE)
     if(missing(backbone_selection_file)){
         backbone_definition <- select_backbone_and_exploratory_markers(files)
         write.csv(backbone_definition,file=file.path(path_to_output,"backbone_selection_file.csv"),row.names=FALSE)
