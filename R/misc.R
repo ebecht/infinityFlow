@@ -121,7 +121,7 @@ color_biplot_by_channels <- function(
     env <- environment()
     clusterExport(
         cl,
-        c("n_backbone", "chans", "h5file", "annot", "chop_quantiles", "color.scale", "tmpdir", "resolution", "raster.height", "raster.width", "x", "y", "regular_channels", "transforms")
+        c("n_backbone", "chans", "h5file", "annot", "chop_quantiles", "color.scale", "tmpdir", "resolution", "raster.height", "raster.width", "x", "y", "regular_channels", "transforms", "spl")
       , envir = env
     )
     
