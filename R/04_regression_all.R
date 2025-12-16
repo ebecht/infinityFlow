@@ -119,6 +119,7 @@ polynomial_formula <- function(variables,degree){
 #' Wrapper to predict. Defined separetely to avoid passing too many objects in parLapplyLB
 #' @param x passed from predict_from_models
 #' @noRd
+#' @importFrom xgboost xgb.model.parameters<-
 predict_wrapper <- function(x){
     if(is(x, "lm")){
         xp <- as.data.frame(xp)
@@ -134,8 +135,7 @@ predict_wrapper <- function(x){
     }
     if(is(x, "xgb.Booster")){
         requireNamespace("xgboost")
-        x <- xgboost::xgb.Booster.complete(x)
-        xgboost::xgb.parameters(x) <- list(nthread = 1)
+        xgb.model.parameters(x) <- list(nthread = 1)
     }
     if(is(x, "svm")){
         requireNamespace("e1071")
