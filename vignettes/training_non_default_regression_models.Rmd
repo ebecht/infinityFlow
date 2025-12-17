@@ -89,7 +89,7 @@ fitter_lm	 | stats	    | Linear and polynomial models
 
 These functions rely on optional package dependencies (so that you do not need to install e.g. Keras if you are not planning to use it). We need to make sure that these dependencies are however met:
 
-```{r, dependencies}
+```{r, dependencies, eval = FALSE}
        optional_dependencies <- c("glmnetUtils", "e1071")
        unmet_dependencies <- setdiff(optional_dependencies, rownames(installed.packages()))
        if(length(unmet_dependencies) > 0){
@@ -208,7 +208,9 @@ if (!requireNamespace("BiocManager", quietly = TRUE)){
     install.packages("BiocManager")
 }
 BiocManager::install("infinityFlow")
+```
 
+```{r}
 library(infinityFlow)
 
 data(steady_state_lung)
