@@ -210,8 +210,9 @@ if (!requireNamespace("BiocManager", quietly = TRUE)){
 BiocManager::install("infinityFlow")
 ```
 
-```{r}
+```{r, eval = FALSE}
 library(infinityFlow)
+library(keras)
 
 data(steady_state_lung)
 data(steady_state_lung_annotation)
