@@ -108,7 +108,7 @@ fit_regressions <- function(
 #' @param regression_functions named list of fitter_* functions, passed from infinity_flow()
 #' @param neural_networks_seed Seed for computational reproducibility when using neural networks. Passed from infinity_flow()
 #' @param verbose Verbosity
-#' @importFrom xgboost xgb.parameters<-
+#' @importFrom xgboost xgb.model.parameters<-
 #' @noRd
 predict_from_models <- function(
                                 paths,
@@ -143,7 +143,7 @@ predict_from_models <- function(
     models = lapply(
         models,
         function(x){
-            xgb.parameters(x)<-list(nthread=cores)
+            xgb.model.parameters(x)<-list(nthread=cores)
             x
         }
     )
