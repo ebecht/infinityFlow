@@ -15,10 +15,10 @@
 logicle_transform_input <- function(
                                     yvar,
                                     paths,
-                                    chans=readRDS(file.path(paths["rds"],"chans.Rds")),
-                                    transforms=readRDS(file.path(paths["rds"],"transforms.Rds")),
-                                    annot=read.table(paths["annotation"],sep=",",header=TRUE,stringsAsFactors=FALSE),
-                                    verbose=TRUE
+                                    chans = readRDS(file.path(paths["rds"], "chans.Rds")),
+                                    transforms = readRDS(file.path(paths["rds"], "transforms.Rds")),
+                                    annot = read.table(paths["annotation"], sep = ",", header = TRUE, stringsAsFactors = FALSE),
+                                    verbose = TRUE
                                     ){
     
     ## ##################

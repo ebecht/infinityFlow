@@ -86,7 +86,6 @@ color_biplot_by_channels <- function(
                                      transforms = transforms,
                                      chans = chans,
                                      yvar = yvar,
-                                     ## data_transformation_reverse=transforms[[yvar]]$backward,
                                      file_name="biplot.pdf",
                                      raster.height=480,
                                      raster.width=480,
@@ -103,12 +102,11 @@ color_biplot_by_channels <- function(
     spl <- sample(seq_len(nrow(umap)))
     umap <- umap[spl, ]
 
-    x <- umap[,1]
-    y <- umap[,2]
+    x <- umap[, 1]
+    y <- umap[, 2]
     
     regular_channels <- h5readAttributes(h5file, paste0(predictions_group, "1"))$colnames
     regular_channels = c(chans, regular_channels)
-    rasters_list <- list()
 
     color.scale <- unique(colorRampPalette(palette)(100))
     n <- length(color.scale)
@@ -125,7 +123,6 @@ color_biplot_by_channels <- function(
       , envir = env
     )
     
-    ##for(i in seq_len(n_backbone + nrow(annot))){
     rasters_list <- pblapply(
         seq_len(n_backbone + nrow(annot)),
         cl = cl,
@@ -135,7 +132,7 @@ color_biplot_by_channels <- function(
                 col_index <- match(chans[i], h5readAttributes(h5file, "/input/expression/1")$colnames)
                 for(j in seq_len(nrow(annot))){
                     w <- h5read(h5file, name = paste0("/sampling/predictions/", j)) == 1L
-                    preds[[j]] <- h5read(h5file, name = paste0(backbone_data_group, j))[w, col_index]
+                    preds[[j]] = h5read(h5file, name=paste0(backbone_data_group, j), index=list(NULL, col_index))[w]
                 }
             } else {
                 for(j in seq_len(nrow(annot))){
@@ -145,53 +142,58 @@ color_biplot_by_channels <- function(
             preds <- do.call(c, preds)
             preds <- preds[spl]
 
-            q <- quantile(preds,c(chop_quantiles,1-chop_quantiles))
+            q <- quantile(preds,c(chop_quantiles, 1-chop_quantiles))
             preds[preds<=q[1]] <- q[1]
             preds[preds>=q[2]] <- q[2]
 
             range <- range(preds)
-            breaks <- unique(seq(range[1],range[2],length.out=n+1))
+            breaks <- unique(seq(range[1], range[2], length.out=n+1))
 
             if(length(unique(breaks))>1){
-                points.colors <- as.character(cut(preds,breaks=breaks,labels=color.scale))
+                points.colors <- as.character(cut(preds, breaks = breaks, labels = color.scale, include.lowest = TRUE))
             } else {
-                points.colors <- rep("lightsteelblue",length(preds))
+                points.colors <- rep("lightsteelblue", length(preds))
             }
-            mainplot <- paste(tmpdir,"/mainplot_",i,".png",sep="")
-            png(mainplot,res=resolution,height=raster.height*resolution/72,width=raster.width*resolution/72)
-            par("bty"="l")
+            mainplot <- paste(tmpdir, "/mainplot_", i, ".png", sep = "")
+            png(mainplot, res = resolution, height = raster.height*resolution/72, width = raster.width*resolution/72)
+            par("bty" = "l")
             plot(
                 x,
                 y,
-                col=points.colors,
-                xlab="UMAP1",
-                ylab="UMAP2",
-                main=regular_channels[i],
+                col = points.colors,
+                xlab = "UMAP1",
+                ylab = "UMAP2",
+                main = regular_channels[i],
                 ...
             )
             dev.off()
 
-            colorscale <- paste(tmpdir,"/colorscale_",i,".png",sep="")
-            png(colorscale,res=resolution,height=raster.height/2*resolution/72,width=raster.width*resolution/72)
+            colorscale <- paste(tmpdir, "/colorscale_", i, ".png", sep = "")
+            png(colorscale, res = resolution, height = raster.height/2*resolution/72, width = raster.width*resolution/72)
             plot.new()
-            par("mar"=c(2,1,2,1))
-
+            
             xlims <- par("usr")[c(1, 2)]
-            x_coords <- seq(xlims[1],xlims[2],length.out=n+1)
+            x_coords <- seq(xlims[1], xlims[2], length.out = n + 1)
             ylims <- par("usr")[c(3, 4)]
+            ylims = (diff(ylims)/4)*c(1, -1) + ylims
 
             if(i < n_backbone + 1){
                 breaks_native <- transforms[[chans[i]]]$backward(breaks)
             } else {
                 breaks_native <- transforms[[yvar]]$backward(breaks)
             }
-            labels <- signif(breaks_native,2)
-            labels <- labels[round(seq(1,length(labels),length.out=5))]
-            labels.x_coords <- seq(x_coords[1],x_coords[length(x_coords)],length.out=5)
+            labels <- signif(breaks_native, 2)
+            labels <- labels[round(seq(1, length(labels), length.out = 5))]
+            labels.x_coords <- seq(x_coords[1], x_coords[length(x_coords)], length.out = 5)
 
-            rect(border=NA,ybottom=ylims[1],ytop=ylims[2],xleft=x_coords[-length(x_coords)],xright=x_coords[-1],col=color.scale)
-            text(xpd=TRUE,y=ylims[1],pos=1,labels=labels,x=labels.x_coords)
-            text(xpd=TRUE,y=ylims[2],pos=3,labels=paste(annot[i, "target"],"intensity"),x=mean(xlims))
+            rect(border = NA, ybottom = ylims[1], ytop = ylims[2], xleft = x_coords[-length(x_coords)], xright = x_coords[-1], col = color.scale)
+
+            counts <- tabulate(findInterval(preds, breaks, rightmost.closed = TRUE), nbins = n)
+            bar_heights <- counts/max(counts)
+            rect(border = NA, ybottom = ylims[1], ytop = ylims[1] + (ylims[2] - ylims[1]) * bar_heights, xleft = x_coords[-length(x_coords)], xright = x_coords[-1], col = "black")
+            
+            text(xpd = TRUE, y = ylims[1], pos = 1, labels = labels, x = labels.x_coords, cex = 2)
+            text(xpd = TRUE, y = ylims[2], pos = 3, labels = paste(regular_channels[i], "intensity"), x = mean(xlims), cex = 2)
             dev.off()
 
             ## rasters_list <- c(rasters_list, list(list(mainplot = mainplot, colorscale = colorscale)))
@@ -202,13 +204,13 @@ color_biplot_by_channels <- function(
     stopCluster(cl)
     pdf(file_name)
     for(i in seq_along(rasters_list)){
-        par("mar"=c(0,0,0,0))
+        par("mar" = c(0,0,0,0))
         grid.newpage()
         
         grid.raster(readPNG(rasters_list[[i]]$mainplot,native=TRUE),y=0.6,height=0.8)
         grid.raster(readPNG(rasters_list[[i]]$colorscale,native=TRUE),y=0.1,height=0.2)
         
-        grid.text(x=unit(1,"npc"),y=unit(1,"npc"),label=ifelse(i < n_backbone + 1, chans[i], annot[i - n_backbone, "target"]),just=c(1,1),gp=gpar(col="white",cex=0.1))
+        grid.text(x = unit(1, "npc"),y = unit(1, "npc"), label = ifelse(i < n_backbone + 1, chans[i], annot[i - n_backbone, "target"]),just = c(1,1), gp = gpar(col = "white", cex = 0.1))
     }
     dev.off()
     

@@ -286,24 +286,24 @@ initialize <- function(
             }
         }
     }
-    saveRDS(transforms, file=file.path(paths["rds"], "transforms.Rds"))
-    saveRDS(chans,file=file.path(paths["rds"],"chans.Rds"))
+    saveRDS(transforms, file = file.path(paths["rds"], "transforms.Rds"))
+    saveRDS(chans, file = file.path(paths["rds"], "chans.Rds"))
 
     if(is.null(names(regression_functions))){
-        names(regression_functions) <- paste0("Alg",seq_along(regression_functions))
+        names(regression_functions) <- paste0("Alg", seq_along(regression_functions))
     }
-    w <- is.na(names(regression_functions))|names(regression_functions)==""
+    w <- is.na(names(regression_functions))|names(regression_functions) == ""
     if(any(w)){
-        names(regression_functions)[w] <- paste0("Alg",seq_along(regression_functions))[w]
+        names(regression_functions)[w] <- paste0("Alg", seq_along(regression_functions))[w]
     }
     names(regression_functions) <- make.unique(names(regression_functions))
 
     return(
         list(
-            paths=paths,
-            chans=chans,
-            name_of_PE_parameter=name_of_PE_parameter,
-            regression_functions=regression_functions
+            paths = paths,
+            chans = chans,
+            name_of_PE_parameter = name_of_PE_parameter,
+            regression_functions = regression_functions
         )
     )
 }

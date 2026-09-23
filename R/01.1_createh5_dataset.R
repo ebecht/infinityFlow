@@ -45,7 +45,8 @@ create_h5_file <- function(
             h5createDataset(
                 paths["h5"],
                 paste0("input/expression/", i),
-                dims = c(ns[i], nchans)
+                dims = c(ns[i], nchans),
+                chunk=c(ns[i], 1)
             )
         )
     }
@@ -54,7 +55,8 @@ create_h5_file <- function(
             h5createDataset(
                 paths["h5"],
                 paste0("input/expression_transformed/", i),
-                dims = c(ns[i], nchans)
+                dims = c(ns[i], nchans),
+                chunk=c(ns[i], 1)
             )
         )
     }
@@ -63,7 +65,8 @@ create_h5_file <- function(
             h5createDataset(
                 paths["h5"],
                 paste0("input/expression_transformed_scaled/", i),
-                dims = c(ns[i], nchans)
+                dims = c(ns[i], nchans),
+                chunk=c(ns[i], 1)
             )
         )
     }

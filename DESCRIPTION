@@ -35,5 +35,5 @@ Suggests: knitr,
 	glmnetUtils,
 	e1071
 VignetteBuilder: knitr
-RoxygenNote: 7.3.2
 biocViews: Software, FlowCytometry, CellBasedAssays, SingleCell, Proteomics
+Config/roxygen2/version: 8.1.0
